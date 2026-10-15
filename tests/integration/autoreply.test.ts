@@ -142,16 +142,19 @@ describe('DM guards', () => {
 
   it('stops at the plan allowance and tells the owner once', async () => {
     await createRule(ctx, rule({ keywords: [], scope: 'post', externalMediaId: 'm-1' }))
-    const free = SEED_PLANS.find(p => p.slug === 'kreator')!
-    await getDb().update(plans).set({ limits: { ...free.limits, autoReplyDmsPerMonth: 1 } }).where(eq(plans.id, 'plan-kreator'))
-    await invalidateEntitlements(ctx.workspaceId)
-    for (let i = 0; i < 3; i++) await ingestMetaWebhook(getDb(), comment('halo'))
-    await run()
-    const rows = await events()
-    expect(rows.filter(e => e.status === 'dm_sent')).toHaveLength(1)
-    expect(rows.filter(e => e.status === 'rate_limited' && e.error === 'plan_limit')).toHaveLength(2)
-    expect(await getDb().select().from(notifications)).toHaveLength(1)
-    await getDb().update(plans).set({ limits: free.limits }).where(eq(plans.id, 'plan-kreator'))
+    const kreator = SEED_PLANS.find(p => p.slug === 'kreator')!
+    await getDb().update(plans).set({ limits: { ...kreator.limits, autoReplyDmsPerMonth: 1 } }).where(eq(plans.id, 'plan-kreator'))
+    try {
+      await invalidateEntitlements(ctx.workspaceId)
+      for (let i = 0; i < 3; i++) await ingestMetaWebhook(getDb(), comment('halo'))
+      await run()
+      const rows = await events()
+      expect(rows.filter(e => e.status === 'dm_sent')).toHaveLength(1)
+      expect(rows.filter(e => e.status === 'rate_limited' && e.error === 'plan_limit')).toHaveLength(2)
+      expect(await getDb().select().from(notifications)).toHaveLength(1) // concurrent sends, one notice
+    } finally {
+      await getDb().update(plans).set({ limits: kreator.limits }).where(eq(plans.id, 'plan-kreator'))
+    }
   })
 
   it('a daily cap per rule and an account that needs reconnecting are explained, not sent', async () => {

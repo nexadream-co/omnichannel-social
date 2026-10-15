@@ -21,3 +21,16 @@
 :root {
   --ui-radius: 0.375rem;
 }
+
+/* v-reveal (app/plugins/reveal.ts): hidden only once JS has marked <html>, and only when motion is welcome. */
+@media (prefers-reduced-motion: no-preference) {
+  .reveal-ready .reveal {
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 500ms ease-out, transform 500ms ease-out;
+  }
+  .reveal-ready .reveal.revealed {
+    opacity: 1;
+    transform: none;
+  }
+}

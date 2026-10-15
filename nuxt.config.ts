@@ -12,6 +12,15 @@ export default defineNuxtConfig({
   modules: ['@nuxt/ui', '@nuxt/eslint', '@nuxtjs/i18n'],
   ssr: true,
   devtools: { enabled: true },
+  app: {
+    head: {
+      link: [
+        { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
+        { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' }
+      ],
+      meta: [{ name: 'theme-color', content: '#e6114f' }]
+    }
+  },
   css: ['~/assets/css/main.css'],
   colorMode: { preference: 'light', fallback: 'light' },
   runtimeConfig: {
@@ -50,6 +59,8 @@ export default defineNuxtConfig({
       { code: 'id', language: 'id-ID', name: 'Bahasa Indonesia', file: 'id.json' },
       { code: 'en', language: 'en-US', name: 'English', file: 'en.json' }
     ],
-    detectBrowserLanguage: false
+    detectBrowserLanguage: false,
+    // Absolute hreflang/canonical URLs (docs/blueprint/14 §6).
+    baseUrl: process.env.NUXT_PUBLIC_SITE_URL || 'http://localhost:3000'
   }
 })

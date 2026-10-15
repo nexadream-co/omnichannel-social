@@ -1,6 +1,6 @@
 import { env } from '../core/env'
 
-const SHORT_PATHS = [/^\/r\//, /^\/bio\//, /^\/_nuxt\//, /^\/__nuxt/, /^\/favicon\.ico$/, /^\/robots\.txt$/]
+const SHORT_PATHS = [/^\/r\//, /^\/bio\//, /^\/_nuxt\//, /^\/__nuxt/, /^\/favicon\.(ico|svg|png)$/, /^\/apple-touch-icon\.png$/, /^\/robots\.txt$/]
 
 /**
  * On SHORT_DOMAIN only short links, Etalase pages and static assets are served (docs/blueprint/19 §7).

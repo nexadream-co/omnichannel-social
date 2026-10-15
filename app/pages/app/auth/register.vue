@@ -133,13 +133,13 @@ async function onSubmit() {
             <template #label>
               {{ t('auth.acceptTermsPrefix') }}
               <ULink
-                :to="localePath('/page/terms')"
+                :to="localePath('/terms')"
                 target="_blank"
                 class="text-primary"
               >{{ t('auth.terms') }}</ULink>
               {{ t('auth.and') }}
               <ULink
-                :to="localePath('/page/privacy')"
+                :to="localePath('/privacy')"
                 target="_blank"
                 class="text-primary"
               >{{ t('auth.privacy') }}</ULink>

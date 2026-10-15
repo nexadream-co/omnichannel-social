@@ -1,4 +1,4 @@
-import { and, count, desc, eq, ilike, inArray, isNull, or } from 'drizzle-orm'
+import { and, count, desc, eq, ilike, inArray, isNull, or, sql } from 'drizzle-orm'
 import { NOTIFICATION_TEMPLATES, renderTemplateString } from '../../shared/utils/templates'
 import type { CoreContext } from './context'
 import type { Executor } from './db/client'
@@ -45,28 +45,34 @@ export async function createNotification(ctx: Ctx, input: CreateNotificationInpu
   if (!title) throw new Error(`Notification without title or known template: ${input.templateKey}`)
   const body = input.body ?? (template ? renderTemplateString(template.body, variables) : '')
 
-  if (input.dedupeKey) {
-    const recipient = input.audience === 'staff' ? eq(notifications.staffUserId, input.staffUserId!) : eq(notifications.userId, input.userId!)
-    const existing = await db.select({ id: notifications.id }).from(notifications)
-      .where(and(recipient, eq(notifications.dedupeKey, input.dedupeKey), isNull(notifications.readAt))).limit(1)
-    if (existing.length) return
+  // Check + insert under a per-(recipient, dedupeKey) lock, so concurrent jobs can't both pass the check.
+  const write = async (exec: Executor): Promise<boolean> => {
+    if (input.dedupeKey) {
+      await exec.execute(sql`select pg_advisory_xact_lock(hashtext(${`notification:${input.staffUserId ?? input.userId}:${input.dedupeKey}`}))`)
+      const recipient = input.audience === 'staff' ? eq(notifications.staffUserId, input.staffUserId!) : eq(notifications.userId, input.userId!)
+      const existing = await exec.select({ id: notifications.id }).from(notifications)
+        .where(and(recipient, eq(notifications.dedupeKey, input.dedupeKey), isNull(notifications.readAt))).limit(1)
+      if (existing.length) return false
+    }
+    if (input.channels?.database !== false) {
+      await exec.insert(notifications).values({
+        audience: input.audience,
+        userId: input.userId ?? null,
+        staffUserId: input.staffUserId ?? null,
+        workspaceId: input.workspaceId ?? null,
+        templateKey: input.templateKey ?? null,
+        dedupeKey: input.dedupeKey ?? null,
+        title,
+        body,
+        actionUrl: input.actionUrl ?? (template?.actionUrl ? renderTemplateString(template.actionUrl, variables) : null),
+        icon: input.icon ?? template?.icon ?? null,
+        level: input.level ?? template?.level ?? 'info'
+      })
+    }
+    return true
   }
-
-  if (input.channels?.database !== false) {
-    await db.insert(notifications).values({
-      audience: input.audience,
-      userId: input.userId ?? null,
-      staffUserId: input.staffUserId ?? null,
-      workspaceId: input.workspaceId ?? null,
-      templateKey: input.templateKey ?? null,
-      dedupeKey: input.dedupeKey ?? null,
-      title,
-      body,
-      actionUrl: input.actionUrl ?? (template?.actionUrl ? renderTemplateString(template.actionUrl, variables) : null),
-      icon: input.icon ?? template?.icon ?? null,
-      level: input.level ?? template?.level ?? 'info'
-    })
-  }
+  const written = tx ? await write(tx) : input.dedupeKey ? await ctx.db.transaction(write) : await write(ctx.db)
+  if (!written) return
 
   if (input.channels?.email === false || !input.templateKey) return
   const templateKey = input.templateKey

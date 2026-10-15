@@ -65,6 +65,15 @@ for (const [device, viewport] of Object.entries(VIEWPORTS)) {
       })
       if (overflowing.length) problems.push(`[${device}/${scheme}] ${path} → overflow: ${overflowing.join(', ')}`)
       const name = `${audience}${path.replace(/[/?=&]+/g, '_')}-${device}-${scheme}.png`
+      // Scroll through once so reveal-on-scroll sections and lazy images render before the capture.
+      await page.evaluate(async () => {
+        for (let y = 0; y < document.body.scrollHeight; y += window.innerHeight / 2) {
+          window.scrollTo(0, y)
+          await new Promise(resolve => setTimeout(resolve, 60))
+        }
+        window.scrollTo(0, 0)
+      })
+      await page.waitForTimeout(600)
       await page.screenshot({ path: `${outDir}/${name}`, fullPage: device === 'phone' })
     }
     await context.close()

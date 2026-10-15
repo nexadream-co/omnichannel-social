@@ -1,5 +1,6 @@
 import { eq, sql } from 'drizzle-orm'
 import { hashPassword } from 'better-auth/crypto'
+import { SEED_FAQS, SEED_PAGES } from './seed-content'
 import { loadDotEnv } from './_env'
 
 loadDotEnv()
@@ -96,23 +97,12 @@ for (const schedule of SCHEDULES) {
 }
 
 step('pages + FAQ')
-const draft = '<p><em>Draf. Isi halaman ini diganti dari /admin/pages sebelum peluncuran.</em></p>'
-const PAGES = [
-  { slug: 'privacy', title: 'Kebijakan Privasi' },
-  { slug: 'terms', title: 'Syarat & Ketentuan' },
-  { slug: 'kebijakan-pembayaran', title: 'Kebijakan Pembayaran' },
-  { slug: 'bantuan', title: 'Bantuan' }
-]
-for (const page of PAGES) {
-  await db.insert(schema.pages).values({ ...page, content: draft }).onConflictDoNothing()
+for (const page of SEED_PAGES) {
+  await db.insert(schema.pages).values(page).onConflictDoNothing()
 }
 const [faqCount] = await db.select({ n: sql<number>`count(*)::int` }).from(schema.faqs)
 if (!faqCount?.n) {
-  await db.insert(schema.faqs).values([
-    { question: 'Apakah Socialz.id gratis?', answer: 'Ya. Paket Gratis bisa dipakai selamanya untuk 2 akun media sosial dan 20 postingan terjadwal per bulan.', order: 0 },
-    { question: 'Akun apa saja yang bisa dihubungkan?', answer: 'Instagram (akun Bisnis atau Kreator), Threads dan Halaman Facebook.', order: 1 },
-    { question: 'Bagaimana cara membayar?', answer: 'Lewat QRIS, transfer virtual account, e-wallet atau kartu. Tidak ada tagihan otomatis: kamu memperpanjang sendiri, dan kami ingatkan sebelum paket berakhir.', order: 2 }
-  ])
+  await db.insert(schema.faqs).values(SEED_FAQS.map((faq, order) => ({ ...faq, order })))
 }
 
 step('superadmin')
