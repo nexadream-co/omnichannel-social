@@ -1,5 +1,7 @@
 import type { JobHandler } from '../types'
 import { mediaWatchdogJob, processMediaJob } from '../../media/service'
+import { dmSendJob } from '../../autoreply/send'
+import { webhookMetaJob } from '../../autoreply/webhook'
 import { unfurlLinkJob } from '../../links/unfurl-job'
 import { dataDeletionJob } from '../../meta-callbacks'
 import { publishPollJob, publishReconcileJob, publishTargetJob } from '../../publishing/pipeline'
@@ -19,5 +21,7 @@ export const handlers: Record<string, JobHandler> = {
   'publish.target': publishTargetJob,
   'publish.poll': publishPollJob,
   'publish.reconcile': publishReconcileJob,
-  'links.unfurl': unfurlLinkJob
+  'links.unfurl': unfurlLinkJob,
+  'webhook.meta': webhookMetaJob,
+  'dm.send': dmSendJob
 }

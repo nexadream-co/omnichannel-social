@@ -25,7 +25,10 @@ export const QUEUES = {
   'publish.target': queue('publish.target', { maxAttempts: 4, leaseSeconds: 180, expectedMs: 30_000, concurrency: 10 }),
   'publish.poll': queue('publish.poll', { maxAttempts: 4, concurrency: 10 }),
   'publish.reconcile': queue('publish.reconcile', { maxAttempts: 4, concurrency: 5 }),
-  'links.unfurl': queue('links.unfurl', { maxAttempts: 2, concurrency: 3 })
+  'links.unfurl': queue('links.unfurl', { maxAttempts: 2, concurrency: 3 }),
+  'webhook.meta': queue('webhook.meta', { maxAttempts: 5, concurrency: 10 }),
+  // A DM is never blindly retried: the worker claims the event first, so retries only re-check and defer.
+  'dm.send': queue('dm.send', { maxAttempts: 3, concurrency: 10 })
 } as const satisfies Record<string, QueueDef>
 
 export type QueueName = keyof typeof QUEUES

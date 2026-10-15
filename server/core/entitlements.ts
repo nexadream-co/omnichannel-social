@@ -147,14 +147,20 @@ export async function countScheduledThisMonth(db: Executor, workspaceId: string,
   return row?.n ?? 0
 }
 
-export async function entitlementUsage(db: Executor, workspaceId: string, tz: string): Promise<Record<Exclude<LimitKey, 'clickRetentionDays' | 'activityLogRetentionDays'>, number>> {
+export async function countDmsThisMonth(db: Executor, workspaceId: string, tz: string): Promise<number> {
   const { start, end } = monthBounds(tz)
+  const [row] = await db.select({ n: count() }).from(dmEvents)
+    .where(and(eq(dmEvents.workspaceId, workspaceId), eq(dmEvents.status, 'dm_sent'), sql`${dmEvents.createdAt} >= ${start} and ${dmEvents.createdAt} < ${end}`))
+  return row?.n ?? 0
+}
+
+export async function entitlementUsage(db: Executor, workspaceId: string, tz: string): Promise<Record<Exclude<LimitKey, 'clickRetentionDays' | 'activityLogRetentionDays'>, number>> {
   const [[accounts], scheduled, [bios], [rules], [dms], [members], [invites], [storage]] = await Promise.all([
     db.select({ n: count() }).from(socialAccounts).where(and(eq(socialAccounts.workspaceId, workspaceId), eq(socialAccounts.status, 'active'))),
     countScheduledThisMonth(db, workspaceId, tz),
     db.select({ n: count() }).from(bioPages).where(and(eq(bioPages.workspaceId, workspaceId), eq(bioPages.published, true))),
     db.select({ n: count() }).from(dmRules).where(and(eq(dmRules.workspaceId, workspaceId), eq(dmRules.active, true))),
-    db.select({ n: count() }).from(dmEvents).where(and(eq(dmEvents.workspaceId, workspaceId), eq(dmEvents.status, 'dm_sent'), sql`${dmEvents.createdAt} >= ${start} and ${dmEvents.createdAt} < ${end}`)),
+    countDmsThisMonth(db, workspaceId, tz).then(n => [{ n }]),
     db.select({ n: count() }).from(workspaceMembers).where(and(eq(workspaceMembers.workspaceId, workspaceId), eq(workspaceMembers.isActive, true))),
     db.select({ n: count() }).from(workspaceInvitations).where(and(eq(workspaceInvitations.workspaceId, workspaceId), isNull(workspaceInvitations.acceptedAt), isNull(workspaceInvitations.revokedAt), gt(workspaceInvitations.expiresAt, new Date()))),
     db.select({ bytes: sql<string>`coalesce(sum(${mediaAssets.bytes}), 0)` }).from(mediaAssets).where(and(eq(mediaAssets.workspaceId, workspaceId), ne(mediaAssets.status, 'failed')))

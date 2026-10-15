@@ -11,6 +11,8 @@ import { ChannelError, type AdapterError, type ChannelAdapter, type ConnectedAcc
  */
 const published = new Map<string, { externalId: string, caption: string, ts: Date, permalink: string }[]>()
 const containers = new Map<string, number>() // container id → status polls remaining
+/** Messages the fake adapter "sent" (private replies and public comment replies), for tests and local QA. */
+export const fakeOutbox: { kind: 'dm' | 'reply', accountId: string, commentId: string, text: string }[] = []
 
 const FAKE_ACCOUNTS: Record<Platform, () => ConnectedAccount[]> = {
   instagram: () => [account('17841400000000001', 'kreator.demo')],
@@ -89,8 +91,14 @@ export function fakeAdapter(platform: Platform): ChannelAdapter {
     async fetchInsights(_c, ids) {
       return ids.map(id => ({ externalId: id, metrics: { views: 120, likes: 12, comments: 3 } }))
     },
-    async sendPrivateReply() {},
-    async replyToComment() {},
+    async sendPrivateReply(c, commentId, text) {
+      const failure = /fail-(auth|rate_limit|permanent|transient)/.exec(commentId)?.[1] as AdapterError['kind'] | undefined
+      if (failure) throw new ChannelError({ kind: failure, code: `FAKE_${failure.toUpperCase()}`, message: `Fake ${failure} failure` })
+      fakeOutbox.push({ kind: 'dm', accountId: c.account.id, commentId, text })
+    },
+    async replyToComment(c, commentId, text) {
+      fakeOutbox.push({ kind: 'reply', accountId: c.account.id, commentId, text })
+    },
     normalizeError: e => (e instanceof ChannelError ? e.detail : { kind: 'transient', message: String(e) })
   }
 }
@@ -99,6 +107,7 @@ export function fakeAdapter(platform: Platform): ChannelAdapter {
 export function resetFakeChannels() {
   published.clear()
   containers.clear()
+  fakeOutbox.length = 0
 }
 
 export const isFakeMode = () => env().ADAPTER_MODE === 'fake'
