@@ -19,4 +19,9 @@
 - Media uploads go straight to storage; photos are converted to JPEG and videos (including iPhone HEVC) to H.264 MP4 ready for Reels, automatically.
 - Plans: what a workspace may do follows its plan in force; a lapsed trial falls back to Gratis immediately. Limits show friendly messages, a quiet trial/grace banner sits under the top bar, an upgrade dialog opens only when a limit is hit, and the rail shows an Upgrade button when there is something to upgrade to.
 - Back-office plan editor: prices, trial days, every limit (with "Tanpa batas") and every feature; plans in use or the default plan can't be deleted.
+- Buat Postingan: write once for every connected account (all selected by default), upload photos and videos that are fixed automatically, see per-platform character counts and friendly hints (for example, Instagram links aren't clickable), pick a suggested time, then Jadwalkan, Posting sekarang or save a draft. Per-platform caption, format, first comment and alt text sit under "Opsi lanjutan".
+- Postingan list with Terjadwal / Draf / Terbit / Gagal tabs, per-account status in plain words, "Coba lagi" on failures; post detail with reasons and fix buttons; duplicate, edit, cancel and delete.
+- Kalender: month view with drag-to-reschedule on desktop and a day list on phones; tap a day to create a post for it.
+- Posts publish automatically and reliably: a lost platform response is reconciled instead of posting twice, daily platform limits reschedule instead of failing, expired accounts pause their posts and ask for a reconnect, and the monthly plan allowance is shown before scheduling.
+- Beranda shows upcoming posts and a fix-it alert for failed posts.
 - Database schema for the platform and domain layers, with seeded permissions, roles, menus, settings, templates, plans, job schedules and legal pages.

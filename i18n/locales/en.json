@@ -133,7 +133,11 @@
     },
     "trialBanner": "{plan} trial active until {date}.",
     "seePlans": "See plans",
-    "dismissConfirm": "Hide the getting-started guide? You can still use every feature."
+    "dismissConfirm": "Hide the getting-started guide? You can still use every feature.",
+    "upcoming": "Coming up",
+    "noUpcoming": "No scheduled posts yet.",
+    "failedAlert": "{count} post(s) failed to publish.",
+    "failedAction": "View and fix"
   },
   "role": {
     "owner": {
@@ -168,6 +172,25 @@
       "running": "Running",
       "done": "Done",
       "dead": "Failed",
+      "cancelled": "Cancelled"
+    },
+    "post": {
+      "draft": "Draft",
+      "scheduled": "Scheduled",
+      "publishing": "Processing",
+      "published": "Published",
+      "partial": "Partly published",
+      "failed": "Failed",
+      "cancelled": "Cancelled"
+    },
+    "target": {
+      "draft": "Draft",
+      "scheduled": "Scheduled",
+      "processing": "Processing",
+      "deferred": "Rescheduled",
+      "needsReauth": "Needs reconnecting",
+      "published": "Published",
+      "failed": "Failed",
       "cancelled": "Cancelled"
     }
   },
@@ -375,5 +398,132 @@
     "grace": "Payment pending. Pay before {date} to keep your plan.",
     "choose": "Choose a plan",
     "pay": "Pay now"
+  },
+  "format": {
+    "feed": "Post",
+    "carousel": "Carousel",
+    "reel": "Reel",
+    "story": "Story",
+    "text": "Text"
+  },
+  "publishError": {
+    "auth": "The account needs reconnecting.",
+    "rateLimit": "The platform is limiting posts. We will retry automatically.",
+    "quota": "The daily platform limit is reached. We rescheduled it automatically.",
+    "validation": "The platform didn't accept this post. Check the media and caption, then try again.",
+    "permanent": "The platform rejected this post. Change it and try again.",
+    "transient": "The platform is having trouble. Try again shortly.",
+    "notFound": "We couldn't confirm the post went out. Check your account; if it's missing, try again.",
+    "containerTimeout": "The platform took too long to process the video. Try again.",
+    "mediaNotReady": "Media is not ready yet.",
+    "missedWhileSuspended": "Missed while the account was suspended.",
+    "accountDisconnected": "The account was disconnected."
+  },
+  "channel": {
+    "captionTooLong": "Caption is too long ({count}/{max} characters).",
+    "tooManyHashtags": "Too many hashtags (max {max}).",
+    "tooManyMentions": "Too many mentions (max {max}).",
+    "tooManyLinks": "Too many links (max {max}).",
+    "mediaRequired": "Add at least {min} photo or video.",
+    "tooManyMedia": "At most {max} photos/videos.",
+    "emptyPost": "Write a caption or add media.",
+    "mediaKindUnsupported": "This media type isn't supported for this format.",
+    "imageWillBeConverted": "We convert the photo to a supported format automatically.",
+    "imageWillBeCropped": "The photo ratio is outside the limits; Instagram will crop it.",
+    "videoTooShort": "Video is too short (min {min} seconds).",
+    "videoTooLong": "Video is too long (max {max} seconds).",
+    "formatUnsupported": "This format isn't supported.",
+    "instagram": {
+      "linkNotClickable": "Links in Instagram captions aren't clickable. Put it in your storefront or use Auto reply.",
+      "unavailable": "Instagram isn't available yet."
+    },
+    "threads": {
+      "unavailable": "Threads isn't available yet."
+    },
+    "facebook": {
+      "unavailable": "Facebook isn't available yet."
+    }
+  },
+  "composer": {
+    "title": "New post",
+    "editTitle": "Edit post",
+    "accounts": "Post to",
+    "noAccounts": "Connect an account first so posts can publish automatically.",
+    "connect": "Connect account",
+    "caption": "Caption",
+    "captionPlaceholder": "Write a caption… e.g. 50% off today! Link in bio 💖",
+    "media": "Photos & videos",
+    "addMedia": "Add photo/video",
+    "uploading": "Uploading {percent}%",
+    "processing": "Preparing…",
+    "remove": "Remove",
+    "when": "When to post?",
+    "date": "Date",
+    "time": "Time",
+    "suggested": "Suggested time",
+    "schedule": "Schedule",
+    "now": "Post now",
+    "draft": "Save draft",
+    "advanced": "Advanced options",
+    "perPlatform": "{platform} caption",
+    "perPlatformHint": "Leave empty to use the main caption.",
+    "format": "{platform} format",
+    "firstComment": "First comment",
+    "altText": "Photo alt text",
+    "preview": "Preview",
+    "remaining": "{count} posts left this month.",
+    "scheduled": "Post scheduled.",
+    "publishedNow": "Your post is being published.",
+    "savedDraft": "Draft saved.",
+    "fixFirst": "Some things need fixing first.",
+    "mediaPending": "Wait for the media to finish preparing.",
+    "pastTime": "That time has passed. Pick a future time."
+  },
+  "posts": {
+    "title": "Posts",
+    "subtitle": "All your posts and how they published.",
+    "tabs": {
+      "scheduled": "Scheduled",
+      "draft": "Drafts",
+      "published": "Published",
+      "failed": "Failed",
+      "all": "All"
+    },
+    "empty": {
+      "scheduled": "No scheduled posts yet. Schedule your first post now.",
+      "draft": "No drafts.",
+      "published": "Nothing published yet.",
+      "failed": "No failed posts. Nice!",
+      "all": "No posts yet. Start by scheduling your first post."
+    },
+    "create": "New post",
+    "retry": "Try again",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "duplicate": "Duplicate",
+    "delete": "Delete",
+    "view": "View post",
+    "cancelConfirm": "Cancel this post? It won't be published.",
+    "deleteConfirm": "Delete this post?",
+    "cancelled": "Post cancelled.",
+    "deleted": "Post deleted.",
+    "retried": "We'll try publishing again.",
+    "noCaption": "(no caption)",
+    "detail": "Post detail",
+    "perPlatform": "Status per account",
+    "publishedAt": "Published {date}",
+    "scheduledFor": "Scheduled for {date}",
+    "reconnect": "Reconnect"
+  },
+  "calendar": {
+    "title": "Calendar",
+    "subtitle": "See and move your planned posts.",
+    "today": "Today",
+    "prev": "Previous month",
+    "next": "Next month",
+    "empty": "No posts this month.",
+    "dragHint": "Drag a post to another day to reschedule it.",
+    "moved": "Schedule moved.",
+    "more": "+{n} more"
   }
 }

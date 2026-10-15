@@ -133,7 +133,11 @@
     },
     "trialBanner": "Uji coba {plan} aktif sampai {date}.",
     "seePlans": "Lihat paket",
-    "dismissConfirm": "Sembunyikan panduan memulai? Kamu tetap bisa memakai semua fitur."
+    "dismissConfirm": "Sembunyikan panduan memulai? Kamu tetap bisa memakai semua fitur.",
+    "upcoming": "Postingan berikutnya",
+    "noUpcoming": "Belum ada postingan terjadwal.",
+    "failedAlert": "{count} postingan gagal terbit.",
+    "failedAction": "Lihat dan perbaiki"
   },
   "role": {
     "owner": {
@@ -168,6 +172,25 @@
       "running": "Berjalan",
       "done": "Selesai",
       "dead": "Gagal permanen",
+      "cancelled": "Dibatalkan"
+    },
+    "post": {
+      "draft": "Draf",
+      "scheduled": "Terjadwal",
+      "publishing": "Diproses",
+      "published": "Terbit",
+      "partial": "Sebagian terbit",
+      "failed": "Gagal",
+      "cancelled": "Dibatalkan"
+    },
+    "target": {
+      "draft": "Draf",
+      "scheduled": "Terjadwal",
+      "processing": "Diproses",
+      "deferred": "Dijadwalkan ulang",
+      "needsReauth": "Perlu hubungkan ulang",
+      "published": "Terbit",
+      "failed": "Gagal",
       "cancelled": "Dibatalkan"
     }
   },
@@ -375,5 +398,132 @@
     "grace": "Pembayaran tertunda. Bayar sebelum {date} agar paket tidak turun.",
     "choose": "Pilih paket",
     "pay": "Bayar sekarang"
+  },
+  "format": {
+    "feed": "Postingan",
+    "carousel": "Carousel",
+    "reel": "Reels",
+    "story": "Story",
+    "text": "Teks"
+  },
+  "publishError": {
+    "auth": "Akun perlu dihubungkan ulang.",
+    "rateLimit": "Platform sedang membatasi postingan. Kami coba lagi otomatis.",
+    "quota": "Batas harian platform tercapai. Kami jadwalkan ulang otomatis.",
+    "validation": "Postingan tidak diterima platform. Periksa media dan caption, lalu coba lagi.",
+    "permanent": "Platform menolak postingan ini. Ubah isinya lalu coba lagi.",
+    "transient": "Platform sedang bermasalah. Coba lagi sebentar lagi.",
+    "notFound": "Kami tidak bisa memastikan postingan terbit. Cek akunmu; jika belum ada, coba lagi.",
+    "containerTimeout": "Platform terlalu lama memproses video. Coba lagi.",
+    "mediaNotReady": "Media belum siap.",
+    "missedWhileSuspended": "Terlewat saat akun ditangguhkan.",
+    "accountDisconnected": "Akun sudah diputuskan."
+  },
+  "channel": {
+    "captionTooLong": "Caption terlalu panjang ({count}/{max} karakter).",
+    "tooManyHashtags": "Terlalu banyak hashtag (maks {max}).",
+    "tooManyMentions": "Terlalu banyak mention (maks {max}).",
+    "tooManyLinks": "Terlalu banyak link (maks {max}).",
+    "mediaRequired": "Tambahkan minimal {min} foto atau video.",
+    "tooManyMedia": "Maksimal {max} foto/video.",
+    "emptyPost": "Tulis caption atau tambahkan media.",
+    "mediaKindUnsupported": "Jenis media ini tidak didukung untuk format ini.",
+    "imageWillBeConverted": "Foto otomatis kami ubah ke format yang didukung.",
+    "imageWillBeCropped": "Rasio foto di luar batas; Instagram akan memotongnya.",
+    "videoTooShort": "Video terlalu pendek (min {min} detik).",
+    "videoTooLong": "Video terlalu panjang (maks {max} detik).",
+    "formatUnsupported": "Format ini tidak didukung.",
+    "instagram": {
+      "linkNotClickable": "Link di caption Instagram tidak bisa diklik. Taruh di Etalase atau pakai Balas Otomatis.",
+      "unavailable": "Instagram belum tersedia."
+    },
+    "threads": {
+      "unavailable": "Threads belum tersedia."
+    },
+    "facebook": {
+      "unavailable": "Facebook belum tersedia."
+    }
+  },
+  "composer": {
+    "title": "Buat Postingan",
+    "editTitle": "Ubah postingan",
+    "accounts": "Posting ke",
+    "noAccounts": "Hubungkan akun dulu supaya postingan bisa terbit otomatis.",
+    "connect": "Hubungkan akun",
+    "caption": "Caption",
+    "captionPlaceholder": "Tulis caption… Contoh: Lagi diskon 50%! Cek link di bio ya 💖",
+    "media": "Foto & video",
+    "addMedia": "Tambah foto/video",
+    "uploading": "Mengunggah {percent}%",
+    "processing": "Disiapkan…",
+    "remove": "Hapus",
+    "when": "Kapan diposting?",
+    "date": "Tanggal",
+    "time": "Jam",
+    "suggested": "Waktu yang disarankan",
+    "schedule": "Jadwalkan",
+    "now": "Posting sekarang",
+    "draft": "Simpan draf",
+    "advanced": "Opsi lanjutan",
+    "perPlatform": "Caption khusus {platform}",
+    "perPlatformHint": "Kosongkan untuk memakai caption utama.",
+    "format": "Format {platform}",
+    "firstComment": "Komentar pertama",
+    "altText": "Teks alternatif foto",
+    "preview": "Pratinjau",
+    "remaining": "Sisa kuota bulan ini: {count} postingan.",
+    "scheduled": "Postingan dijadwalkan.",
+    "publishedNow": "Postingan sedang diterbitkan.",
+    "savedDraft": "Draf disimpan.",
+    "fixFirst": "Ada yang perlu diperbaiki dulu.",
+    "mediaPending": "Tunggu media selesai disiapkan.",
+    "pastTime": "Waktu sudah lewat. Pilih waktu yang akan datang."
+  },
+  "posts": {
+    "title": "Postingan",
+    "subtitle": "Semua postingan kamu dan status terbitnya.",
+    "tabs": {
+      "scheduled": "Terjadwal",
+      "draft": "Draf",
+      "published": "Terbit",
+      "failed": "Gagal",
+      "all": "Semua"
+    },
+    "empty": {
+      "scheduled": "Belum ada postingan terjadwal. Jadwalkan postingan pertamamu sekarang.",
+      "draft": "Belum ada draf.",
+      "published": "Belum ada postingan yang terbit.",
+      "failed": "Tidak ada postingan gagal. Mantap!",
+      "all": "Belum ada postingan. Mulai dengan menjadwalkan postingan pertamamu."
+    },
+    "create": "Buat Postingan",
+    "retry": "Coba lagi",
+    "cancel": "Batalkan",
+    "edit": "Ubah",
+    "duplicate": "Duplikat",
+    "delete": "Hapus",
+    "view": "Lihat postingan",
+    "cancelConfirm": "Batalkan postingan ini? Postingan tidak akan terbit.",
+    "deleteConfirm": "Hapus postingan ini?",
+    "cancelled": "Postingan dibatalkan.",
+    "deleted": "Postingan dihapus.",
+    "retried": "Kami coba terbitkan lagi.",
+    "noCaption": "(tanpa caption)",
+    "detail": "Detail postingan",
+    "perPlatform": "Status per akun",
+    "publishedAt": "Terbit {date}",
+    "scheduledFor": "Dijadwalkan {date}",
+    "reconnect": "Hubungkan ulang"
+  },
+  "calendar": {
+    "title": "Kalender",
+    "subtitle": "Lihat dan pindahkan jadwal postingan.",
+    "today": "Hari ini",
+    "prev": "Bulan sebelumnya",
+    "next": "Bulan berikutnya",
+    "empty": "Tidak ada postingan di bulan ini.",
+    "dragHint": "Seret postingan ke tanggal lain untuk memindahkan jadwal.",
+    "moved": "Jadwal dipindahkan.",
+    "more": "+{n} lagi"
   }
 }

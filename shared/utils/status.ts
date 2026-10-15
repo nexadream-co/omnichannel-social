@@ -36,3 +36,47 @@ export const SOCIAL_ACCOUNT_STATUS_META: Record<string, StatusMeta> = {
   disabled: { labelKey: 'accounts.status.disabled', color: 'neutral' },
   revoked: { labelKey: 'accounts.status.revoked', color: 'neutral' }
 }
+
+export const POST_STATUS_META: Record<string, StatusMeta> = {
+  draft: { labelKey: 'status.post.draft', color: 'neutral' },
+  scheduled: { labelKey: 'status.post.scheduled', color: 'info' },
+  publishing: { labelKey: 'status.post.publishing', color: 'warning' },
+  published: { labelKey: 'status.post.published', color: 'success' },
+  partial: { labelKey: 'status.post.partial', color: 'warning' },
+  failed: { labelKey: 'status.post.failed', color: 'error' },
+  cancelled: { labelKey: 'status.post.cancelled', color: 'neutral' }
+}
+
+/** Creators see five words: Draf, Terjadwal, Diproses, Terbit, Gagal (docs/SCREENS.md §I). */
+export const POST_TARGET_STATUS_META: Record<string, StatusMeta> = {
+  draft: { labelKey: 'status.target.draft', color: 'neutral' },
+  scheduled: { labelKey: 'status.target.scheduled', color: 'info' },
+  preparing: { labelKey: 'status.target.processing', color: 'warning' },
+  processing: { labelKey: 'status.target.processing', color: 'warning' },
+  publishing: { labelKey: 'status.target.processing', color: 'warning' },
+  publish_unknown: { labelKey: 'status.target.processing', color: 'warning' },
+  retrying: { labelKey: 'status.target.processing', color: 'warning' },
+  quota_deferred: { labelKey: 'status.target.deferred', color: 'info' },
+  needs_reauth: { labelKey: 'status.target.needsReauth', color: 'warning' },
+  published: { labelKey: 'status.target.published', color: 'success' },
+  failed: { labelKey: 'status.target.failed', color: 'error' },
+  cancelled: { labelKey: 'status.target.cancelled', color: 'neutral' }
+}
+
+/**
+ * Why a target failed, in plain words with the fix (ARCHITECTURE §1.1 rule 6). Keys are stable codes stored
+ * in post_targets.last_error_code; Meta's raw text never reaches a creator.
+ */
+export const PUBLISH_ERROR_LABELS: Record<string, string> = {
+  auth: 'publishError.auth',
+  rate_limit: 'publishError.rateLimit',
+  quota: 'publishError.quota',
+  validation: 'publishError.validation',
+  permanent: 'publishError.permanent',
+  transient: 'publishError.transient',
+  not_found_after_publish: 'publishError.notFound',
+  container_timeout: 'publishError.containerTimeout',
+  media_not_ready: 'publishError.mediaNotReady',
+  missed_while_suspended: 'publishError.missedWhileSuspended',
+  account_disconnected: 'publishError.accountDisconnected'
+}

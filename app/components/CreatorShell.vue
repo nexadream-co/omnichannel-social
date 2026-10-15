@@ -169,7 +169,7 @@ const canCompose = computed(() => auth.hasAbility('posts.write'))
       </ul>
     </nav>
     <UButton
-      v-if="canCompose"
+      v-if="canCompose && !isActive('/app/compose')"
       :to="localePath('/app/compose')"
       icon="i-lucide-plus"
       size="xl"

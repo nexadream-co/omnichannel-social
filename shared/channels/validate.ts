@@ -36,7 +36,7 @@ export function validateTarget(caps: ChannelCapabilities, draft: TargetDraft, me
   if (!rules) return issues
   if (media.length < rules.minItems) issues.push({ level: 'error', code: 'channel.mediaRequired', field: 'media', params: { min: rules.minItems } })
   if (media.length > rules.maxItems) issues.push({ level: 'error', code: 'channel.tooManyMedia', field: 'media', params: { max: rules.maxItems } })
-  if (!media.length && !draft.caption.trim()) issues.push({ level: 'error', code: 'channel.emptyPost', field: 'caption' })
+  if (rules.minItems === 0 && !media.length && !draft.caption.trim()) issues.push({ level: 'error', code: 'channel.emptyPost', field: 'caption' })
 
   media.forEach((item, index) => {
     if (!rules.kinds.includes(item.kind)) {

@@ -60,3 +60,10 @@ describe('media helpers', () => {
     expect(parseProbe(json)).toMatchObject({ kind: 'video', width: 1080, height: 1920, durationMs: 4000, hasAudio: true, rotation: 90 })
   })
 })
+
+describe('validateTarget empty posts', () => {
+  it('asks for media once on Instagram, and for text only where media is optional', () => {
+    expect(validateTarget(CHANNELS.instagram, { format: 'feed', caption: '' }, []).map(i => i.code)).toEqual(['channel.mediaRequired'])
+    expect(validateTarget(CHANNELS.threads, { format: 'text', caption: '' }, []).map(i => i.code)).toEqual(['channel.emptyPost'])
+  })
+})

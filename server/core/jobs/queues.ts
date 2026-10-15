@@ -20,7 +20,11 @@ export const QUEUES = {
   'token.refresh': queue('token.refresh', { maxAttempts: 3, concurrency: 1 }),
   'token.refresh.one': queue('token.refresh.one', { maxAttempts: 4 }),
   'media.process': queue('media.process', { maxAttempts: 4 }),
-  'media.watchdog': queue('media.watchdog', { maxAttempts: 3 })
+  'media.watchdog': queue('media.watchdog', { maxAttempts: 3 }),
+  // publish.target polls containers inline for up to 15 s, so it needs a longer lease and budget.
+  'publish.target': queue('publish.target', { maxAttempts: 4, leaseSeconds: 180, expectedMs: 30_000, concurrency: 10 }),
+  'publish.poll': queue('publish.poll', { maxAttempts: 4, concurrency: 10 }),
+  'publish.reconcile': queue('publish.reconcile', { maxAttempts: 4, concurrency: 5 })
 } as const satisfies Record<string, QueueDef>
 
 export type QueueName = keyof typeof QUEUES

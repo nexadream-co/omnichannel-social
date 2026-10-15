@@ -1,7 +1,10 @@
 <script setup lang="ts">
+import { PLATFORM_META } from '#shared/channels/registry'
+import type { Platform } from '#shared/channels/types'
+
 definePageMeta({ layout: 'creator' })
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const localePath = useLocalePath()
 const auth = useCreatorAuth()
 useHead({ title: () => t('nav.home') })
@@ -19,6 +22,20 @@ const steps = computed(() => STEPS.map(step => ({ ...step, done: Boolean(profile
 const doneCount = computed(() => steps.value.filter(step => step.done).length)
 const nextStep = computed(() => steps.value.find(step => !step.done)?.key)
 const showChecklist = computed(() => profile.value && !profile.value.onboarding.dismissed)
+
+// "What do I do today?" (docs/SCREENS.md #12): upcoming posts and problems with a fix button.
+interface Upcoming { id: string, caption: string, scheduledAt: string | null, targets: { platform: Platform }[] }
+const upcoming = ref<Upcoming[]>([])
+const failedCount = ref(0)
+onMounted(async () => {
+  if (!auth.hasAbility('posts.read')) return
+  const [scheduled, failed] = await Promise.all([
+    apiFetch<{ items: Upcoming[] }>('/api/app/posts', { query: { tab: 'scheduled', limit: 5 } }).catch(() => ({ items: [] })),
+    apiFetch<{ meta: { total: number } }>('/api/app/posts', { query: { tab: 'failed', limit: 1 } }).catch(() => ({ meta: { total: 0 } }))
+  ])
+  upcoming.value = scheduled.items
+  failedCount.value = failed.meta.total
+})
 
 const { confirm } = useConfirmDialog()
 async function dismiss() {
@@ -140,6 +157,62 @@ async function dismiss() {
           @click="dismiss"
         />
       </template>
+    </UCard>
+
+    <UAlert
+      v-if="failedCount"
+      color="error"
+      variant="subtle"
+      icon="i-lucide-triangle-alert"
+      :title="t('home.failedAlert', { count: failedCount })"
+      :actions="[{ label: t('home.failedAction'), to: localePath({ path: '/app/posts', query: { tab: 'failed' } }), color: 'error', variant: 'outline' }]"
+    />
+
+    <UCard v-if="auth.hasAbility('posts.read')">
+      <template #header>
+        <div class="flex items-center justify-between">
+          <h2 class="font-semibold text-highlighted">
+            {{ t('home.upcoming') }}
+          </h2>
+          <ULink
+            :to="localePath('/app/calendar')"
+            class="text-sm text-primary"
+          >
+            {{ t('nav.calendar') }}
+          </ULink>
+        </div>
+      </template>
+      <p
+        v-if="!upcoming.length"
+        class="text-sm text-muted"
+      >
+        {{ t('home.noUpcoming') }}
+      </p>
+      <ul
+        v-else
+        class="divide-y divide-default -my-2"
+      >
+        <li
+          v-for="post in upcoming"
+          :key="post.id"
+        >
+          <NuxtLink
+            :to="localePath(`/app/posts/${post.id}`)"
+            class="flex items-center gap-3 py-2.5"
+          >
+            <span class="text-sm text-muted w-28 shrink-0">{{ post.scheduledAt ? formatRelative(post.scheduledAt, locale) : '—' }}</span>
+            <span class="flex gap-1 shrink-0">
+              <UIcon
+                v-for="p in [...new Set(post.targets.map(x => x.platform))]"
+                :key="p"
+                :name="PLATFORM_META[p].icon"
+                class="size-4"
+              />
+            </span>
+            <span class="text-sm truncate">{{ post.caption || t('posts.noCaption') }}</span>
+          </NuxtLink>
+        </li>
+      </ul>
     </UCard>
   </div>
 </template>
