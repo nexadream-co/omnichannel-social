@@ -19,7 +19,7 @@ export const SCHEDULES: ScheduleDef[] = [
   { name: 'billing.renewal-reminders', cron: '0 7 * * *', tz: 'Asia/Jakarta', enabled: false },
   { name: 'engagement.inactivity', cron: '0 7 * * *', tz: 'Asia/Jakarta', enabled: false },
   { name: 'maintenance.purge', cron: '0 3 * * *', tz: 'Asia/Jakarta', enabled: true },
-  { name: 'token.refresh', cron: '0 * * * *', tz: 'Asia/Jakarta', enabled: false },
+  { name: 'token.refresh', cron: '0 * * * *', tz: 'Asia/Jakarta', enabled: true },
   { name: 'insights.daily', cron: '30 2 * * *', tz: 'Asia/Jakarta', enabled: false }
 ]
 

@@ -309,5 +309,55 @@
     "deleteAfter4": "Catatan pembayaran disimpan {years} tahun karena diwajibkan peraturan perpajakan.",
     "deleteMeta": "Jika kamu menghapus Socialz.id dari pengaturan Instagram atau Facebook, kami menerima permintaan itu otomatis dan menghapus data dari akun media sosial tersebut.",
     "daysUnit": "{n} hari"
+  },
+  "accounts": {
+    "title": "Akun Sosial",
+    "subtitle": "Hubungkan akun supaya postingan terbit otomatis.",
+    "connectTitle": "Hubungkan akun baru",
+    "connect": "Hubungkan {platform}",
+    "reconnect": "Hubungkan ulang",
+    "disconnect": "Putuskan",
+    "connectedTitle": "Akun terhubung",
+    "empty": "Belum ada akun terhubung. Mulai dengan Instagram: paling banyak dipakai untuk jualan afiliasi.",
+    "soon": "Segera hadir",
+    "notConfigured": "Belum tersedia",
+    "hint": {
+      "instagram": "Akun Bisnis atau Kreator. Postingan, Reels, Story, dan Balas Otomatis.",
+      "threads": "Postingan teks, foto dan video. Link bisa diklik.",
+      "facebook": "Halaman Facebook yang kamu kelola. Link bisa diklik."
+    },
+    "help": "Akun Instagram harus Bisnis atau Kreator.",
+    "helpLink": "Cara ubah →",
+    "status": {
+      "active": "Aktif",
+      "needs_reauth": "Perlu dihubungkan ulang",
+      "disabled": "Nonaktif (batas paket)",
+      "revoked": "Terputus"
+    },
+    "connected": "{count} akun {platform} berhasil dihubungkan.",
+    "disconnectConfirm": "Putuskan {name}?",
+    "disconnectBody": "Postingan yang sudah terbit tetap ada. Postingan terjadwal ke akun ini kembali menjadi draf.",
+    "disconnected": "Akun diputuskan.",
+    "verifyFirst": "Verifikasi email kamu dulu untuk menghubungkan akun media sosial.",
+    "resend": "Kirim ulang email",
+    "pickTitle": "Pilih akun yang mau ditambahkan",
+    "pickSubtitle": "Kamu mengelola beberapa Halaman. Pilih yang ingin dipakai di Socialz.id.",
+    "pickButton": "Tambahkan",
+    "pickExpired": "Sesi pilih akun sudah berakhir. Hubungkan lagi.",
+    "alreadyConnected": "Sudah terhubung",
+    "error": {
+      "cancelled": "Menghubungkan akun dibatalkan. Coba lagi kapan saja.",
+      "state": "Sesi menghubungkan akun sudah berakhir. Coba lagi.",
+      "personal_account": "Akun Instagram pribadi belum bisa dipakai. Ubah ke akun Kreator atau Bisnis (gratis, 1 menit), lalu hubungkan lagi.",
+      "no_accounts": "Tidak ada akun yang bisa dihubungkan. Untuk Facebook, pastikan kamu admin sebuah Halaman.",
+      "exchange": "Platform sedang tidak bisa dihubungi. Coba lagi sebentar lagi.",
+      "email_not_verified": "Verifikasi email kamu dulu untuk menghubungkan akun media sosial.",
+      "limit_reached": "Batas akun di paketmu sudah tercapai. Upgrade untuk menambah akun.",
+      "conflict": "Akun ini sudah terhubung ke akun Socialz.id lain.",
+      "forbidden": "Hanya pemilik akun yang bisa menghubungkan akun media sosial.",
+      "service_unavailable": "Menghubungkan akun ini belum tersedia. Coba lagi nanti.",
+      "rate_limited": "Terlalu banyak percobaan. Coba lagi beberapa menit lagi.",
+      "unknown": "Akun belum berhasil dihubungkan. Coba lagi."
+    }
   }
 }

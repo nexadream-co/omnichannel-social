@@ -2,6 +2,7 @@ import pLimit from 'p-limit'
 import { sql } from 'drizzle-orm'
 import type { CoreContext } from '../context'
 import type { Database } from '../db/client'
+import { env } from '../env'
 import { handlers } from './handlers'
 import { backoffMs, queueDef } from './queues'
 import { PermanentJobError, type ClaimedJob } from './types'
@@ -154,7 +155,7 @@ export async function runDue(ctx: CoreContext & { db: Database }, options: RunOp
 }
 
 /** Runs only the given jobs, right after the request that enqueued them (docs/blueprint/15 §1.4). */
-export function kick(ctx: CoreContext & { db: Database }, ids: (string | null)[], budgetMs = 20_000): Promise<RunSummary> {
+export function kick(ctx: CoreContext & { db: Database }, ids: (string | null)[], budgetMs = env().JOBS_TIME_BUDGET_MS): Promise<RunSummary> {
   const valid = ids.filter((id): id is string => Boolean(id))
   if (!valid.length) return Promise.resolve({ claimed: 0, done: 0, retried: 0, deferred: 0, dead: 0, released: 0, durationMs: 0 })
   return runDue(ctx, { budgetMs, ids: valid })

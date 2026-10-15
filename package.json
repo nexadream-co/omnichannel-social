@@ -22,7 +22,8 @@
     "db:reset": "tsx scripts/reset.ts && npm run db:migrate && npm run db:seed",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "media:dev": "tsx watch services/media-processor/server.ts"
   },
   "dependencies": {
     "@nuxt/ui": "^4.12.0",

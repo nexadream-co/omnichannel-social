@@ -24,7 +24,7 @@ const schema = z.object({
   JOBS_TIME_BUDGET_MS: int(45_000),
   JOBS_FANOUT_MAX: int(4),
 
-  MEDIA_PROCESSOR_DRIVER: z.enum(['http', 'local', 'fake']).default('local'),
+  MEDIA_PROCESSOR_DRIVER: z.enum(['http', 'fake']).default('http'),
   MEDIA_PROCESSOR_URL: z.string().default(''),
   MEDIA_PROCESSOR_SECRET: z.string().default(''),
 

@@ -306,6 +306,7 @@ These platform tables are specified in [`blueprint/02-database-schema.md`](bluep
 | `post_targets` | `post_id`, `social_account_id`, `platform`, `format`, `caption_override`, `media_override`, `options jsonb` (first_comment, link_attachment, alt_text), `status` (§8.2), `scheduled_at`, `container_ids text[]`, `step`, `external_id`, `permalink`, `attempt_count`, `last_error_code`, `last_error_msg`, `job_id`, `published_at`. Index(`status`, `scheduled_at`), Index(`social_account_id`, `published_at`) |
 | `publish_attempts` | `post_target_id`, `attempt_no`, `step`, `http_status`, `error_code`, `error_subcode`, `fbtrace_id`, `response jsonb` (redacted), `outcome`, `duration_ms` |
 | `platform_publish_ledger` | `social_account_id`, `published_at`. Used for the local rolling-24h quota count |
+| `channel_connect_sessions` | Short-lived (15 min) pending account list when one OAuth returns several accounts (Facebook Pages); tokens encrypted, never in a cookie |
 | `insight_snapshots` | `post_target_id`, `captured_at`, `metrics jsonb` |
 | `usage_counters` | PK(`workspace_id`, `period_start`, `metric`), `count` |
 

@@ -14,4 +14,7 @@
 - Team: owners on plans with team access invite editors or viewers, manage roles, deactivate members; invitees accept from the emailed link. Plan-gated menu entries show a lock.
 - Meta data deletion and deauthorize callbacks, with a public status page.
 - The onboarding guide on Beranda can be hidden.
+- Akun Sosial: connect Instagram (Business/Creator), Threads and Facebook Pages, pick which Pages to add, reconnect and disconnect; clear messages for personal Instagram accounts, plan limits and accounts already used elsewhere. TikTok, YouTube and X show "Segera hadir".
+- Tokens are stored encrypted and bound to their account; tokens near expiry refresh automatically every hour, and the owner is told when an account needs reconnecting.
+- Media uploads go straight to storage; photos are converted to JPEG and videos (including iPhone HEVC) to H.264 MP4 ready for Reels, automatically.
 - Database schema for the platform and domain layers, with seeded permissions, roles, menus, settings, templates, plans, job schedules and legal pages.

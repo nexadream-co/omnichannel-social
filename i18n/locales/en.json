@@ -309,5 +309,55 @@
     "deleteAfter4": "Payment records are kept for {years} years, as tax law requires.",
     "deleteMeta": "If you remove Socialz.id from your Instagram or Facebook settings, we receive that request automatically and delete the data from that social account.",
     "daysUnit": "{n} days"
+  },
+  "accounts": {
+    "title": "Social accounts",
+    "subtitle": "Connect accounts so your posts publish automatically.",
+    "connectTitle": "Connect a new account",
+    "connect": "Connect {platform}",
+    "reconnect": "Reconnect",
+    "disconnect": "Disconnect",
+    "connectedTitle": "Connected accounts",
+    "empty": "No accounts connected yet. Start with Instagram: it is the most used for affiliate sales.",
+    "soon": "Coming soon",
+    "notConfigured": "Not available yet",
+    "hint": {
+      "instagram": "Business or Creator account. Posts, Reels, Stories and Auto reply.",
+      "threads": "Text, photo and video posts. Links are clickable.",
+      "facebook": "Facebook Pages you manage. Links are clickable."
+    },
+    "help": "Your Instagram account must be Business or Creator.",
+    "helpLink": "How to switch →",
+    "status": {
+      "active": "Active",
+      "needs_reauth": "Needs reconnecting",
+      "disabled": "Inactive (plan limit)",
+      "revoked": "Disconnected"
+    },
+    "connected": "{count} {platform} account(s) connected.",
+    "disconnectConfirm": "Disconnect {name}?",
+    "disconnectBody": "Published posts stay. Scheduled posts to this account go back to draft.",
+    "disconnected": "Account disconnected.",
+    "verifyFirst": "Verify your email first to connect social accounts.",
+    "resend": "Resend email",
+    "pickTitle": "Choose accounts to add",
+    "pickSubtitle": "You manage several Pages. Pick the ones to use in Socialz.id.",
+    "pickButton": "Add",
+    "pickExpired": "This selection expired. Connect again.",
+    "alreadyConnected": "Already connected",
+    "error": {
+      "cancelled": "Connecting was cancelled. Try again any time.",
+      "state": "The connection session expired. Try again.",
+      "personal_account": "Personal Instagram accounts can't be used yet. Switch to a Creator or Business account (free, 1 minute), then connect again.",
+      "no_accounts": "No accounts could be connected. For Facebook, make sure you are an admin of a Page.",
+      "exchange": "The platform can't be reached right now. Try again shortly.",
+      "email_not_verified": "Verify your email first to connect social accounts.",
+      "limit_reached": "Your plan’s account limit is reached. Upgrade to add more.",
+      "conflict": "This account is already connected to another Socialz.id account.",
+      "forbidden": "Only the account owner can connect social accounts.",
+      "service_unavailable": "Connecting this account isn't available yet. Try again later.",
+      "rate_limited": "Too many attempts. Try again in a few minutes.",
+      "unknown": "The account wasn't connected. Try again."
+    }
   }
 }

@@ -2,7 +2,7 @@ import { and, count, desc, eq, ilike, inArray, isNull, or } from 'drizzle-orm'
 import { NOTIFICATION_TEMPLATES, renderTemplateString } from '../../shared/utils/templates'
 import type { CoreContext } from './context'
 import type { Executor } from './db/client'
-import { notifications, notificationTemplates, permissions, rolePermissions, roles, staffUsers, users } from './db/schema'
+import { notifications, notificationTemplates, permissions, rolePermissions, roles, staffUsers, users, workspaceMembers } from './db/schema'
 import { sendTemplatedEmail } from './email'
 import { appError } from './errors'
 import { getSetting } from './settings'
@@ -95,6 +95,18 @@ export async function notifyStaff(ctx: Ctx, permissionKey: string, input: Omit<C
     }
   } catch (error) {
     ctx.log.error('notify_staff.failed', { permissionKey, error })
+  }
+}
+
+/** Owners of the workspace; operational templates (post_failed …) also reach active editors (docs/blueprint/11 §2). */
+export async function notifyWorkspaceOwners(ctx: Ctx, workspaceId: string, input: Omit<CreateNotificationInput, 'audience' | 'userId' | 'workspaceId'>, options: { includeEditors?: boolean } = {}) {
+  try {
+    const roles = options.includeEditors ? ['owner', 'editor'] as const : ['owner'] as const
+    const members = await ctx.db.select({ userId: workspaceMembers.userId }).from(workspaceMembers)
+      .where(and(eq(workspaceMembers.workspaceId, workspaceId), eq(workspaceMembers.isActive, true), inArray(workspaceMembers.role, [...roles])))
+    for (const member of members) await createNotification(ctx, { ...input, audience: 'creator', userId: member.userId, workspaceId })
+  } catch (error) {
+    ctx.log.error('notify_owners.failed', { workspaceId, error })
   }
 }
 

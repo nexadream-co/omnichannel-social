@@ -16,7 +16,11 @@ function queue(name: string, options: Partial<Omit<QueueDef, 'name'>> = {}): Que
 export const QUEUES = {
   'system.noop': queue('system.noop', { maxAttempts: 1, expectedMs: 1_000 }),
   'maintenance.purge': queue('maintenance.purge', { maxAttempts: 3, leaseSeconds: 300, expectedMs: 30_000, concurrency: 1 }),
-  'meta.data_deletion': queue('meta.data_deletion', { maxAttempts: 5 })
+  'meta.data_deletion': queue('meta.data_deletion', { maxAttempts: 5 }),
+  'token.refresh': queue('token.refresh', { maxAttempts: 3, concurrency: 1 }),
+  'token.refresh.one': queue('token.refresh.one', { maxAttempts: 4 }),
+  'media.process': queue('media.process', { maxAttempts: 4 }),
+  'media.watchdog': queue('media.watchdog', { maxAttempts: 3 })
 } as const satisfies Record<string, QueueDef>
 
 export type QueueName = keyof typeof QUEUES

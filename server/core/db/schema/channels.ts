@@ -155,3 +155,14 @@ export const usageCounters = pgTable('usage_counters', {
   metric: text().notNull(),
   count: integer().notNull().default(0)
 }, t => [primaryKey({ columns: [t.workspaceId, t.periodStart, t.metric] })])
+
+/** Facebook can return several Pages; the creator picks which to add. Tokens stay encrypted server-side, never in a cookie. */
+export const channelConnectSessions = pgTable('channel_connect_sessions', {
+  id: id(),
+  workspaceId: text().notNull().references(() => workspaces.id, { onDelete: 'cascade' }),
+  userId: text().notNull(),
+  platform: platform().notNull(),
+  payloadEnc: text().notNull(),
+  expiresAt: tstz().notNull(),
+  createdAt: createdAt()
+}, t => [index().on(t.workspaceId), index().on(t.expiresAt)])

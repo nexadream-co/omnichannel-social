@@ -88,7 +88,7 @@ services/media-processor/
   transcode.ts        imports server/core/media/{probe,ffmpeg-args}.ts (pure, shared)
 ```
 
-- **Contract** (`server/core/services/media/types.ts`):
+- **Contract** (`server/core/services/media/types.ts`; the request also carries the signed `callbackUrl`, so the processor knows nothing about the app):
 
   ```ts
   interface MediaProcessor {
@@ -98,7 +98,7 @@ services/media-processor/
   }
   ```
 
-  Drivers: `http` (the container above, default), `local` (spawns ffmpeg on the dev machine), `fake` (tests, `ADAPTER_MODE=fake`). A future driver for a managed transcoding API plugs in with one file.
+  Drivers: `http` (the container above, default; in development `npm run media:dev` runs the same server locally with the developer's ffmpeg) and `fake` (tests, `MEDIA_PROCESSOR_DRIVER=fake`). A future driver for a managed transcoding API plugs in with one file.
 - **No secrets and no database inside the processor.** It downloads from a presigned GET, uploads to presigned PUTs, and reports through the signed callback (`15` §2.1). It only knows `MEDIA_PROCESSOR_SECRET` and the callback URL.
 - **Scales to zero** on Cloud Run, Lambda, Fly Machines or Azure Container Apps. Concurrency 1 per instance (ffmpeg uses all cores), max instances from config.
 - **Output rules** are unchanged: images → JPEG (EXIF stripped); video → H.264/AAC, ≤ 1080p, `+faststart`.

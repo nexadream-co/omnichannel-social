@@ -29,3 +29,10 @@ export const JOB_STATUS_META: Record<string, StatusMeta> = {
   dead: { labelKey: 'status.job.dead', color: 'error' },
   cancelled: { labelKey: 'status.job.cancelled', color: 'neutral' }
 }
+
+export const SOCIAL_ACCOUNT_STATUS_META: Record<string, StatusMeta> = {
+  active: { labelKey: 'accounts.status.active', color: 'success' },
+  needs_reauth: { labelKey: 'accounts.status.needs_reauth', color: 'warning' },
+  disabled: { labelKey: 'accounts.status.disabled', color: 'neutral' },
+  revoked: { labelKey: 'accounts.status.revoked', color: 'neutral' }
+}

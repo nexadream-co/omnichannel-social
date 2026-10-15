@@ -1,0 +1,88 @@
+import type { ChannelCapabilities, MediaKind, Platform, PostFormat } from '../../../shared/channels/types'
+import type { Logger } from '../log'
+
+export interface DecryptedSocialAccount {
+  id: string
+  platform: Platform
+  externalId: string
+  accessToken: string
+  refreshToken: string | null
+  meta: Record<string, unknown>
+}
+
+export interface AdapterCtx {
+  account: DecryptedSocialAccount
+  fetch: typeof fetch // injected, so tests can pass a fake
+  log: Logger
+}
+
+/** One connectable account returned by an OAuth exchange (Facebook can return several Pages). */
+export interface ConnectedAccount {
+  externalId: string
+  username: string | null
+  avatarUrl: string | null
+  accessToken: string
+  refreshToken: string | null
+  tokenExpiresAt: Date | null
+  scopes: string[]
+  meta: Record<string, unknown>
+}
+
+export interface TokenBundle {
+  accessToken: string
+  refreshToken: string | null
+  tokenExpiresAt: Date | null
+}
+
+export interface ResolvedTarget {
+  format: PostFormat
+  caption: string
+  media: { url: string, kind: MediaKind }[]
+  options: { firstComment?: string, altText?: string, linkAttachment?: string }
+}
+
+export interface AdapterError {
+  kind: 'auth' | 'rate_limit' | 'quota' | 'validation' | 'transient' | 'permanent'
+  code?: string
+  subcode?: string
+  message: string
+  retryAfter?: Date
+  fbtraceId?: string
+}
+
+export interface InsightRow {
+  externalId: string
+  metrics: Record<string, number>
+}
+
+/**
+ * The main extension point (ARCHITECTURE §6.2). Adding TikTok/YouTube/X = one capabilities file + one adapter.
+ * Vendor vocabulary (Graph fields, error codes) never leaves the adapter files.
+ */
+export interface ChannelAdapter {
+  caps: ChannelCapabilities
+  apiVersion: string
+  isConfigured(): boolean
+  oauth: {
+    authorizeUrl(state: string, redirectUri: string): string
+    exchange(code: string, redirectUri: string, fetchImpl: typeof fetch): Promise<ConnectedAccount[]>
+    refresh?(token: TokenBundle, fetchImpl: typeof fetch): Promise<TokenBundle>
+  }
+  getQuota?(c: AdapterCtx): Promise<{ used: number, limit: number }>
+  prepare(c: AdapterCtx, t: ResolvedTarget): Promise<{ containerIds: string[] } | { ready: true }>
+  checkStatus(c: AdapterCtx, containerIds: string[]): Promise<'pending' | 'ready' | AdapterError>
+  publish(c: AdapterCtx, t: ResolvedTarget, containerIds: string[]): Promise<{ externalId: string, permalink?: string }>
+  findRecent(c: AdapterCtx, since: Date): Promise<{ externalId: string, caption: string, ts: Date, permalink?: string }[]>
+  fetchInsights?(c: AdapterCtx, externalIds: string[]): Promise<InsightRow[]>
+  sendPrivateReply?(c: AdapterCtx, commentId: string, text: string): Promise<void>
+  replyToComment?(c: AdapterCtx, commentId: string, text: string): Promise<void>
+  normalizeError(e: unknown): AdapterError
+}
+
+/** Thrown inside adapters for expected, already-classified failures. */
+export class ChannelError extends Error {
+  constructor(public readonly detail: AdapterError) {
+    super(detail.message)
+    this.name = 'ChannelError'
+  }
+}

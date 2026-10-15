@@ -133,3 +133,13 @@ describe('schedules', () => {
     expect(beat.rows[0]!.n).toBe(1)
   })
 })
+
+describe('kick budget', () => {
+  it('runs a kicked job whose expectedMs is the default (regression: kick released it)', async () => {
+    const ctx = testContext()
+    const id = await enqueue(ctx.db, q('test.ok'), { n: 'kicked' })
+    const summary = await kick(ctx, [id])
+    expect(summary.done).toBe(1)
+    expect(summary.released).toBe(0)
+  })
+})
