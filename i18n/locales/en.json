@@ -139,7 +139,24 @@
     "upcoming": "Coming up",
     "noUpcoming": "No scheduled posts yet.",
     "failedAlert": "{count} post(s) failed to publish.",
-    "failedAction": "View and fix"
+    "failedAction": "View and fix",
+    "reauthAlert": "{count} account(s) need reconnecting so posts keep publishing.",
+    "reauthAction": "Reconnect",
+    "clicksWeek": "link clicks this week",
+    "autoRepliesWeek": "auto DMs this week",
+    "topProducts": "Most clicked products",
+    "clicks": "{n} clicks",
+    "tipTitle": "Tip of the day",
+    "tips": [
+      "Posting at peak hours (7–9 PM) usually gets more clicks.",
+      "\"Comment want\" + Auto Reply = the link lands in DMs without replying one by one.",
+      "Put your Storefront address in your Instagram bio so every product is one link away.",
+      "One post can go to Instagram, Threads and Facebook at once.",
+      "Label your best seller \"Terlaris\" in the Storefront so it stands out.",
+      "Schedule 3 posts at the start of the week, then just watch the statistics.",
+      "On Threads and Facebook, links in captions are clickable. Use them!"
+    ],
+    "subtitleDone": "Here's your week at a glance."
   },
   "role": {
     "owner": {
@@ -570,7 +587,15 @@
     "perPlatform": "Status per account",
     "publishedAt": "Published {date}",
     "scheduledFor": "Scheduled for {date}",
-    "reconnect": "Reconnect"
+    "reconnect": "Reconnect",
+    "metrics": {
+      "views": "Views",
+      "likes": "Likes",
+      "comments": "Comments",
+      "clicks": "Link clicks",
+      "autoReplies": "Auto DMs",
+      "pending": "Platform numbers appear tomorrow morning."
+    }
   },
   "calendar": {
     "title": "Calendar",

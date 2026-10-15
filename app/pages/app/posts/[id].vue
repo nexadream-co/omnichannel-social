@@ -9,7 +9,7 @@ interface Detail {
   status: string
   scheduledAt: string | null
   media: { id: string, kind: 'image' | 'video', url: string | null }[]
-  targets: { id: string, platform: Platform, format: PostFormat, username: string | null, avatarUrl: string | null, accountStatus: string, status: string, scheduledAt: string | null, publishedAt: string | null, permalink: string | null, errorCode: string | null }[]
+  targets: { id: string, platform: Platform, format: PostFormat, username: string | null, avatarUrl: string | null, accountStatus: string, status: string, scheduledAt: string | null, publishedAt: string | null, permalink: string | null, errorCode: string | null, insights: { metrics: Record<string, number>, capturedAt: string } | null, clicks: number, autoReplies: number }[]
 }
 
 definePageMeta({ layout: 'creator' })
@@ -29,6 +29,19 @@ async function load() {
 onMounted(load)
 
 // While anything is in flight, keep the page fresh without a manual reload.
+type Target = Detail['targets'][number]
+/** Views/likes/comments come from the platform once a day; clicks and auto-replies are ours, live. */
+function statsFor(target: Target) {
+  const m = target.insights?.metrics ?? {}
+  const pick = (...keys: string[]) => (target.insights ? keys.reduce<number | null>((found, k) => found ?? (typeof m[k] === 'number' ? m[k] : null), null) : null)
+  return [
+    { key: 'views', value: pick('views', 'impressions') },
+    { key: 'likes', value: pick('likes', 'reactions') },
+    { key: 'comments', value: pick('comments', 'replies') },
+    { key: 'clicks', value: target.clicks },
+    ...(target.platform === 'instagram' ? [{ key: 'autoReplies', value: target.autoReplies }] : [])
+  ]
+}
 const inFlight = computed(() => post.value?.status === 'publishing' || post.value?.targets.some(t => ['preparing', 'processing', 'publishing', 'publish_unknown', 'retrying'].includes(t.status)))
 let timer: ReturnType<typeof setInterval> | undefined
 watch(inFlight, (busy) => {
@@ -175,6 +188,29 @@ async function remove() {
                 :meta="POST_TARGET_STATUS_META"
               />
             </div>
+            <dl
+              v-if="target.status === 'published'"
+              class="grid grid-cols-3 sm:grid-cols-5 gap-2 text-center"
+            >
+              <div
+                v-for="stat in statsFor(target)"
+                :key="stat.key"
+                class="rounded-md bg-elevated/60 px-2 py-1.5"
+              >
+                <dt class="text-[11px] text-muted">
+                  {{ t(`posts.metrics.${stat.key}`) }}
+                </dt>
+                <dd class="text-sm font-semibold text-highlighted">
+                  {{ stat.value === null ? '—' : formatCompact(stat.value, locale) }}
+                </dd>
+              </div>
+            </dl>
+            <p
+              v-if="target.status === 'published' && !target.insights"
+              class="text-xs text-muted"
+            >
+              {{ t('posts.metrics.pending') }}
+            </p>
             <UAlert
               v-if="target.errorCode && ['failed', 'needs_reauth', 'quota_deferred'].includes(target.status)"
               :color="target.status === 'failed' ? 'error' : 'warning'"

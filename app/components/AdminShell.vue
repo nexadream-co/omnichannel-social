@@ -129,6 +129,7 @@ const { data: platformStatus } = useFetch<{ publishingPaused: boolean, autoReply
             </UDropdownMenu>
           </template>
         </UDashboardNavbar>
+        <AdminImpersonationBanner />
       </template>
       <template #body>
         <UAlert

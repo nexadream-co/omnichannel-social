@@ -29,7 +29,7 @@ This file lets a new Claude session (or another account) continue exactly where 
 
 **Run locally:** `npm run dev`, `npm run tick:dev` (jobs), `npm run media:dev` (ffmpeg processor), optionally `npx tsx scripts/mock-payment-hub.ts` (then activate the gateway at `/admin/payment-gateways` with base URL `http://localhost:3300`, any key, prefix `DEV`). Logins: `admin@socialz.local` / `admin12345` (`/admin`), `demo@socialz.local` / `demo12345` (`/app`).
 
-**Known gaps (deliberate, small):** staff-to-staff impersonation (creator impersonation exists); Etalase page has no SWR route cache (the public API is CDN-cached 15 s); engagement/insights schedules ship disabled; real Meta, R2, Resend and Google paths are unexercised until keys exist.
+**Known gaps (deliberate, small):** the Etalase page has no server route cache (its public API is CDN-cached 15 s); real Meta, R2, Resend and Google paths are unexercised until keys exist.
 
 ## 2. Document map
 

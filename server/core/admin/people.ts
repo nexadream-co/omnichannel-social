@@ -9,7 +9,7 @@ import { menus, permissions, rolePermissions, roles, staffAccounts, staffInvitat
 import { sendTemplatedEmail } from '../email'
 import { env } from '../env'
 import { appError } from '../errors'
-import { hashPassword, revokeAllSessions } from '../services/auth'
+import { createStaffImpersonationSession, hashPassword, revokeAllSessions } from '../services/auth'
 
 const meta = (page: number, limit: number, total: number) => ({ page, limit, total, pageCount: Math.max(1, Math.ceil(total / limit)) })
 const sha256 = (v: string) => createHash('sha256').update(v).digest('hex')
@@ -309,4 +309,19 @@ export async function reorderMenus(ctx: StaffContext, ids: string[]) {
   await ctx.db.transaction(async (tx) => {
     for (const [order, id] of ids.entries()) await tx.update(menus).set({ order, updatedAt: new Date() }).where(eq(menus.id, id))
   })
+}
+
+/** Superadmin opens the back-office as another staff member: never a superadmin, never yourself, no chains. */
+export async function impersonateStaff(ctx: StaffContext, targetId: string, cookieHeader: string) {
+  if (!ctx.isSuperAdmin) throw appError(403, 'Hanya superadmin yang bisa menyamar.', 'FORBIDDEN')
+  if (ctx.impersonatorId) throw appError(403, 'Berhenti menyamar dulu sebelum menyamar lagi.', 'FORBIDDEN')
+  if (targetId === ctx.staffUserId) throw appError(409, 'Tidak bisa menyamar sebagai diri sendiri.', 'CONFLICT')
+  const [target] = await ctx.db.select({ id: staffUsers.id, name: staffUsers.name, isActive: staffUsers.isActive, isSuperAdmin: roles.isSuperAdmin })
+    .from(staffUsers).innerJoin(roles, eq(roles.id, staffUsers.roleId)).where(eq(staffUsers.id, targetId)).limit(1)
+  if (!target) throw appError(404, 'Staf tidak ditemukan.', 'NOT_FOUND')
+  if (target.isSuperAdmin) throw appError(403, 'Tidak bisa menyamar sebagai superadmin lain.', 'FORBIDDEN')
+  if (!target.isActive) throw appError(409, 'Staf ini nonaktif.', 'CONFLICT')
+  const result = await createStaffImpersonationSession(targetId, ctx.staffUserId, cookieHeader)
+  await audit(ctx, 'staff.impersonate_start', { targetType: 'staff_user', targetId, metadata: { sessionId: result.sessionId, targetName: target.name } })
+  return result
 }

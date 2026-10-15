@@ -1,4 +1,4 @@
-import { updateStaff } from '../../../core/admin/people'
+import { updateStaff } from '../../../../core/admin/people'
 
 /** Delete = deactivate: isActive false and every staff session revoked. */
 export default defineEventHandler(async (event) => {

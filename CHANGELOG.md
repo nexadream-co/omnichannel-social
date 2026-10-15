@@ -49,4 +49,9 @@
 - Deployment kits in `deploy/` for a Docker/VPS host (app, media processor, per-minute tick, optional Cloudflare Tunnel), Google Cloud Run, AWS Lambda and Vercel, with the shared release order, the Cloudflare short-domain rule and the back-office first-run checklist. The app and media processor images build and pass a smoke test.
 - End-to-end tests in a phone browser: a newcomer registers, verifies their email, connects a Page and schedules a first post (well under five minutes), then turns a product link into a published Etalase; plus the public site and the back-office. They also run in CI.
 - Bantuan page in the console (help guide, FAQ, WhatsApp/email), and plan cards in the visitor's language (English plan lines with proper plurals).
+- Beranda now shows link clicks and auto-replies this week, the three most-clicked products, an alert when an account needs reconnecting, and a tip of the day.
+- Post detail shows views, likes and comments per platform (collected every night), link clicks and auto-replies.
+- A win-back email goes to owners who haven't opened Socialz.id for 10 days.
+- Back-office: superadmins can impersonate another staff member (never another superadmin) and return to their own session; impersonated sessions can't change passwords or email.
+- Fix: the nightly billing job declared a run time longer than the tick budget, so it would never have started. Every queue is now checked against the budget by a test.
 - Database schema for the platform and domain layers, with seeded permissions, roles, menus, settings, templates, plans, job schedules and legal pages.

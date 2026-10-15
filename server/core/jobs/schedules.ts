@@ -17,10 +17,10 @@ export interface ScheduleDef {
 export const SCHEDULES: ScheduleDef[] = [
   { name: 'billing.daily', cron: '5 0 * * *', tz: 'Asia/Jakarta', enabled: true },
   { name: 'billing.renewal-reminders', cron: '0 7 * * *', tz: 'Asia/Jakarta', enabled: true },
-  { name: 'engagement.inactivity', cron: '0 7 * * *', tz: 'Asia/Jakarta', enabled: false },
+  { name: 'engagement.inactivity', cron: '0 7 * * *', tz: 'Asia/Jakarta', enabled: true },
   { name: 'maintenance.purge', cron: '0 3 * * *', tz: 'Asia/Jakarta', enabled: true },
   { name: 'token.refresh', cron: '0 * * * *', tz: 'Asia/Jakarta', enabled: true },
-  { name: 'insights.daily', cron: '30 2 * * *', tz: 'Asia/Jakarta', enabled: false }
+  { name: 'insights.daily', cron: '30 2 * * *', tz: 'Asia/Jakarta', enabled: true }
 ]
 
 /** The latest cron time at or before `now` in the schedule's timezone. */

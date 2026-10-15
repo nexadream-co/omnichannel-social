@@ -4,7 +4,7 @@ import type { Platform } from '#shared/channels/types'
 
 definePageMeta({ layout: 'creator' })
 
-const { t, locale } = useI18n()
+const { t, tm, rt, locale } = useI18n()
 const localePath = useLocalePath()
 const auth = useCreatorAuth()
 useHead({ title: () => t('nav.home') })
@@ -37,6 +37,18 @@ onMounted(async () => {
   failedCount.value = failed.meta.total
 })
 
+interface Summary { clicks7d: number, autoReplies7d: number, topProducts: { linkId: string, title: string | null, imageUrl: string | null, clicks: number }[], needsReauth: number }
+const summary = ref<Summary | null>(null)
+onMounted(async () => {
+  if (auth.hasAbility('analytics.read')) summary.value = await apiFetch<Summary>('/api/app/home').catch(() => null)
+})
+// One tip per day, the same all day (tips live in i18n so both languages rotate together).
+const tips = computed(() => tm('home.tips') as unknown[])
+const tip = computed(() => {
+  const day = Math.floor(Date.now() / 86_400_000)
+  return tips.value.length ? rt(tips.value[day % tips.value.length] as Parameters<typeof rt>[0]) : ''
+})
+
 const { confirm } = useConfirmDialog()
 async function dismiss() {
   if (!(await confirm({ title: t('home.dismiss'), description: t('home.dismissConfirm') }))) return
@@ -55,7 +67,7 @@ async function dismiss() {
         {{ t('home.greeting', { name: profile.user.name.split(' ')[0] }) }}
       </h1>
       <p class="text-muted">
-        {{ t('home.subtitle') }}
+        {{ doneCount === steps.length ? t('home.subtitleDone') : t('home.subtitle') }}
       </p>
     </div>
 
@@ -168,6 +180,75 @@ async function dismiss() {
       :actions="[{ label: t('home.failedAction'), to: localePath({ path: '/app/posts', query: { tab: 'failed' } }), color: 'error', variant: 'outline' }]"
     />
 
+    <UAlert
+      v-if="summary?.needsReauth"
+      color="warning"
+      variant="subtle"
+      icon="i-lucide-plug-zap"
+      :title="t('home.reauthAlert', { count: summary.needsReauth })"
+      :actions="[{ label: t('home.reauthAction'), to: localePath('/app/accounts'), color: 'warning', variant: 'outline' }]"
+    />
+
+    <div
+      v-if="summary"
+      class="grid grid-cols-2 gap-3"
+    >
+      <NuxtLink
+        :to="localePath('/app/analytics')"
+        class="rounded-lg border border-default p-4 hover:bg-elevated/50"
+      >
+        <p class="text-2xl font-semibold text-highlighted">
+          {{ formatCompact(summary.clicks7d, locale) }}
+        </p>
+        <p class="text-sm text-muted">
+          {{ t('home.clicksWeek') }}
+        </p>
+      </NuxtLink>
+      <NuxtLink
+        :to="localePath('/app/auto-reply/activity')"
+        class="rounded-lg border border-default p-4 hover:bg-elevated/50"
+      >
+        <p class="text-2xl font-semibold text-highlighted">
+          {{ formatCompact(summary.autoReplies7d, locale) }}
+        </p>
+        <p class="text-sm text-muted">
+          {{ t('home.autoRepliesWeek') }}
+        </p>
+      </NuxtLink>
+    </div>
+
+    <UCard v-if="summary?.topProducts.length">
+      <template #header>
+        <h2 class="font-semibold text-highlighted">
+          {{ t('home.topProducts') }}
+        </h2>
+      </template>
+      <ul class="space-y-3">
+        <li
+          v-for="product in summary.topProducts"
+          :key="product.linkId"
+        >
+          <NuxtLink
+            :to="localePath(`/app/links/${product.linkId}`)"
+            class="flex items-center gap-3"
+          >
+            <img
+              v-if="product.imageUrl"
+              :src="product.imageUrl"
+              alt=""
+              class="size-10 rounded object-cover shrink-0"
+            >
+            <div
+              v-else
+              class="size-10 rounded bg-elevated shrink-0"
+            />
+            <span class="text-sm text-default truncate flex-1">{{ product.title || '—' }}</span>
+            <span class="text-sm font-semibold text-highlighted">{{ t('home.clicks', { n: product.clicks }) }}</span>
+          </NuxtLink>
+        </li>
+      </ul>
+    </UCard>
+
     <UCard v-if="auth.hasAbility('posts.read')">
       <template #header>
         <div class="flex items-center justify-between">
@@ -214,5 +295,23 @@ async function dismiss() {
         </li>
       </ul>
     </UCard>
+
+    <div
+      v-if="tip"
+      class="flex gap-3 rounded-lg bg-primary/5 border border-primary/20 p-4"
+    >
+      <UIcon
+        name="i-lucide-lightbulb"
+        class="size-5 text-primary shrink-0 mt-0.5"
+      />
+      <div>
+        <p class="text-sm font-medium text-highlighted">
+          {{ t('home.tipTitle') }}
+        </p>
+        <p class="text-sm text-default">
+          {{ tip }}
+        </p>
+      </div>
+    </div>
   </div>
 </template>

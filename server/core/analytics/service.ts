@@ -1,7 +1,7 @@
 import { and, desc, eq, gte, lt, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import { assertAbility, type WorkspaceContext } from '../context'
-import { linkClicks, links, posts, postTargets, shortLinks, workspaces } from '../db/schema'
+import { dmEvents, linkClicks, links, posts, postTargets, shortLinks, socialAccounts, workspaces } from '../db/schema'
 import { getEntitlements } from '../entitlements'
 import { appError } from '../errors'
 
@@ -67,4 +67,20 @@ export async function linkAnalytics(ctx: WorkspaceContext, linkId: string, query
     ctx.db.select({ city: linkClicks.city, clicks: sql<number>`count(*)::int` }).from(linkClicks).innerJoin(shortLinks, eq(shortLinks.id, linkClicks.shortLinkId)).where(and(where, sql`${linkClicks.city} is not null`)).groupBy(linkClicks.city).orderBy(desc(sql`count(*)`)).limit(5)
   ])
   return { window: { days: window.days, requestedDays: window.requestedDays, clamped: window.clamped, today: window.today }, totals: totals ?? { clicks: 0, uniques: 0 }, daily, bySource, devices, cities }
+}
+
+/** Beranda numbers (docs/SCREENS.md #12): last 7 days, plus accounts that need a reconnect. */
+export async function homeSummary(ctx: WorkspaceContext) {
+  assertAbility(ctx, 'analytics.read')
+  const since = new Date(Date.now() - 7 * 86_400_000)
+  const where = human(ctx, since, new Date())
+  const [[clicks], topProducts, [dms], [reauth]] = await Promise.all([
+    ctx.db.select({ n: sql<number>`count(*)::int` }).from(linkClicks).where(where),
+    ctx.db.select({ linkId: links.id, title: links.title, imageUrl: links.imageUrl, clicks: sql<number>`count(*)::int` })
+      .from(linkClicks).innerJoin(shortLinks, eq(shortLinks.id, linkClicks.shortLinkId)).innerJoin(links, eq(links.id, shortLinks.linkId))
+      .where(where).groupBy(links.id).orderBy(desc(sql`count(*)`)).limit(3),
+    ctx.db.select({ n: sql<number>`count(*)::int` }).from(dmEvents).where(and(eq(dmEvents.workspaceId, ctx.workspaceId), eq(dmEvents.status, 'dm_sent'), gte(dmEvents.updatedAt, since))),
+    ctx.db.select({ n: sql<number>`count(*)::int` }).from(socialAccounts).where(and(eq(socialAccounts.workspaceId, ctx.workspaceId), eq(socialAccounts.status, 'needs_reauth')))
+  ])
+  return { clicks7d: clicks?.n ?? 0, autoReplies7d: dms?.n ?? 0, topProducts, needsReauth: reauth?.n ?? 0 }
 }

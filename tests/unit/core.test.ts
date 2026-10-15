@@ -61,3 +61,11 @@ describe('env', () => {
     expect(loadEnv({ DATABASE_URL: 'postgres://x', NUXT_PUBLIC_SITE_URL: 'https://socialz.id/' }).siteUrl).toBe('https://socialz.id')
   })
 })
+
+describe('job queues fit the tick budget', () => {
+  it('every queue expects to finish well inside the default 45 s budget (or it would never be started)', async () => {
+    const { QUEUES } = await import('../../server/core/jobs/queues')
+    const budget = 45_000
+    for (const [name, def] of Object.entries(QUEUES)) expect(def.expectedMs, name).toBeLessThanOrEqual(budget - 5_000)
+  })
+})

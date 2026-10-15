@@ -6,8 +6,9 @@ import type { MediaMeta, PostFormat } from '../../../shared/channels/types'
 import { hasBlockingIssues, validateTarget } from '../../../shared/channels/validate'
 import { recordAudit } from '../audit'
 import { assertAbility, type WorkspaceContext } from '../context'
-import type { Executor } from '../db/client'
-import { jobs, mediaAssets, postMedia, posts, postTargets, publishAttempts, socialAccounts } from '../db/schema'
+import type { Database, Executor } from '../db/client'
+import { dmEvents, jobs, linkClicks, mediaAssets, postMedia, posts, postTargets, publishAttempts, shortLinks, socialAccounts } from '../db/schema'
+import { latestInsights } from '../engagement-jobs'
 import { countScheduledThisMonth, getEntitlements } from '../entitlements'
 import { appError } from '../errors'
 import { enqueue } from '../jobs/enqueue'
@@ -234,6 +235,20 @@ export async function getPost(ctx: WorkspaceContext, postId: string) {
     ctx.db.select({ target: postTargets, username: socialAccounts.username, avatarUrl: socialAccounts.avatarUrl, accountStatus: socialAccounts.status })
       .from(postTargets).innerJoin(socialAccounts, eq(socialAccounts.id, postTargets.socialAccountId)).where(eq(postTargets.postId, postId)).orderBy(asc(postTargets.platform))
   ])
+  // Numbers per target (SCREENS #16): latest platform insights, clicks on its attribution links, auto-replies sent.
+  const targetIds = targets.map(row => row.target.id)
+  const [insights, clicks, dms] = await Promise.all([
+    latestInsights(ctx.db as Database, targetIds),
+    targetIds.length
+      ? ctx.db.select({ targetId: shortLinks.postTargetId, n: sql<number>`count(${linkClicks.id})::int` }).from(shortLinks)
+          .leftJoin(linkClicks, and(eq(linkClicks.shortLinkId, shortLinks.id), eq(linkClicks.isBot, false)))
+          .where(and(eq(shortLinks.workspaceId, ctx.workspaceId), inArray(shortLinks.postTargetId, targetIds))).groupBy(shortLinks.postTargetId)
+      : [],
+    targets.some(row => row.target.externalId)
+      ? ctx.db.select({ mediaId: dmEvents.mediaId, n: sql<number>`count(*)::int` }).from(dmEvents)
+          .where(and(eq(dmEvents.workspaceId, ctx.workspaceId), eq(dmEvents.status, 'dm_sent'), inArray(dmEvents.mediaId, targets.map(row => row.target.externalId).filter((v): v is string => Boolean(v))))).groupBy(dmEvents.mediaId)
+      : []
+  ])
   return {
     id: post.id, caption: post.baseCaption, status: post.status, scheduledAt: post.scheduledAt, createdAt: post.createdAt, version: post.version,
     media,
@@ -241,7 +256,10 @@ export async function getPost(ctx: WorkspaceContext, postId: string) {
       id: t.id, socialAccountId: t.socialAccountId, platform: t.platform, format: t.format, username, avatarUrl, accountStatus,
       captionOverride: t.captionOverride, options: t.options as { firstComment?: string, altText?: string },
       status: t.status, scheduledAt: t.scheduledAt, publishedAt: t.publishedAt, permalink: t.permalink,
-      errorCode: t.lastErrorCode, attemptCount: t.attemptCount
+      errorCode: t.lastErrorCode, attemptCount: t.attemptCount,
+      insights: insights.get(t.id) ?? null,
+      clicks: clicks.find(c => c.targetId === t.id)?.n ?? 0,
+      autoReplies: t.externalId ? dms.find(d => d.mediaId === t.externalId)?.n ?? 0 : 0
     }))
   }
 }

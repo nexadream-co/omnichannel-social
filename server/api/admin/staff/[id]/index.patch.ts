@@ -1,4 +1,4 @@
-import { staffUpdateSchema, updateStaff } from '../../../core/admin/people'
+import { staffUpdateSchema, updateStaff } from '../../../../core/admin/people'
 
 export default defineEventHandler(async (event) => {
   const ctx = await requirePermission(event, 'staff.write')

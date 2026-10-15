@@ -139,7 +139,24 @@
     "upcoming": "Postingan berikutnya",
     "noUpcoming": "Belum ada postingan terjadwal.",
     "failedAlert": "{count} postingan gagal terbit.",
-    "failedAction": "Lihat dan perbaiki"
+    "failedAction": "Lihat dan perbaiki",
+    "reauthAlert": "{count} akun perlu dihubungkan ulang supaya postingan tetap terbit.",
+    "reauthAction": "Hubungkan ulang",
+    "clicksWeek": "klik link minggu ini",
+    "autoRepliesWeek": "DM otomatis minggu ini",
+    "topProducts": "Produk paling banyak diklik",
+    "clicks": "{n} klik",
+    "tipTitle": "Tips hari ini",
+    "tips": [
+      "Posting di jam ramai (19.00–21.00) biasanya dapat lebih banyak klik.",
+      "Komen \"mau\" + Balas Otomatis = link langsung sampai di DM tanpa kamu balas satu-satu.",
+      "Pasang alamat Etalase di bio Instagram supaya semua produkmu bisa dibeli dari satu link.",
+      "Satu postingan bisa terbit ke Instagram, Threads dan Facebook sekaligus.",
+      "Beri label \"Terlaris\" pada produk andalan di Etalase supaya lebih menonjol.",
+      "Jadwalkan 3 postingan sekaligus di awal minggu, lalu tinggal pantau statistiknya.",
+      "Di Threads dan Facebook, link di caption bisa langsung diklik. Manfaatkan!"
+    ],
+    "subtitleDone": "Ini ringkasan akunmu minggu ini."
   },
   "role": {
     "owner": {
@@ -570,7 +587,15 @@
     "perPlatform": "Status per akun",
     "publishedAt": "Terbit {date}",
     "scheduledFor": "Dijadwalkan {date}",
-    "reconnect": "Hubungkan ulang"
+    "reconnect": "Hubungkan ulang",
+    "metrics": {
+      "views": "Dilihat",
+      "likes": "Suka",
+      "comments": "Komentar",
+      "clicks": "Klik link",
+      "autoReplies": "DM otomatis",
+      "pending": "Angka dari platform muncul besok pagi."
+    }
   },
   "calendar": {
     "title": "Kalender",

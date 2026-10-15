@@ -194,6 +194,6 @@ export async function impersonateCreator(ctx: StaffContext, input: { workspaceId
   if (!member) throw appError(404, 'Pengguna tidak ditemukan.', 'NOT_FOUND')
   if (!member.isActive) throw appError(409, 'Pengguna ini nonaktif.', 'CONFLICT')
   const session = await createImpersonationSession(member.userId, member.workspaceId, ctx.staffUserId)
-  await recordAudit(ctx, { audience: 'staff', action: 'user.impersonate', actorId: ctx.staffUserId, actorName: ctx.staffName, workspaceId: member.workspaceId, targetType: 'user', targetId: member.userId, metadata: { sessionId: session.sessionId } })
+  await recordAudit(ctx, { audience: 'staff', action: 'workspace.impersonate_start', actorId: ctx.staffUserId, actorName: ctx.staffName, workspaceId: member.workspaceId, targetType: 'user', targetId: member.userId, metadata: { sessionId: session.sessionId } })
   return session
 }

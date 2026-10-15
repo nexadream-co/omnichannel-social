@@ -115,3 +115,42 @@ export async function clearedCreatorSessionCookie(): Promise<string> {
   const cookie = ctx.authCookies.sessionToken
   return serializeCookie(cookie.name, '', { ...cookie.attributes, maxAge: 0 })
 }
+
+export const STAFF_RETURN_COOKIE = 'socialz_staff_return'
+
+/**
+ * Staff-to-staff impersonation (docs/blueprint/03 §10): a one-hour staff session marked impersonatedBy.
+ * The operator's own signed session cookie is parked verbatim in an HttpOnly return cookie and restored on stop.
+ */
+export async function createStaffImpersonationSession(targetStaffId: string, impersonatorStaffId: string, currentCookieHeader: string): Promise<{ setCookies: string[], sessionId: string }> {
+  const ctx = await staffAuth().$context
+  const cookie = ctx.authCookies.sessionToken
+  const current = currentCookieHeader.split(/;\s*/).find(part => part.startsWith(`${cookie.name}=`))?.slice(cookie.name.length + 1)
+  if (!current) throw new Error('no staff session cookie to return to')
+  const session = await ctx.internalAdapter.createSession(targetStaffId, true, {
+    impersonatedBy: impersonatorStaffId, expiresAt: new Date(Date.now() + IMPERSONATION_TTL_MS)
+  } as Record<string, unknown>, true)
+  if (!session) throw new Error('impersonation session not created')
+  const maxAge = IMPERSONATION_TTL_MS / 1000
+  return {
+    sessionId: session.id,
+    setCookies: [
+      await serializeSignedCookie(cookie.name, session.token, ctx.secret, { ...cookie.attributes, maxAge }),
+      serializeCookie(STAFF_RETURN_COOKIE, decodeURIComponent(current), { httpOnly: true, secure: cookie.attributes.secure, sameSite: 'lax', path: '/', maxAge })
+    ]
+  }
+}
+
+/** Stop: the operator's parked cookie goes back on the staff session name; the return cookie is cleared. */
+export async function restoreStaffSessionCookies(currentCookieHeader: string): Promise<string[]> {
+  const ctx = await staffAuth().$context
+  const cookie = ctx.authCookies.sessionToken
+  const parked = currentCookieHeader.split(/;\s*/).find(part => part.startsWith(`${STAFF_RETURN_COOKIE}=`))?.slice(STAFF_RETURN_COOKIE.length + 1)
+  return [
+    parked ? serializeCookie(cookie.name, decodeURIComponent(parked), { ...cookie.attributes }) : serializeCookie(cookie.name, '', { ...cookie.attributes, maxAge: 0 }),
+    serializeCookie(STAFF_RETURN_COOKIE, '', { path: '/', maxAge: 0 })
+  ]
+}
+
+/** Auth endpoints an impersonated session may never call: credentials and identity stay with their owner. */
+export const IMPERSONATION_BLOCKED_AUTH_PATHS = ['/change-password', '/change-email', '/set-password', '/delete-user', '/revoke-sessions', '/revoke-other-sessions']

@@ -55,6 +55,15 @@ async function toggleActive(row: Row) {
   if (row.isActive && !await confirm({ title: `Nonaktifkan ${row.name}?`, description: 'Semua sesinya langsung dicabut.', color: 'error', confirmLabel: 'Nonaktifkan' })) return
   await run(() => apiFetch(`/api/admin/staff/${row.id}`, { method: 'PATCH', body: { isActive: !row.isActive } }), row.isActive ? 'Staf dinonaktifkan.' : 'Staf diaktifkan.')
 }
+async function impersonate(row: Row) {
+  if (!await confirm({ title: `Menyamar sebagai ${row.name}?`, description: 'Back-office terbuka dengan hak akses staf ini selama 1 jam. Semua tindakan tercatat.', confirmLabel: 'Impersonate' })) return
+  try {
+    const result = await apiFetch<{ redirect: string }>(`/api/admin/staff/${row.id}/impersonate`, { method: 'POST' })
+    window.location.href = result.redirect
+  } catch (caught) {
+    toast.add({ title: extractErrorMessage(caught, 'Terjadi kesalahan.'), color: 'error' })
+  }
+}
 const revokeInvite = (inv: Invitation) => run(() => apiFetch(`/api/admin/staff-invitations/${inv.id}`, { method: 'DELETE' }), 'Undangan dibatalkan.')
 const columns: TableColumn<Row>[] = [
   { accessorKey: 'name', header: 'Staf' },
@@ -158,6 +167,14 @@ const columns: TableColumn<Row>[] = [
               variant="ghost"
               :label="row.original.isActive ? 'Nonaktifkan' : 'Aktifkan'"
               @click="toggleActive(row.original)"
+            />
+            <UButton
+              v-if="isSuper && !row.original.isSuperAdmin && row.original.isActive && !auth.profile.value?.impersonating"
+              size="xs"
+              color="neutral"
+              variant="outline"
+              label="Impersonate"
+              @click="impersonate(row.original)"
             />
           </div>
         </template>
