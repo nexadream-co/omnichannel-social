@@ -38,7 +38,7 @@ async function invite() {
     Object.assign(inviteForm, { email: '', name: '', role: 'editor' })
     await load()
   } catch (caught) {
-    toast.add({ title: extractErrorMessage(caught, t('authError.generic')), color: 'error' })
+    if (!entitlements.handlePlanError(caught)) toast.add({ title: extractErrorMessage(caught, t('authError.generic')), color: 'error' })
   } finally {
     inviting.value = false
   }
@@ -56,7 +56,7 @@ async function update(member: Member, body: { role?: string, isActive?: boolean 
     await apiFetch(`/api/app/team/members/${member.id}`, { method: 'PATCH', body })
     toast.add({ title: t('team.saved'), color: 'success' })
   } catch (caught) {
-    toast.add({ title: extractErrorMessage(caught, t('authError.generic')), color: 'error' })
+    if (!entitlements.handlePlanError(caught)) toast.add({ title: extractErrorMessage(caught, t('authError.generic')), color: 'error' })
   }
   await load()
 }

@@ -359,5 +359,21 @@
       "rate_limited": "Terlalu banyak percobaan. Coba lagi beberapa menit lagi.",
       "unknown": "Akun belum berhasil dihubungkan. Coba lagi."
     }
+  },
+  "upgrade": {
+    "title": "Upgrade paket",
+    "generic": "Fitur ini ada di paket yang lebih tinggi.",
+    "feature": "\"{feature}\" ada di paket yang lebih tinggi.",
+    "reassure": "Kamu bisa upgrade kapan saja. Data kamu tetap aman.",
+    "askOwner": "Minta pemilik akun untuk upgrade paket.",
+    "later": "Nanti saja",
+    "seePlans": "Lihat paket",
+    "rail": "Upgrade"
+  },
+  "trialBanner": {
+    "trial": "Uji coba {plan}: {days} hari lagi.",
+    "grace": "Pembayaran tertunda. Bayar sebelum {date} agar paket tidak turun.",
+    "choose": "Pilih paket",
+    "pay": "Bayar sekarang"
   }
 }

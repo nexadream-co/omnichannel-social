@@ -25,7 +25,8 @@ onMounted(async () => {
   const error = route.query.error ? String(route.query.error) : null
   const connected = route.query.connected ? Number(route.query.connected) : 0
   const platform = route.query.platform && String(route.query.platform) in PLATFORM_META ? PLATFORM_META[String(route.query.platform) as Platform].name : ''
-  if (error) toast.add({ title: t(`accounts.error.${error}`, t('accounts.error.unknown')), color: 'error', duration: 8000 })
+  if (error === 'limit_reached') useEntitlements().upgradeRequired(null, t('accounts.error.limit_reached'))
+  else if (error) toast.add({ title: t(`accounts.error.${error}`, t('accounts.error.unknown')), color: 'error', duration: 8000 })
   else if (connected) toast.add({ title: t('accounts.connected', { count: connected, platform }), color: 'success' })
   if (error || connected) await navigateTo({ query: {} }, { replace: true })
 })

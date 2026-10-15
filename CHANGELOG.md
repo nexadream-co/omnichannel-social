@@ -17,4 +17,6 @@
 - Akun Sosial: connect Instagram (Business/Creator), Threads and Facebook Pages, pick which Pages to add, reconnect and disconnect; clear messages for personal Instagram accounts, plan limits and accounts already used elsewhere. TikTok, YouTube and X show "Segera hadir".
 - Tokens are stored encrypted and bound to their account; tokens near expiry refresh automatically every hour, and the owner is told when an account needs reconnecting.
 - Media uploads go straight to storage; photos are converted to JPEG and videos (including iPhone HEVC) to H.264 MP4 ready for Reels, automatically.
+- Plans: what a workspace may do follows its plan in force; a lapsed trial falls back to Gratis immediately. Limits show friendly messages, a quiet trial/grace banner sits under the top bar, an upgrade dialog opens only when a limit is hit, and the rail shows an Upgrade button when there is something to upgrade to.
+- Back-office plan editor: prices, trial days, every limit (with "Tanpa batas") and every feature; plans in use or the default plan can't be deleted.
 - Database schema for the platform and domain layers, with seeded permissions, roles, menus, settings, templates, plans, job schedules and legal pages.

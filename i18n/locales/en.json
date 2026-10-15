@@ -359,5 +359,21 @@
       "rate_limited": "Too many attempts. Try again in a few minutes.",
       "unknown": "The account wasn't connected. Try again."
     }
+  },
+  "upgrade": {
+    "title": "Upgrade your plan",
+    "generic": "This feature is part of a higher plan.",
+    "feature": "\"{feature}\" is part of a higher plan.",
+    "reassure": "You can upgrade any time. Your data stays safe.",
+    "askOwner": "Ask the account owner to upgrade the plan.",
+    "later": "Not now",
+    "seePlans": "See plans",
+    "rail": "Upgrade"
+  },
+  "trialBanner": {
+    "trial": "{plan} trial: {days} days left.",
+    "grace": "Payment pending. Pay before {date} to keep your plan.",
+    "choose": "Choose a plan",
+    "pay": "Pay now"
   }
 }

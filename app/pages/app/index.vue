@@ -1,7 +1,7 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'creator' })
 
-const { t, locale } = useI18n()
+const { t } = useI18n()
 const localePath = useLocalePath()
 const auth = useCreatorAuth()
 useHead({ title: () => t('nav.home') })
@@ -26,12 +26,6 @@ async function dismiss() {
   await apiFetch('/api/app/onboarding/dismiss', { method: 'POST' })
   await auth.fetchProfile()
 }
-
-const trialEnds = computed(() => {
-  const sub = profile.value?.subscription
-  if (sub?.status !== 'trialing' || !sub.trialEndsAt) return null
-  return new Intl.DateTimeFormat(locale.value === 'en' ? 'en-GB' : 'id-ID', { day: 'numeric', month: 'long', year: 'numeric', timeZone: profile.value?.displayTimezone }).format(new Date(sub.trialEndsAt))
-})
 </script>
 
 <template>
@@ -55,14 +49,6 @@ const trialEnds = computed(() => {
       icon="i-lucide-mail-warning"
       :title="t('auth.verifyBanner')"
       :actions="[{ label: t('auth.verifyResend'), to: localePath('/app/auth/verify-email'), color: 'warning', variant: 'outline' }]"
-    />
-
-    <UAlert
-      v-if="trialEnds"
-      color="info"
-      variant="subtle"
-      icon="i-lucide-sparkles"
-      :title="t('home.trialBanner', { plan: profile.subscription.planName, date: trialEnds })"
     />
 
     <UCard v-if="showChecklist">

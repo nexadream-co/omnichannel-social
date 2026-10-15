@@ -8,6 +8,8 @@ const route = useRoute()
 const auth = useCreatorAuth()
 const entitlements = useEntitlements()
 onMounted(() => entitlements.load())
+// Hidden when the plan already has every feature, or when this role can't buy (docs/blueprint/06 §6).
+const showUpgrade = computed(() => Boolean(entitlements.data.value) && !entitlements.hasEveryFeature.value && auth.hasAbility('billing.manage'))
 
 const visibleNav = computed(() => CREATOR_NAV.filter(item => !item.ability || auth.hasAbility(item.ability)))
 
@@ -79,6 +81,16 @@ const canCompose = computed(() => auth.hasAbility('posts.write'))
 
       <template #footer="{ collapsed }">
         <UButton
+          v-if="showUpgrade"
+          :to="localePath('/app/billing')"
+          icon="i-lucide-sparkles"
+          :label="collapsed ? undefined : t('upgrade.rail')"
+          variant="soft"
+          :square="collapsed"
+          block
+          class="justify-start"
+        />
+        <UButton
           :to="localePath('/app/help')"
           icon="i-lucide-life-buoy"
           :label="collapsed ? undefined : t('nav.help')"
@@ -114,6 +126,7 @@ const canCompose = computed(() => auth.hasAbility('posts.write'))
             <CreatorUserMenu />
           </template>
         </UDashboardNavbar>
+        <TrialBanner />
       </template>
 
       <template #body>
@@ -188,5 +201,6 @@ const canCompose = computed(() => auth.hasAbility('posts.write'))
       </template>
     </UDrawer>
     <ConfirmDialog />
+    <UpgradeDialog />
   </UDashboardGroup>
 </template>
