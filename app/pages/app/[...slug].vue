@@ -8,7 +8,7 @@ useHead({ title: () => t('common.comingSoon') })
 </script>
 
 <template>
-  <div class="max-w-md mx-auto text-center py-16 space-y-4">
+  <div class="w-full max-w-md mx-auto text-center py-16 space-y-4">
     <UIcon
       name="i-lucide-hammer"
       class="size-10 text-muted mx-auto"

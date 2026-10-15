@@ -5,6 +5,10 @@ const props = defineProps<{ error: NuxtError }>()
 const { t } = useI18n()
 const localePath = useLocalePath()
 
+const route = useRoute()
+// Return to the console the visitor was in, not always the public landing page.
+const home = computed(() => route.path.startsWith('/admin') ? '/admin/dashboard' : /^(\/en)?\/app(\/|$)/.test(route.path) ? localePath('/app') : localePath('/'))
+
 const title = computed(() => props.error.statusCode === 404 ? t('error.notFoundTitle') : t('error.genericTitle'))
 </script>
 
@@ -22,9 +26,8 @@ const title = computed(() => props.error.statusCode === 404 ? t('error.notFoundT
           {{ error.statusCode === 404 ? t('error.notFoundBody') : t('error.genericBody') }}
         </p>
         <UButton
-          :to="localePath('/')"
           :label="t('error.backHome')"
-          @click="clearError({ redirect: localePath('/') })"
+          @click="clearError({ redirect: home })"
         />
       </div>
     </main>

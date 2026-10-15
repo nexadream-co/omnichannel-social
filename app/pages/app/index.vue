@@ -30,7 +30,7 @@ const trialEnds = computed(() => {
 <template>
   <div
     v-if="profile"
-    class="max-w-3xl mx-auto space-y-6"
+    class="w-full max-w-3xl mx-auto space-y-6"
   >
     <div class="space-y-1">
       <h1 class="text-2xl font-semibold text-highlighted">

@@ -13,7 +13,11 @@
     "or": "atau",
     "comingSoon": "Segera hadir",
     "comingSoonBody": "Halaman ini sedang kami siapkan. Sementara itu, ikuti langkah di Beranda.",
-    "backToHome": "Ke Beranda"
+    "backToHome": "Ke Beranda",
+    "confirm": "Ya, lanjutkan",
+    "search": "Cari…",
+    "previous": "Sebelumnya",
+    "next": "Berikutnya"
   },
   "nav": {
     "home": "Beranda",
@@ -184,5 +188,13 @@
     "genericTitle": "Ada yang tidak beres",
     "genericBody": "Terjadi kesalahan. Coba lagi sebentar lagi.",
     "backHome": "Kembali ke beranda"
+  },
+  "notifications": {
+    "title": "Notifikasi",
+    "markAllRead": "Tandai semua dibaca",
+    "empty": "Belum ada notifikasi.",
+    "seeAll": "Lihat semua notifikasi",
+    "unreadOnly": "Belum dibaca saja",
+    "emptyUnread": "Semua notifikasi sudah dibaca."
   }
 }

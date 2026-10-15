@@ -1,9 +1,10 @@
-import { and, eq, inArray, isNull } from 'drizzle-orm'
+import { and, count, desc, eq, ilike, inArray, isNull, or } from 'drizzle-orm'
 import { NOTIFICATION_TEMPLATES, renderTemplateString } from '../../shared/utils/templates'
 import type { CoreContext } from './context'
 import type { Executor } from './db/client'
 import { notifications, notificationTemplates, permissions, rolePermissions, roles, staffUsers, users } from './db/schema'
 import { sendTemplatedEmail } from './email'
+import { appError } from './errors'
 import { getSetting } from './settings'
 
 export interface CreateNotificationInput {
@@ -95,4 +96,58 @@ export async function notifyStaff(ctx: Ctx, permissionKey: string, input: Omit<C
   } catch (error) {
     ctx.log.error('notify_staff.failed', { permissionKey, error })
   }
+}
+
+export interface NotificationRecipient {
+  audience: 'creator' | 'staff'
+  userId: string
+  workspaceId?: string | null
+}
+
+function recipientFilter(recipient: NotificationRecipient) {
+  return recipient.audience === 'staff'
+    ? and(eq(notifications.audience, 'staff'), eq(notifications.staffUserId, recipient.userId))
+    : and(eq(notifications.audience, 'creator'), eq(notifications.userId, recipient.userId), recipient.workspaceId ? eq(notifications.workspaceId, recipient.workspaceId) : undefined)
+}
+
+/**
+ * One implementation behind both bells and both notification pages (docs/blueprint/11 §2).
+ * unreadCount counts everything addressed to the recipient, never just the filtered page.
+ */
+export async function listNotifications(db: Executor, recipient: NotificationRecipient, query: { page: number, limit: number, offset: number, search: string, unreadOnly?: boolean }) {
+  const base = recipientFilter(recipient)
+  const filters = and(
+    base,
+    query.unreadOnly ? isNull(notifications.readAt) : undefined,
+    query.search ? or(ilike(notifications.title, `%${query.search}%`), ilike(notifications.body, `%${query.search}%`)) : undefined
+  )
+  const [items, [total], [unread]] = await Promise.all([
+    db.select({
+      id: notifications.id, title: notifications.title, body: notifications.body, actionUrl: notifications.actionUrl,
+      icon: notifications.icon, level: notifications.level, readAt: notifications.readAt, createdAt: notifications.createdAt
+    }).from(notifications).where(filters).orderBy(desc(notifications.createdAt)).limit(query.limit).offset(query.offset),
+    db.select({ n: count() }).from(notifications).where(filters),
+    db.select({ n: count() }).from(notifications).where(and(base, isNull(notifications.readAt)))
+  ])
+  const totalCount = total?.n ?? 0
+  return {
+    items,
+    meta: { page: query.page, limit: query.limit, total: totalCount, pageCount: Math.max(1, Math.ceil(totalCount / query.limit)) },
+    unreadCount: unread?.n ?? 0
+  }
+}
+
+/** 404 for someone else's notification (never reveal it exists). */
+export async function markNotificationRead(db: Executor, recipient: NotificationRecipient, id: string): Promise<void> {
+  const rows = await db.update(notifications).set({ readAt: new Date() })
+    .where(and(recipientFilter(recipient), eq(notifications.id, id)))
+    .returning({ id: notifications.id })
+  if (!rows.length) throw appError(404, 'Notifikasi tidak ditemukan.', 'NOT_FOUND')
+}
+
+export async function markAllNotificationsRead(db: Executor, recipient: NotificationRecipient): Promise<number> {
+  const rows = await db.update(notifications).set({ readAt: new Date() })
+    .where(and(recipientFilter(recipient), isNull(notifications.readAt)))
+    .returning({ id: notifications.id })
+  return rows.length
 }

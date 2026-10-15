@@ -13,7 +13,11 @@
     "or": "or",
     "comingSoon": "Coming soon",
     "comingSoonBody": "We're still building this page. In the meantime, follow the steps on Home.",
-    "backToHome": "Go to Home"
+    "backToHome": "Go to Home",
+    "confirm": "Yes, continue",
+    "search": "Search…",
+    "previous": "Previous",
+    "next": "Next"
   },
   "nav": {
     "home": "Home",
@@ -184,5 +188,13 @@
     "genericTitle": "Something went wrong",
     "genericBody": "Something went wrong. Please try again shortly.",
     "backHome": "Back to home"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "markAllRead": "Mark all as read",
+    "empty": "No notifications yet.",
+    "seeAll": "See all notifications",
+    "unreadOnly": "Unread only",
+    "emptyUnread": "All caught up."
   }
 }

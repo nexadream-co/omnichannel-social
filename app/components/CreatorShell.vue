@@ -106,6 +106,7 @@ const canCompose = computed(() => auth.hasAbility('posts.write'))
             </NuxtLink>
           </template>
           <template #right>
+            <NotificationMenu audience="creator" />
             <CreatorUserMenu />
           </template>
         </UDashboardNavbar>
@@ -182,5 +183,6 @@ const canCompose = computed(() => auth.hasAbility('posts.write'))
         </ul>
       </template>
     </UDrawer>
+    <ConfirmDialog />
   </UDashboardGroup>
 </template>

@@ -45,7 +45,12 @@ const userItems = computed<DropdownMenuItem[][]>(() => [
   [{ label: 'Keluar', icon: 'i-lucide-log-out', onSelect: () => auth.signOut() }]
 ])
 
-const appVersion = useRuntimeConfig().public.appVersion
+const config = useRuntimeConfig().public
+const appVersion = config.appVersion
+const isTestEnvironment = config.appEnv !== 'production'
+
+// Kill switches stay visible on every admin page, so nobody forgets one is on (docs/blueprint/09 §1).
+const { data: platformStatus } = useFetch<{ publishingPaused: boolean, autoReplyEnabled: boolean }>('/api/public/status', { server: false })
 </script>
 
 <template>
@@ -94,7 +99,16 @@ const appVersion = useRuntimeConfig().public.appVersion
     <UDashboardPanel id="admin-main">
       <template #header>
         <UDashboardNavbar>
+          <template #left>
+            <UBadge
+              v-if="isTestEnvironment"
+              color="warning"
+              variant="subtle"
+              label="Test environment"
+            />
+          </template>
           <template #right>
+            <NotificationMenu audience="staff" />
             <UDropdownMenu
               :items="userItems"
               :content="{ align: 'end' }"
@@ -110,8 +124,18 @@ const appVersion = useRuntimeConfig().public.appVersion
         </UDashboardNavbar>
       </template>
       <template #body>
+        <UAlert
+          v-if="platformStatus?.publishingPaused || platformStatus?.autoReplyEnabled === false"
+          color="error"
+          variant="solid"
+          icon="i-lucide-octagon-pause"
+          class="mb-4"
+          :title="[platformStatus?.publishingPaused ? 'Semua publikasi sedang dijeda.' : '', platformStatus?.autoReplyEnabled === false ? 'Balas Otomatis sedang dimatikan.' : ''].filter(Boolean).join(' ')"
+          :actions="[{ label: 'Buka pengaturan', to: '/admin/settings?group=channels', color: 'neutral', variant: 'solid' }]"
+        />
         <slot />
       </template>
     </UDashboardPanel>
+    <ConfirmDialog />
   </UDashboardGroup>
 </template>

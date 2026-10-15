@@ -78,3 +78,8 @@ export async function sendTemplatedEmail(ctx: Ctx, key: string, to: string, vari
     return { sent: false, error: (error as Error).message }
   }
 }
+
+/** True when a real driver would send (Resend key set, or the dev log driver outside production). */
+export async function isEmailConfigured(): Promise<boolean> {
+  return Boolean(await getAllSettings().then(s => s['email.resendApiKey'])) || !env().isProduction
+}

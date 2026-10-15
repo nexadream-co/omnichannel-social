@@ -7,6 +7,7 @@ export default defineEventHandler(async () => {
     maintenanceMessage: settings['app.maintenanceMessage'],
     publishingPaused: settings['channels.publishing.paused'] === 'true',
     publishingPausedMessage: settings['channels.publishing.pausedMessage'],
+    autoReplyEnabled: settings['channels.autoReply.enabled'] !== 'false',
     registrationOpen: settings['app.registrationOpen'] !== 'false'
   }
 })
