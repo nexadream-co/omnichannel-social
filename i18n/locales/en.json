@@ -879,5 +879,40 @@
   "impersonation": {
     "banner": "You are impersonating {name}. Every action is recorded.",
     "stop": "Stop impersonating"
+  },
+  "plans": {
+    "limit": {
+      "socialAccounts": "{n} social account | {n} social accounts",
+      "scheduledPostsPerMonth": "{n} post per month | {n} posts per month",
+      "autoReplyDmsPerMonth": "{n} auto DM per month | {n} auto DMs per month",
+      "bioPages": "{n} Storefront page | {n} Storefront pages",
+      "clickRetentionDays": "{n} day of statistics | {n} days of statistics"
+    },
+    "unlimited": {
+      "socialAccounts": "Unlimited social accounts",
+      "scheduledPostsPerMonth": "Unlimited posts",
+      "autoReplyDmsPerMonth": "Unlimited auto DMs",
+      "bioPages": "Unlimited Storefront pages",
+      "clickRetentionDays": "Unlimited statistics history"
+    },
+    "feature": {
+      "removeBranding": "No \"made with Socialz.id\" footer",
+      "customSlug": "Custom short link names",
+      "anyDestination": "Links to any website",
+      "analyticsExport": "Download statistics (CSV)",
+      "teamAccess": "Team access",
+      "activityLog": "Activity log",
+      "prioritySupport": "Priority support"
+    }
+  },
+  "help": {
+    "title": "Help",
+    "subtitle": "A quick guide, common questions, and how to reach us.",
+    "guide": "Guide",
+    "faq": "Common questions",
+    "contactTitle": "Still stuck?",
+    "contactBody": "Our team usually replies within one business day.",
+    "email": "Send an email",
+    "whatsapp": "Chat on WhatsApp"
   }
 }

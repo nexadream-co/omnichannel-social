@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { FEATURE_KEYS, FEATURE_META, LIMIT_META, formatLimit, type FeatureKey, type LimitKey } from '#shared/utils/plans'
+import type { FeatureKey, LimitKey } from '#shared/utils/plans'
 import { PAYMENT_STATUS_KEYS, type PaymentStatusValue } from '#shared/utils/payments'
 
 interface Payment { id: string, orderId: string, amount: number, status: PaymentStatusValue, planSlug: string | null, period: 'monthly' | 'yearly', paymentType: string | null, redirectUrl: string | null, paidAt: string | null, expiresAt: string | null, createdAt: string }
@@ -90,10 +90,7 @@ const yearlySave = computed(() => {
   return Math.max(...paid.map(p => Math.round((1 - p.priceYearly / (p.priceMonthly * 12)) * 100)))
 })
 const periodItems = computed(() => [{ value: 'monthly', label: t('billing.monthly') }, { value: 'yearly', label: yearlySave.value > 0 ? `${t('billing.yearly')} · ${t('billing.yearlySave', { n: yearlySave.value })}` : t('billing.yearly') }])
-const KEY_LIMITS: LimitKey[] = ['socialAccounts', 'scheduledPostsPerMonth', 'autoReplyDmsPerMonth', 'bioPages', 'clickRetentionDays']
-const LIMIT_SUFFIX: Partial<Record<LimitKey, string>> = { socialAccounts: 'media sosial', scheduledPostsPerMonth: 'per bulan', autoReplyDmsPerMonth: 'otomatis per bulan', bioPages: 'Etalase', clickRetentionDays: 'riwayat statistik' }
-/** "5 akun media sosial", "1.000 DM otomatis per bulan"; unlimited reads "Akun media sosial tanpa batas". */
-const limitLine = (key: LimitKey, value: number) => (value === -1 ? `${LIMIT_META[key].label} tanpa batas` : `${formatLimit(key, value)} ${LIMIT_SUFFIX[key] ?? ''}`.trim())
+const { lines: planLines } = usePlanLines()
 
 function buttonFor(plan: PlanCard): { label: string, variant: 'solid' | 'outline' } | null {
   if (price(plan) <= 0) return null
@@ -318,26 +315,15 @@ const paymentColor = (status: PaymentStatusValue) => (status === 'paid' ? 'succe
             </p>
             <ul class="space-y-1.5 text-sm flex-1">
               <li
-                v-for="key in KEY_LIMITS"
-                :key="key"
+                v-for="line in planLines(plan)"
+                :key="line"
                 class="flex gap-2"
               >
                 <UIcon
                   name="i-lucide-check"
                   class="size-4 text-primary shrink-0 mt-0.5"
                 />
-                <span class="text-default">{{ limitLine(key, plan.limits[key] ?? 0) }}</span>
-              </li>
-              <li
-                v-for="key in FEATURE_KEYS.filter(k => plan.features[k])"
-                :key="key"
-                class="flex gap-2"
-              >
-                <UIcon
-                  name="i-lucide-check"
-                  class="size-4 text-primary shrink-0 mt-0.5"
-                />
-                <span class="text-default">{{ FEATURE_META[key].label }}</span>
+                <span class="text-default">{{ line }}</span>
               </li>
             </ul>
             <UButton

@@ -879,5 +879,40 @@
   "impersonation": {
     "banner": "Kamu sedang menyamar sebagai {name}. Semua tindakan tercatat.",
     "stop": "Berhenti menyamar"
+  },
+  "plans": {
+    "limit": {
+      "socialAccounts": "{n} akun media sosial",
+      "scheduledPostsPerMonth": "{n} postingan per bulan",
+      "autoReplyDmsPerMonth": "{n} DM otomatis per bulan",
+      "bioPages": "{n} halaman Etalase",
+      "clickRetentionDays": "{n} hari riwayat statistik"
+    },
+    "unlimited": {
+      "socialAccounts": "Akun media sosial tanpa batas",
+      "scheduledPostsPerMonth": "Postingan tanpa batas",
+      "autoReplyDmsPerMonth": "DM otomatis tanpa batas",
+      "bioPages": "Halaman Etalase tanpa batas",
+      "clickRetentionDays": "Riwayat statistik tanpa batas"
+    },
+    "feature": {
+      "removeBranding": "Tanpa tulisan \"dibuat dengan Socialz.id\"",
+      "customSlug": "Nama link pendek sendiri",
+      "anyDestination": "Link ke situs mana saja",
+      "analyticsExport": "Unduh statistik (CSV)",
+      "teamAccess": "Akses tim",
+      "activityLog": "Log aktivitas",
+      "prioritySupport": "Dukungan prioritas"
+    }
+  },
+  "help": {
+    "title": "Bantuan",
+    "subtitle": "Panduan singkat, pertanyaan umum, dan cara menghubungi kami.",
+    "guide": "Panduan",
+    "faq": "Pertanyaan umum",
+    "contactTitle": "Masih bingung?",
+    "contactBody": "Tim kami biasanya membalas dalam 1 hari kerja.",
+    "email": "Kirim email",
+    "whatsapp": "Chat WhatsApp"
   }
 }

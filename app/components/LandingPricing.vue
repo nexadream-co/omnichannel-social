@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { FEATURE_KEYS, FEATURE_META, LIMIT_META, formatLimit, type FeatureKey, type LimitKey } from '#shared/utils/plans'
-
 interface Plan { slug: string, name: string, description: string | null, priceMonthly: number, priceYearly: number, trialDays: number, limits: Record<string, number>, features: Record<string, boolean> }
 const props = defineProps<{ plans: Plan[], trialPlanSlug: string, registrationOpen: boolean }>()
 const { t, locale } = useI18n()
@@ -8,9 +6,7 @@ const localePath = useLocalePath()
 const period = ref<'monthly' | 'yearly'>('monthly')
 const price = (p: Plan) => (period.value === 'yearly' ? p.priceYearly : p.priceMonthly)
 const save = computed(() => Math.max(0, ...props.plans.filter(p => p.priceMonthly > 0 && p.priceYearly > 0).map(p => Math.round((1 - p.priceYearly / (p.priceMonthly * 12)) * 100))))
-const KEYS: LimitKey[] = ['socialAccounts', 'scheduledPostsPerMonth', 'autoReplyDmsPerMonth', 'bioPages', 'clickRetentionDays']
-const SUFFIX: Partial<Record<LimitKey, string>> = { socialAccounts: 'media sosial', scheduledPostsPerMonth: 'per bulan', autoReplyDmsPerMonth: 'otomatis per bulan', bioPages: 'Etalase', clickRetentionDays: 'riwayat statistik' }
-const line = (key: LimitKey, v: number) => (v === -1 ? `${LIMIT_META[key].label} tanpa batas` : `${formatLimit(key, v)} ${SUFFIX[key] ?? ''}`.trim())
+const { lines: planLines } = usePlanLines()
 const featured = computed(() => props.trialPlanSlug)
 </script>
 
@@ -59,26 +55,15 @@ const featured = computed(() => props.trialPlanSlug)
         </p>
         <ul class="space-y-2 text-sm flex-1">
           <li
-            v-for="key in KEYS"
-            :key="key"
+            v-for="item in planLines(plan)"
+            :key="item"
             class="flex gap-2"
           >
             <UIcon
               name="i-lucide-check"
               class="size-4 text-primary shrink-0 mt-0.5"
             />
-            <span>{{ line(key, plan.limits[key] ?? 0) }}</span>
-          </li>
-          <li
-            v-for="key in FEATURE_KEYS.filter(k => plan.features[k])"
-            :key="key"
-            class="flex gap-2"
-          >
-            <UIcon
-              name="i-lucide-check"
-              class="size-4 text-primary shrink-0 mt-0.5"
-            />
-            <span>{{ FEATURE_META[key as FeatureKey].label }}</span>
+            <span>{{ item }}</span>
           </li>
         </ul>
         <UButton
