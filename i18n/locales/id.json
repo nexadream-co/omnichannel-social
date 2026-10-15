@@ -1,0 +1,188 @@
+{
+  "app": {
+    "name": "Socialz.id",
+    "tagline": "Jadwalkan konten, kumpulkan link produk, balas komentar otomatis."
+  },
+  "common": {
+    "loading": "Memuat…",
+    "save": "Simpan",
+    "cancel": "Batal",
+    "back": "Kembali",
+    "retry": "Coba lagi",
+    "close": "Tutup",
+    "or": "atau",
+    "comingSoon": "Segera hadir",
+    "comingSoonBody": "Halaman ini sedang kami siapkan. Sementara itu, ikuti langkah di Beranda.",
+    "backToHome": "Ke Beranda"
+  },
+  "nav": {
+    "home": "Beranda",
+    "compose": "Buat Postingan",
+    "calendar": "Kalender",
+    "posts": "Postingan",
+    "links": "Link Produk",
+    "bio": "Etalase",
+    "autoReply": "Balas Otomatis",
+    "analytics": "Statistik",
+    "accounts": "Akun Sosial",
+    "team": "Tim",
+    "more": "Lainnya",
+    "billing": "Langganan",
+    "settings": "Pengaturan",
+    "activity": "Log aktivitas",
+    "profile": "Profil",
+    "changePassword": "Ubah kata sandi",
+    "help": "Bantuan",
+    "darkMode": "Mode gelap",
+    "language": "Bahasa",
+    "signOut": "Keluar",
+    "groupAccount": "Akun",
+    "groupBusiness": "Bisnis",
+    "groupApp": "Aplikasi",
+    "collapse": "Ciutkan menu",
+    "expand": "Buka menu"
+  },
+  "auth": {
+    "email": "Email",
+    "password": "Kata sandi",
+    "name": "Nama",
+    "namePlaceholder": "Nama kamu atau nama toko",
+    "phone": "Nomor HP (opsional)",
+    "newPassword": "Kata sandi baru",
+    "passwordHint": "Minimal 8 karakter.",
+    "loginTitle": "Masuk ke Socialz.id",
+    "loginSubtitle": "Kelola postingan, link produk dan Etalase kamu.",
+    "loginButton": "Masuk",
+    "googleButton": "Lanjutkan dengan Google",
+    "forgotLink": "Lupa kata sandi?",
+    "noAccount": "Belum punya akun?",
+    "registerLink": "Daftar gratis",
+    "registerTitle": "Daftar gratis",
+    "registerSubtitle": "Coba semua fitur Kreator gratis selama 14 hari. Tanpa kartu kredit.",
+    "registerButton": "Buat akun",
+    "haveAccount": "Sudah punya akun?",
+    "loginLink": "Masuk",
+    "acceptTermsPrefix": "Saya menyetujui",
+    "terms": "Syarat & Ketentuan",
+    "and": "dan",
+    "privacy": "Kebijakan Privasi",
+    "forgotTitle": "Lupa kata sandi",
+    "forgotSubtitle": "Masukkan email kamu. Kami kirim tautan untuk membuat kata sandi baru.",
+    "forgotButton": "Kirim tautan",
+    "forgotSent": "Kalau email itu terdaftar, tautan sudah kami kirim. Cek kotak masuk atau folder spam.",
+    "resetTitle": "Buat kata sandi baru",
+    "resetButton": "Simpan kata sandi",
+    "resetDone": "Kata sandi berhasil diubah. Silakan masuk.",
+    "resetMissingToken": "Tautan tidak lengkap. Minta tautan baru dari halaman lupa kata sandi.",
+    "verifyTitle": "Verifikasi email",
+    "verifyChecking": "Sedang memverifikasi email kamu…",
+    "verifyDone": "Email kamu sudah terverifikasi. Terima kasih!",
+    "verifyFailed": "Tautan verifikasi sudah tidak berlaku. Minta tautan baru di bawah.",
+    "verifyCheckInbox": "Kami sudah mengirim tautan verifikasi ke email kamu. Klik tautannya untuk melanjutkan.",
+    "verifyResend": "Kirim ulang email verifikasi",
+    "verifyResent": "Email verifikasi sudah dikirim ulang.",
+    "verifyBanner": "Verifikasi email kamu dulu untuk menghubungkan akun media sosial.",
+    "continueToApp": "Lanjut ke Beranda"
+  },
+  "authError": {
+    "invalidCredentials": "Email atau kata sandi salah.",
+    "rateLimited": "Terlalu banyak percobaan. Coba lagi beberapa menit lagi.",
+    "emailTaken": "Email sudah terdaftar. Silakan masuk.",
+    "invalidToken": "Tautan sudah tidak berlaku. Silakan minta tautan baru.",
+    "cancelled": "Masuk dengan Google dibatalkan.",
+    "unavailable": "Masuk dengan Google sedang tidak tersedia. Coba pakai email.",
+    "accountInactive": "Akun ini tidak aktif. Hubungi tim Socialz.id.",
+    "generic": "Terjadi kesalahan. Coba lagi sebentar lagi.",
+    "acceptTerms": "Kamu perlu menyetujui syarat & ketentuan.",
+    "emailInvalid": "Format email tidak valid.",
+    "nameShort": "Nama minimal 2 karakter.",
+    "passwordShort": "Kata sandi minimal 8 karakter."
+  },
+  "home": {
+    "greeting": "Halo, {name}!",
+    "subtitle": "Yuk siapkan akunmu. Empat langkah, sekitar 5 menit.",
+    "checklistTitle": "Panduan memulai",
+    "checklistProgress": "{done} dari {total} selesai",
+    "dismiss": "Sembunyikan panduan",
+    "allDone": "Hebat! Semua langkah selesai. Postinganmu sekarang terbit otomatis.",
+    "steps": {
+      "accountConnected": {
+        "title": "Hubungkan akun",
+        "body": "Hubungkan Instagram, Threads atau Halaman Facebook supaya postingan bisa terbit otomatis.",
+        "action": "Hubungkan akun"
+      },
+      "bioCreated": {
+        "title": "Buat Etalase",
+        "body": "Satu halaman berisi semua produkmu, untuk link di bio.",
+        "action": "Buat Etalase"
+      },
+      "linkAdded": {
+        "title": "Tambah produk pertama",
+        "body": "Tempel link Shopee atau TikTok Shop. Judul, foto dan harga terisi otomatis.",
+        "action": "Tambah produk"
+      },
+      "postScheduled": {
+        "title": "Jadwalkan postingan pertama",
+        "body": "Tulis sekali, terbit di semua akunmu pada waktu terbaik.",
+        "action": "Buat postingan"
+      }
+    },
+    "trialBanner": "Uji coba {plan} aktif sampai {date}.",
+    "seePlans": "Lihat paket"
+  },
+  "role": {
+    "owner": {
+      "label": "Pemilik",
+      "summary": "Akses penuh, termasuk akun media sosial, langganan dan pembayaran."
+    },
+    "editor": {
+      "label": "Editor",
+      "summary": "Membuat dan menjadwalkan postingan, mengelola link produk, Etalase dan Balas Otomatis. Tidak bisa mengubah langganan atau akun media sosial."
+    },
+    "viewer": {
+      "label": "Pemantau",
+      "summary": "Hanya melihat postingan dan statistik."
+    }
+  },
+  "status": {
+    "subscription": {
+      "trialing": "Masa coba",
+      "active": "Aktif",
+      "past_due": "Menunggu pembayaran",
+      "cancelled": "Dibatalkan",
+      "downgraded": "Paket Gratis",
+      "suspended": "Ditangguhkan"
+    },
+    "workspace": {
+      "active": "Aktif",
+      "suspended": "Ditangguhkan",
+      "deleted": "Dihapus"
+    },
+    "job": {
+      "queued": "Antre",
+      "running": "Berjalan",
+      "done": "Selesai",
+      "dead": "Gagal permanen",
+      "cancelled": "Dibatalkan"
+    }
+  },
+  "landing": {
+    "heroTitle": "Jualan afiliasi jadi lebih ringan",
+    "heroBody": "Jadwalkan postingan ke Instagram, Threads dan Facebook, simpan link produk di Etalase, dan kirim link otomatis saat ada yang berkomentar.",
+    "ctaRegister": "Daftar gratis",
+    "ctaLogin": "Masuk",
+    "feature1Title": "Jadwalkan sekali, terbit di semua akun",
+    "feature1Body": "Tulis postingan sekali dan biarkan Socialz.id yang menerbitkannya.",
+    "feature2Title": "Etalase untuk link di bio",
+    "feature2Body": "Semua produk afiliasimu di satu halaman, dengan statistik klik.",
+    "feature3Title": "Balas Otomatis",
+    "feature3Body": "Komentar \"mau\"? Link produk langsung terkirim lewat DM."
+  },
+  "error": {
+    "notFoundTitle": "Halaman tidak ditemukan",
+    "notFoundBody": "Mungkin tautannya salah atau halamannya sudah dipindah.",
+    "genericTitle": "Ada yang tidak beres",
+    "genericBody": "Terjadi kesalahan. Coba lagi sebentar lagi.",
+    "backHome": "Kembali ke beranda"
+  }
+}

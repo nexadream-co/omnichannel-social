@@ -1,0 +1,27 @@
+# Local development only: Postgres 17 + Mailpit (email capture).
+# Production has no containers except the media processor (docs/blueprint/19).
+name: socialz-dev
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: socialz
+      POSTGRES_PASSWORD: socialz
+      POSTGRES_DB: socialz
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init-test-db.sql:/docker-entrypoint-initdb.d/init-test-db.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U socialz"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+  mailpit:
+    image: axllent/mailpit:v1.27
+    ports:
+      - "8025:8025"
+      - "1025:1025"
+volumes:
+  pgdata:

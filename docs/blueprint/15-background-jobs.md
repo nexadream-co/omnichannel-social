@@ -55,7 +55,7 @@ On each tick, for each enabled schedule:
 2. Claim it: `UPDATE job_schedules SET last_slot = $slot WHERE name = $name AND (last_slot IS NULL OR last_slot < $slot) RETURNING name`.
 3. If a row came back, `enqueue(tx, name, { slot }, { singletonKey: slot.toISOString() })` **in the same transaction** as the claim.
 
-Two overlapping ticks race on step 2; only one wins. A tick that was missed simply fires the latest slot on the next tick (catch-up runs **once**, not once per missed slot; every platform job processes "all due" items, so one run catches up). Schedules are upserted from code at deploy (seed / migration), never registered at runtime.
+Two overlapping ticks race on step 2; only one wins. A tick that was missed simply fires the latest slot on the next tick (catch-up runs **once**, not once per missed slot; every platform job processes "all due" items, so one run catches up). Schedules are upserted from code at deploy (seed / migration), never registered at runtime. A schedule ships `enabled = false` until its handler exists; the migration of the milestone that adds the handler enables it (M1: only `maintenance.purge`).
 
 ### 1.3 Claiming and running (`server/core/jobs/runner.ts`)
 

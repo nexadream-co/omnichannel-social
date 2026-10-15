@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: socialz
+          POSTGRES_PASSWORD: socialz
+          POSTGRES_DB: socialz_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U socialz" --health-interval 2s --health-timeout 3s --health-retries 20
+    env:
+      TEST_DATABASE_URL: postgresql://socialz:socialz@localhost:5432/socialz_test
+      DATABASE_URL: postgresql://socialz:socialz@localhost:5432/socialz_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+
+  # Portability (docs/blueprint/19 §4): every tier-1 preset must build from the same source.
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        preset: [node-server, aws-lambda, vercel]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+        env:
+          NITRO_PRESET: ${{ matrix.preset }}

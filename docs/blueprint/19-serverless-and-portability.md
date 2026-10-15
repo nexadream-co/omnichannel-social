@@ -52,7 +52,7 @@ Every target, whatever the host, provides the same six things:
 
 1. `npm run lint && npm run typecheck && npm test`.
 2. `npm run db:migrate` against `DATABASE_URL_DIRECT` (CI secret; the direct URL is never given to the functions).
-3. Seed reference data (idempotent): permissions, menus, settings, templates, plans, `job_schedules`.
+3. Reference data travels **inside migrations** (`02` §5), so a release never needs the seed. The seed (`npm run db:seed`) runs only once, to bootstrap a fresh environment, because re-running it would overwrite admin edits.
 4. Deploy the functions with the host's CLI or Git integration.
 5. Smoke check `/healthz`.
 

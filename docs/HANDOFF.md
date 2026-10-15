@@ -4,10 +4,27 @@ This file lets a new Claude session (or another account) continue exactly where 
 
 ## 1. Status
 
-- **Phase:** design complete and approved by the user. **No application code exists yet.** The project directory holds only docs.
+- **Phase:** **M1 foundation implemented locally (2026-10-15)**, not yet deployed. See §1.1.
 - **2026-10-15: architecture refactored to serverless, provider-agnostic** (user request). The VPS + Docker + Caddy + pg-boss worker topology is replaced by Nitro presets + a Postgres job table run by a per-minute HTTP tick + a separate ffmpeg media processor container. Spec: `docs/blueprint/19`, `docs/blueprint/15`, `docs/ARCHITECTURE.md` §2–3, §8.
-- **Git:** `git init` has been run, but nothing is committed yet. Suggest a first commit of the docs before coding (ask the user first).
+- **Git:** docs committed as `9608de1`; the M1 code is not committed yet (ask the user).
 - **Local environment:** Node **v22.16.0** at `/usr/local/bin/node` is too old (Nuxt 4.6 needs `^22.22.3 || ^24.15.0 || >=26`). Homebrew also has Node 24.1.0, also too old and shadowed by `/usr/local/bin`. The user chose **fnm + Node 24 LTS** (`brew install fnm`, shell hook in `~/.zshrc`, `.nvmrc` = `24`), but setup has **not** been run. Docker 29, psql 14 and bun 1.2.5 are installed; pnpm is not.
+
+### 1.1 M1 status (2026-10-15)
+
+Done and verified locally (Node 24.22 via fnm at `~/.local/share/fnm`, Docker `postgres:17` + Mailpit):
+- Scaffold: Nuxt 4.6.1, Nuxt UI 4.12, i18n id/en, better-auth 1.7.10, Drizzle 0.45, zod 4, TypeScript 5.9 (vue-tsc does not support TS 7 yet).
+- Full platform + domain schema (`server/core/db/schema/*`), first migration `0000_init.sql`, idempotent seed (permissions, roles, menus, settings, templates, plans, gateway row, job schedules, draft legal pages, FAQ, superadmin `admin@socialz.local`, dev demo creator `demo@socialz.local`).
+- Job system (`server/core/jobs`): jobs table, runner with leases + budget + SKIP LOCKED, slot-claimed schedules, kick, fan-out signing, `/api/internal/tick`, `/api/internal/jobs/run`, `/healthz`, `maintenance.purge` + `system.noop` handlers.
+- Auth: two better-auth instances behind the facade, register (workspace + 14-day trial), email verification and reset via Mailpit, per-email + per-IP limits in Postgres, gatekeepers, CSRF origin check, audit rows.
+- UI: landing, creator auth pages, Beranda with the onboarding checklist, creator shell (rail / phone bottom nav), admin auth + dashboard with DB-driven sidebar; light/dark, phone/desktop checked by screenshot.
+- Checks: `npm run lint`, `npm run typecheck`, `npm test` (34 tests, unit + integration on a real Postgres) all pass; `node-server`, `aws-lambda` and `vercel` presets build; the built `node-server` output passes a smoke test.
+- CI: `.github/workflows/ci.yml` (lint, typecheck, tests with Postgres, preset build matrix). Not run yet (no remote).
+
+Not done in M1 (needs the user or a later step):
+- Staging deploy + cron entry: blocked on choosing the staging host (`blueprint/19` §4).
+- Google sign-in: code path in place; untested until `GOOGLE_CLIENT_ID/SECRET` exist.
+- Playwright E2E specs, change-password / profile pages, impersonation, invitations (later phases of `blueprint/17`).
+- Shell `!` tip: add the fnm hook to `~/.zshrc` (`eval "$(fnm env --use-on-cd --shell zsh)"`); the shell runs under Rosetta, so install Node with `fnm install 24 --arch arm64`.
 
 ## 2. Document map
 

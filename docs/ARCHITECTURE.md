@@ -299,7 +299,7 @@ These platform tables are specified in [`blueprint/02-database-schema.md`](bluep
 ### 7.2 Channels and publishing
 | Table | Key columns and constraints |
 |---|---|
-| `social_accounts` | `platform`, `external_id`, `username`, `avatar_url`, `access_token_enc bytea`, `refresh_token_enc bytea`, `key_version`, `token_expires_at`, `scopes text[]`, `status` (active / needs_reauth / revoked / disabled), `meta jsonb` (ig_user_id, page_id…). **UNIQUE(platform, external_id) WHERE status <> 'revoked'** (one owner per account, so webhooks route unambiguously). Index(`token_expires_at`) WHERE active |
+| `social_accounts` | `platform`, `external_id`, `username`, `avatar_url`, `access_token_enc text`, `refresh_token_enc text` (`enc:v1:…` from `server/core/crypto.ts`; the key version is inside the value), `token_expires_at`, `scopes text[]`, `status` (active / needs_reauth / revoked / disabled), `meta jsonb` (ig_user_id, page_id…). **UNIQUE(platform, external_id) WHERE status <> 'revoked'** (one owner per account, so webhooks route unambiguously). Index(`token_expires_at`) WHERE active |
 | `media_assets` | `r2_key`, `public_url`, `mime`, `kind`, `bytes`, `width`, `height`, `duration_ms`, `codec`, `sha256`, `status` (uploading / processing / ready / failed), `processor_ref` (current submission, matched by the callback), `processor_submitted_at`, `variants jsonb`, `error` |
 | `posts` | `author_user_id`, `base_caption`, `status` (draft / scheduled / publishing / published / partial / failed / cancelled), `scheduled_at`, `version int` (optimistic lock). Index(`workspace_id`, `scheduled_at`) |
 | `post_media` | PK(`post_id`, `position`), `media_id` |
@@ -314,9 +314,9 @@ These platform tables are specified in [`blueprint/02-database-schema.md`](bluep
 |---|---|
 | `links` | Vault. `destination_url`, `merchant` (shopee / tokopedia / tiktok_shop / lazada / other), `title`, `image_url`, `price_idr bigint`, `tags text[]`, `archived` |
 | `short_links` | `slug` **UNIQUE** (case-sensitive base62, 6 chars), `domain`, `link_id`, `post_target_id NULL`, `channel NULL`, `source` (vault / post / bio / dm), `active` |
-| `link_clicks` | **Range-partitioned by month on `clicked_at`**. `short_link_id`, `workspace_id`, `ip_hash bytea`, `country`, `region`, `city`, `device`, `os`, `in_app` (ig / threads / fb / none), `referrer_domain`, `is_bot`, `is_unique_day`. BRIN(`clicked_at`), btree(`short_link_id`, `clicked_at`) |
+| `link_clicks` | **Range-partitioned by month on `clicked_at`**. `short_link_id`, `workspace_id`, `ip_hash text` (hex), `country`, `region`, `city`, `device`, `os`, `in_app` (ig / threads / fb / none), `referrer_domain`, `is_bot`, `is_unique_day`. BRIN(`clicked_at`), btree(`short_link_id`, `clicked_at`) |
 | `link_click_daily` | PK(`day`, `short_link_id`, `channel`, `country`, `device`, `referrer_domain`), `clicks`, `uniques`. Retention per plan is applied at query time |
-| `bio_pages` | `handle citext UNIQUE`, `title`, `bio`, `avatar_media_id`, `theme jsonb`, `seo jsonb`, `published` |
+| `bio_pages` | `handle text` (UNIQUE on `lower(handle)`, no citext extension needed), `title`, `bio`, `avatar_media_id`, `theme jsonb`, `seo jsonb`, `published` |
 | `bio_categories` | `bio_page_id`, `name`, `position` |
 | `bio_items` | `bio_page_id`, `category_id`, `type` (product / link / header / social), `link_id`, `short_link_id`, `title`, `image_url`, `price_label`, `badge`, `pinned`, `position`, `visible` |
 

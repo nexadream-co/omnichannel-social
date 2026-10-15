@@ -1,0 +1,188 @@
+{
+  "app": {
+    "name": "Socialz.id",
+    "tagline": "Schedule content, collect product links, auto-reply to comments."
+  },
+  "common": {
+    "loading": "Loading…",
+    "save": "Save",
+    "cancel": "Cancel",
+    "back": "Back",
+    "retry": "Try again",
+    "close": "Close",
+    "or": "or",
+    "comingSoon": "Coming soon",
+    "comingSoonBody": "We're still building this page. In the meantime, follow the steps on Home.",
+    "backToHome": "Go to Home"
+  },
+  "nav": {
+    "home": "Home",
+    "compose": "New post",
+    "calendar": "Calendar",
+    "posts": "Posts",
+    "links": "Product links",
+    "bio": "Storefront",
+    "autoReply": "Auto reply",
+    "analytics": "Statistics",
+    "accounts": "Social accounts",
+    "team": "Team",
+    "more": "More",
+    "billing": "Subscription",
+    "settings": "Settings",
+    "activity": "Activity log",
+    "profile": "Profile",
+    "changePassword": "Change password",
+    "help": "Help",
+    "darkMode": "Dark mode",
+    "language": "Language",
+    "signOut": "Sign out",
+    "groupAccount": "Account",
+    "groupBusiness": "Business",
+    "groupApp": "App",
+    "collapse": "Collapse menu",
+    "expand": "Expand menu"
+  },
+  "auth": {
+    "email": "Email",
+    "password": "Password",
+    "name": "Name",
+    "namePlaceholder": "Your name or shop name",
+    "phone": "Phone number (optional)",
+    "newPassword": "New password",
+    "passwordHint": "At least 8 characters.",
+    "loginTitle": "Sign in to Socialz.id",
+    "loginSubtitle": "Manage your posts, product links and storefront.",
+    "loginButton": "Sign in",
+    "googleButton": "Continue with Google",
+    "forgotLink": "Forgot password?",
+    "noAccount": "No account yet?",
+    "registerLink": "Sign up free",
+    "registerTitle": "Sign up free",
+    "registerSubtitle": "Try every Kreator feature free for 14 days. No credit card.",
+    "registerButton": "Create account",
+    "haveAccount": "Already have an account?",
+    "loginLink": "Sign in",
+    "acceptTermsPrefix": "I agree to the",
+    "terms": "Terms",
+    "and": "and",
+    "privacy": "Privacy Policy",
+    "forgotTitle": "Forgot password",
+    "forgotSubtitle": "Enter your email and we'll send you a link to create a new password.",
+    "forgotButton": "Send link",
+    "forgotSent": "If that email is registered, we've sent the link. Check your inbox or spam folder.",
+    "resetTitle": "Create a new password",
+    "resetButton": "Save password",
+    "resetDone": "Password changed. Please sign in.",
+    "resetMissingToken": "This link is incomplete. Request a new one from the forgot password page.",
+    "verifyTitle": "Verify your email",
+    "verifyChecking": "Verifying your email…",
+    "verifyDone": "Your email is verified. Thank you!",
+    "verifyFailed": "This verification link has expired. Request a new one below.",
+    "verifyCheckInbox": "We sent a verification link to your email. Click it to continue.",
+    "verifyResend": "Resend verification email",
+    "verifyResent": "Verification email sent again.",
+    "verifyBanner": "Verify your email first to connect social accounts.",
+    "continueToApp": "Continue to Home"
+  },
+  "authError": {
+    "invalidCredentials": "Wrong email or password.",
+    "rateLimited": "Too many attempts. Try again in a few minutes.",
+    "emailTaken": "This email is already registered. Please sign in.",
+    "invalidToken": "This link is no longer valid. Please request a new one.",
+    "cancelled": "Google sign-in was cancelled.",
+    "unavailable": "Google sign-in is unavailable right now. Try email instead.",
+    "accountInactive": "This account is inactive. Contact the Socialz.id team.",
+    "generic": "Something went wrong. Please try again shortly.",
+    "acceptTerms": "You need to accept the terms.",
+    "emailInvalid": "Invalid email format.",
+    "nameShort": "Name must be at least 2 characters.",
+    "passwordShort": "Password must be at least 8 characters."
+  },
+  "home": {
+    "greeting": "Hi, {name}!",
+    "subtitle": "Let's set up your account. Four steps, about 5 minutes.",
+    "checklistTitle": "Getting started",
+    "checklistProgress": "{done} of {total} done",
+    "dismiss": "Hide guide",
+    "allDone": "Great! All steps done. Your posts now publish automatically.",
+    "steps": {
+      "accountConnected": {
+        "title": "Connect an account",
+        "body": "Connect Instagram, Threads or a Facebook Page so posts publish automatically.",
+        "action": "Connect account"
+      },
+      "bioCreated": {
+        "title": "Create your storefront",
+        "body": "One page with all your products, for your link in bio.",
+        "action": "Create storefront"
+      },
+      "linkAdded": {
+        "title": "Add your first product",
+        "body": "Paste a Shopee or TikTok Shop link. Title, photo and price fill in automatically.",
+        "action": "Add product"
+      },
+      "postScheduled": {
+        "title": "Schedule your first post",
+        "body": "Write once, publish to all your accounts at the best time.",
+        "action": "New post"
+      }
+    },
+    "trialBanner": "{plan} trial active until {date}.",
+    "seePlans": "See plans"
+  },
+  "role": {
+    "owner": {
+      "label": "Owner",
+      "summary": "Full access, including social accounts, subscription and payments."
+    },
+    "editor": {
+      "label": "Editor",
+      "summary": "Creates and schedules posts, manages product links, storefront and auto reply. Can't change the subscription or social accounts."
+    },
+    "viewer": {
+      "label": "Viewer",
+      "summary": "Only views posts and statistics."
+    }
+  },
+  "status": {
+    "subscription": {
+      "trialing": "Trial",
+      "active": "Active",
+      "past_due": "Payment pending",
+      "cancelled": "Cancelled",
+      "downgraded": "Free plan",
+      "suspended": "Suspended"
+    },
+    "workspace": {
+      "active": "Active",
+      "suspended": "Suspended",
+      "deleted": "Deleted"
+    },
+    "job": {
+      "queued": "Queued",
+      "running": "Running",
+      "done": "Done",
+      "dead": "Failed",
+      "cancelled": "Cancelled"
+    }
+  },
+  "landing": {
+    "heroTitle": "Affiliate selling, made lighter",
+    "heroBody": "Schedule posts to Instagram, Threads and Facebook, keep product links in your storefront, and send links automatically when someone comments.",
+    "ctaRegister": "Sign up free",
+    "ctaLogin": "Sign in",
+    "feature1Title": "Schedule once, publish everywhere",
+    "feature1Body": "Write your post once and let Socialz.id publish it.",
+    "feature2Title": "A storefront for your bio link",
+    "feature2Body": "All your affiliate products on one page, with click statistics.",
+    "feature3Title": "Auto reply",
+    "feature3Body": "Someone comments \"want\"? The product link goes out by DM right away."
+  },
+  "error": {
+    "notFoundTitle": "Page not found",
+    "notFoundBody": "The link may be wrong or the page has moved.",
+    "genericTitle": "Something went wrong",
+    "genericBody": "Something went wrong. Please try again shortly.",
+    "backHome": "Back to home"
+  }
+}

@@ -80,11 +80,12 @@ export default defineEventHandler(event => staffAuth.handler(toWebRequest(event)
 
 - `database: drizzleAdapter(db, { provider: 'pg', schema })`, with `modelName` overrides so the staff instance uses the `staff_*` tables.
 - `secret: env.BETTER_AUTH_SECRET`. In production a missing secret **throws at boot**; never sign with a default.
-- `advanced: { cookiePrefix, useSecureCookies: env.isProduction, generateId: () => uuidv7() }`.
+- `advanced: { cookiePrefix, useSecureCookies: env.isProduction, database: { generateId: () => uuidv7() }, backgroundTasks: { handler } }`. The background-task handler hands better-auth's deferred work (emails) to the current request's `waitUntil` through an `AsyncLocalStorage` request scope (`server/core/request-scope.ts`).
+- The creator instance sets `disabledPaths: ['/sign-up/email']`: public sign-up goes through `POST /api/app/register` (terms, registration switch, workspace). `auth.api.signUpEmail` still works server-side, because `disabledPaths` is only checked by the HTTP router.
 - `session: { expiresIn: 30 days, updateAge: 1 day }` for creators; `expiresIn: 7 days` for staff.
 - `user.additionalFields` for `phone`, `isActive`, `locale`, `lastLoginAt`, `lastSeenAt` (creator) and `roleId`, `phone`, `isActive`, `lastLoginAt`, `lastSeenAt` (staff). Extra session field `activeWorkspaceId` (creator) and `impersonatedBy` (both).
 - `emailAndPassword: { enabled: true, minPasswordLength: 8, sendResetPassword }`. The reset email goes through `sendTemplatedEmail('password_reset', …)` (`11`), never a library mailer.
-- `rateLimit: { enabled: true, storage: 'memory' }` plus our own limits (§8).
+- `rateLimit: { enabled: true, customStorage: { consume } }`, where `consume` writes to our own `rate_limit_buckets` table (instances share no memory, and one mechanism serves both better-auth and our limits), plus our own limits (§8).
 - `databaseHooks.session.create.before`: refuse when `users.isActive = false` (401 "Email atau kata sandi salah."). For creators, also pin `activeWorkspaceId` (§3).
 - The creator instance only: `socialProviders.google` (when configured) and `emailVerification` (§4). The staff instance: `disableSignUp: true` (accounts are created by invitation only).
 
@@ -197,7 +198,7 @@ Staff accounts are created **only** by accepting an invitation: `acceptStaffInvi
 
 ## 8. Rate limiting
 
-On top of better-auth's built-in limiter, `server/core/rate-limit.ts` provides a fixed window stored in Postgres (`rate_limit_buckets`, `16` §4), because serverless instances share no memory. better-auth's own limiter is configured with `rateLimit: { storage: 'database' }` for the same reason (its rate-limit table is generated into each instance's schema):
+On top of better-auth's built-in limiter, `server/core/rate-limit.ts` provides a fixed window stored in Postgres (`rate_limit_buckets`, `16` §4), because serverless instances share no memory. better-auth's own limiter uses the same table through `rateLimit.customStorage.consume` (keys prefixed `ba:<audience>:`), so no separate better-auth rate-limit table exists:
 
 ```ts
 assertRateLimit(scope, identifier, limit, windowMs)  // throws 429 RATE_LIMITED with retryAfterSeconds
