@@ -88,3 +88,11 @@ describe('settings catalog', () => {
     for (const def of SETTINGS_CATALOG.filter(s => s.type === 'select')) expect(def.options?.length).toBeGreaterThan(0)
   })
 })
+
+describe('phone display', () => {
+  it('shows the local format people write', async () => {
+    const { formatIndonesianPhone } = await import('../../shared/utils/phone')
+    expect(formatIndonesianPhone('6281234567890')).toBe('0812-3456-7890')
+    expect(formatIndonesianPhone(null)).toBe('')
+  })
+})

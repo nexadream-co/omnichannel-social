@@ -73,6 +73,14 @@ export const creatorSignUp: SignUpPort = {
   }
 }
 
+/** A Google-only account creates its first password without an old one (docs/blueprint/03 §6). */
+export async function setInitialPassword(headers: Headers, newPassword: string): Promise<void> {
+  if (await creatorAuth().api.getSession({ headers }).then(r => r && hasPassword(r.user.id))) {
+    throw new Error('Account already has a password')
+  }
+  await creatorAuth().api.setPassword({ body: { newPassword }, headers })
+}
+
 export async function hashPassword(password: string): Promise<string> {
   const { hashPassword: hash } = await import('better-auth/crypto')
   return hash(password)

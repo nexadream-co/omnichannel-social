@@ -15,7 +15,8 @@ function queue(name: string, options: Partial<Omit<QueueDef, 'name'>> = {}): Que
 
 export const QUEUES = {
   'system.noop': queue('system.noop', { maxAttempts: 1, expectedMs: 1_000 }),
-  'maintenance.purge': queue('maintenance.purge', { maxAttempts: 3, leaseSeconds: 300, expectedMs: 30_000, concurrency: 1 })
+  'maintenance.purge': queue('maintenance.purge', { maxAttempts: 3, leaseSeconds: 300, expectedMs: 30_000, concurrency: 1 }),
+  'meta.data_deletion': queue('meta.data_deletion', { maxAttempts: 5 })
 } as const satisfies Record<string, QueueDef>
 
 export type QueueName = keyof typeof QUEUES

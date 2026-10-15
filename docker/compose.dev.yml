@@ -23,5 +23,14 @@ services:
     ports:
       - "8025:8025"
       - "1025:1025"
+  # S3-compatible stand-in for Cloudflare R2 (the R2 driver talks to it through R2_ENDPOINT).
+  # Dev only: it accepts any signature and serves objects publicly, like an R2 public bucket.
+  s3:
+    image: adobe/s3mock:4.7.0
+    environment:
+      COM_ADOBE_TESTING_S3MOCK_STORE_INITIAL_BUCKETS: socialz-media
+      COM_ADOBE_TESTING_S3MOCK_STORE_RETAIN_FILES_ON_EXIT: "true"
+    ports:
+      - "9090:9090"
 volumes:
   pgdata:

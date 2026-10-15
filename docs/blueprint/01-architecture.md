@@ -255,6 +255,8 @@ META_WEBHOOK_VERIFY_TOKEN=""
 
 # Storage (R2)
 R2_ACCOUNT_ID="" R2_ACCESS_KEY_ID="" R2_SECRET_ACCESS_KEY="" R2_BUCKET=""
+R2_ENDPOINT=""                 # dev only: the local S3 mock (http://localhost:9090); empty = R2
+STORAGE_DRIVER="r2"            # 'fake' in tests
 
 # Dev / test
 ADAPTER_MODE="real"            # 'fake' swaps channel adapters for in-memory fakes

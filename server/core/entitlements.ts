@@ -1,5 +1,5 @@
 import { eq, sql } from 'drizzle-orm'
-import { normalizeFeatures, normalizeLimits, type FeatureKey, type PlanFeatures, type PlanLimits } from '../../shared/utils/plans'
+import { formatLimit, normalizeFeatures, normalizeLimits, type FeatureKey, type LimitKey, type PlanFeatures, type PlanLimits } from '../../shared/utils/plans'
 import type { Executor } from './db/client'
 import { getDb } from './db/client'
 import { plans, subscriptions, workspaces } from './db/schema'
@@ -76,4 +76,15 @@ export async function requireEntitlement(ctx: Pick<WorkspaceContext, 'workspaceI
   if (!(await can(ctx.workspaceId, feature, ctx.db))) {
     throw appError(402, 'Fitur ini belum termasuk di paket kamu. Upgrade untuk memakainya.', 'PLAN_REQUIRED', { feature })
   }
+}
+
+/**
+ * 402 LIMIT_REACHED when `current` already uses the whole allowance (adding one more would exceed it).
+ * -1 means unlimited. Call after the role check (docs/blueprint/06 §4).
+ */
+export async function assertWithinLimit(ctx: Pick<WorkspaceContext, 'workspaceId' | 'db'>, key: LimitKey, current: number): Promise<void> {
+  const { limits, planName } = await getEntitlements(ctx.workspaceId, undefined, ctx.db)
+  const max = limits[key]
+  if (max === -1 || current < max) return
+  throw appError(402, `Paket ${planName} hanya mengizinkan ${formatLimit(key, max)}. Upgrade untuk menambah lagi.`, 'LIMIT_REACHED', { limit: key, max, current })
 }

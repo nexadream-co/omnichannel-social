@@ -9,4 +9,9 @@
 - Notification bell and notifications page for creators and staff, refreshed every minute.
 - Back-office: settings editor (grouped by topic, kill switches ask for confirmation, test email), email template editor with live preview, notification template editor, kill-switch banner and a "Test environment" badge.
 - The error page sends visitors back to the console they came from.
+- Creators and staff can edit their profile (name, phone shown as 0812-…, photo resized in the browser) and change their password; Google-only creators can create one.
+- Workspace settings (name, time zone, niche, affiliate programs), a one-click data export, and an account deletion request; the public /hapus-akun page explains the process in both languages.
+- Team: owners on plans with team access invite editors or viewers, manage roles, deactivate members; invitees accept from the emailed link. Plan-gated menu entries show a lock.
+- Meta data deletion and deauthorize callbacks, with a public status page.
+- The onboarding guide on Beranda can be hidden.
 - Database schema for the platform and domain layers, with seeded permissions, roles, menus, settings, templates, plans, job schedules and legal pages.

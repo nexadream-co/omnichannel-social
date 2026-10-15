@@ -28,6 +28,22 @@ const schema = z.object({
   MEDIA_PROCESSOR_URL: z.string().default(''),
   MEDIA_PROCESSOR_SECRET: z.string().default(''),
 
+  R2_ACCOUNT_ID: z.string().default(''),
+  R2_ACCESS_KEY_ID: z.string().default(''),
+  R2_SECRET_ACCESS_KEY: z.string().default(''),
+  R2_BUCKET: z.string().default(''),
+  R2_ENDPOINT: z.string().default(''),
+  STORAGE_DRIVER: z.enum(['r2', 'fake']).default('r2'),
+
+  META_APP_ID: z.string().default(''),
+  META_APP_SECRET: z.string().default(''),
+  META_GRAPH_VERSION: z.string().default('v25.0'),
+  INSTAGRAM_APP_ID: z.string().default(''),
+  INSTAGRAM_APP_SECRET: z.string().default(''),
+  THREADS_APP_ID: z.string().default(''),
+  THREADS_APP_SECRET: z.string().default(''),
+  META_WEBHOOK_VERIFY_TOKEN: z.string().default(''),
+
   MAILPIT_URL: z.string().default(''),
   ADAPTER_MODE: z.enum(['real', 'fake']).default('real'),
   DEBUG_JOBS: bool

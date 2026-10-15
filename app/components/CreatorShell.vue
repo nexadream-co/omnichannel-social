@@ -6,6 +6,8 @@ const { t } = useI18n()
 const localePath = useLocalePath()
 const route = useRoute()
 const auth = useCreatorAuth()
+const entitlements = useEntitlements()
+onMounted(() => entitlements.load())
 
 const visibleNav = computed(() => CREATOR_NAV.filter(item => !item.ability || auth.hasAbility(item.ability)))
 
@@ -15,7 +17,9 @@ const railItems = computed<NavigationMenuItem[]>(() => visibleNav.value
     label: t(item.labelKey),
     icon: item.icon,
     to: localePath(item.to),
-    exact: item.to === '/app'
+    exact: item.to === '/app',
+    // Plan-gated entries never hide: they show a lock and the page explains the upgrade (docs/blueprint/04 §2.2).
+    trailingIcon: item.feature && entitlements.data.value && !entitlements.has(item.feature) ? 'i-lucide-lock' : undefined
   })))
 
 const bottomItems = computed(() => visibleNav.value.filter(item => item.bottomNav))

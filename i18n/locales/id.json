@@ -132,7 +132,8 @@
       }
     },
     "trialBanner": "Uji coba {plan} aktif sampai {date}.",
-    "seePlans": "Lihat paket"
+    "seePlans": "Lihat paket",
+    "dismissConfirm": "Sembunyikan panduan memulai? Kamu tetap bisa memakai semua fitur."
   },
   "role": {
     "owner": {
@@ -196,5 +197,117 @@
     "seeAll": "Lihat semua notifikasi",
     "unreadOnly": "Belum dibaca saja",
     "emptyUnread": "Semua notifikasi sudah dibaca."
+  },
+  "profile": {
+    "title": "Profil",
+    "subtitle": "Nama, foto dan nomor HP yang tampil di akunmu.",
+    "photo": "Foto profil",
+    "changePhoto": "Ganti foto",
+    "removePhoto": "Hapus foto",
+    "photoTooLarge": "Foto terlalu besar. Pilih foto lain.",
+    "saved": "Profil disimpan.",
+    "emailHint": "Email tidak bisa diubah di sini."
+  },
+  "password": {
+    "title": "Ubah kata sandi",
+    "createTitle": "Buat kata sandi",
+    "createHint": "Akunmu masuk dengan Google. Buat kata sandi supaya bisa masuk juga dengan email.",
+    "current": "Kata sandi sekarang",
+    "new": "Kata sandi baru",
+    "revokeOthers": "Keluarkan perangkat lain",
+    "saved": "Kata sandi berhasil diubah.",
+    "wrongCurrent": "Kata sandi sekarang salah."
+  },
+  "settings": {
+    "title": "Pengaturan",
+    "subtitle": "Pengaturan akun dan data kamu.",
+    "workspaceName": "Nama akun",
+    "timezone": "Zona waktu",
+    "timezoneHint": "Dipakai untuk jadwal postingan dan statistik harian.",
+    "niche": "Kategori konten (opsional)",
+    "nichePlaceholder": "Misalnya fashion, kecantikan, gadget",
+    "programs": "Program afiliasi yang kamu ikuti (opsional)",
+    "saved": "Pengaturan disimpan.",
+    "dataTitle": "Data kamu",
+    "exportTitle": "Unduh semua data",
+    "exportBody": "File JSON berisi semua data akunmu: postingan, link produk, Etalase dan lainnya. Tanpa kata sandi atau kunci akses.",
+    "exportButton": "Unduh data",
+    "deleteTitle": "Hapus akun",
+    "deleteBody": "Kirim permintaan hapus akun. Tim kami memprosesnya paling lambat {days} hari.",
+    "deleteButton": "Kirim permintaan hapus",
+    "deleteReason": "Alasan (opsional)",
+    "deleteConfirm": "Saya paham semua data akun ini akan dihapus.",
+    "deleteSent": "Permintaan hapus akun sudah dikirim. Kami akan menghubungimu lewat email.",
+    "deleteRequestedOn": "Permintaan hapus akun dikirim pada {date}."
+  },
+  "timezones": {
+    "Asia/Jakarta": "WIB (Jakarta, Sumatra, Jawa, Kalimantan Barat & Tengah)",
+    "Asia/Makassar": "WITA (Bali, NTB, NTT, Sulawesi, Kalimantan Timur & Selatan)",
+    "Asia/Jayapura": "WIT (Maluku, Papua)"
+  },
+  "programs": {
+    "shopee": "Shopee Affiliate",
+    "tiktok_shop": "TikTok Shop",
+    "tokopedia": "Tokopedia",
+    "lazada": "Lazada",
+    "other": "Lainnya"
+  },
+  "team": {
+    "title": "Tim",
+    "subtitle": "Ajak asisten atau tim kecil membantu mengelola akun.",
+    "locked": "Fitur tim tersedia di paket yang lebih tinggi.",
+    "lockedBody": "Upgrade paket untuk mengundang editor atau pemantau.",
+    "seePlans": "Lihat paket",
+    "invite": "Undang anggota",
+    "inviteTitle": "Undang anggota tim",
+    "email": "Email",
+    "name": "Nama (opsional)",
+    "role": "Peran",
+    "members": "Anggota",
+    "pending": "Undangan tertunda",
+    "expires": "Berlaku sampai {date}",
+    "revoke": "Batalkan",
+    "deactivate": "Nonaktifkan",
+    "reactivate": "Aktifkan lagi",
+    "inactive": "Nonaktif",
+    "you": "Kamu",
+    "seats": "{used} dari {limit} kursi terpakai",
+    "seatsUnlimited": "{used} kursi terpakai",
+    "invited": "Undangan dikirim ke {email}.",
+    "revokeConfirm": "Batalkan undangan untuk {email}?",
+    "deactivateConfirm": "Nonaktifkan {name}? Mereka langsung keluar dari akun ini.",
+    "saved": "Perubahan disimpan."
+  },
+  "invite": {
+    "title": "Undangan tim",
+    "joinAs": "Kamu diundang bergabung ke {workspace} sebagai {role}.",
+    "expires": "Undangan berlaku sampai {date}.",
+    "accept": "Terima undangan",
+    "createPassword": "Buat kata sandi",
+    "yourName": "Nama kamu",
+    "otherWorkspace": "Email ini sudah dipakai di {workspace}. Satu akun hanya bisa di satu ruang kerja.",
+    "invalid": "Undangan sudah tidak berlaku. Minta undangan baru dari pemilik akun.",
+    "signInNow": "Undangan diterima. Masuk dengan akunmu untuk melanjutkan."
+  },
+  "legal": {
+    "deleteTitle": "Cara menghapus akun Socialz.id",
+    "deletionStatusTitle": "Status penghapusan data",
+    "code": "Kode konfirmasi",
+    "statusPending": "Sedang diproses",
+    "statusCompleted": "Selesai: data dari akun media sosial tersebut sudah kami hapus.",
+    "requestedAt": "Diminta pada",
+    "notFound": "Kode konfirmasi tidak ditemukan.",
+    "deleteShort": "Hapus akun",
+    "deleteIntro": "Kamu bisa meminta penghapusan akun Socialz.id kapan saja dengan salah satu cara berikut:",
+    "deleteStep1": "Masuk ke aplikasi, buka {settings}, lalu pilih {action}.",
+    "deleteStep1Settings": "Pengaturan",
+    "deleteStep2": "Atau kirim email ke {email} dari alamat email akunmu.",
+    "deleteSla": "Kami memproses permintaan paling lambat {days} hari. Setelah itu:",
+    "deleteAfter1": "Data akun, postingan, link produk, Etalase dan aturan Balas Otomatis dihapus dari sistem kami.",
+    "deleteAfter2": "Akses Socialz.id ke akun Instagram, Threads dan Facebook kamu dicabut.",
+    "deleteAfter3": "Salinan cadangan terhapus otomatis dalam {days} hari.",
+    "deleteAfter4": "Catatan pembayaran disimpan {years} tahun karena diwajibkan peraturan perpajakan.",
+    "deleteMeta": "Jika kamu menghapus Socialz.id dari pengaturan Instagram atau Facebook, kami menerima permintaan itu otomatis dan menghapus data dari akun media sosial tersebut.",
+    "daysUnit": "{n} hari"
   }
 }

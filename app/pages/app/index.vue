@@ -20,6 +20,13 @@ const doneCount = computed(() => steps.value.filter(step => step.done).length)
 const nextStep = computed(() => steps.value.find(step => !step.done)?.key)
 const showChecklist = computed(() => profile.value && !profile.value.onboarding.dismissed)
 
+const { confirm } = useConfirmDialog()
+async function dismiss() {
+  if (!(await confirm({ title: t('home.dismiss'), description: t('home.dismissConfirm') }))) return
+  await apiFetch('/api/app/onboarding/dismiss', { method: 'POST' })
+  await auth.fetchProfile()
+}
+
 const trialEnds = computed(() => {
   const sub = profile.value?.subscription
   if (sub?.status !== 'trialing' || !sub.trialEndsAt) return null
@@ -134,6 +141,19 @@ const trialEnds = computed(() => {
       >
         {{ t('home.allDone') }}
       </p>
+      <template
+        v-if="auth.hasAbility('settings.manage')"
+        #footer
+      >
+        <UButton
+          color="neutral"
+          variant="ghost"
+          size="sm"
+          icon="i-lucide-eye-off"
+          :label="t('home.dismiss')"
+          @click="dismiss"
+        />
+      </template>
     </UCard>
   </div>
 </template>

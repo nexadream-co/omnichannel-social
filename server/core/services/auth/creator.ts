@@ -45,6 +45,9 @@ function createCreatorAuth() {
       autoSignInAfterVerification: true,
       expiresIn: 24 * 60 * 60,
       sendVerificationEmail: async ({ user, token }) => {
+        // Invitees are verified by the invitation link itself; don't send them a second email.
+        const [current] = await getDb().select({ verified: users.emailVerified }).from(users).where(eq(users.id, user.id)).limit(1)
+        if (current?.verified) return
         await sendTemplatedEmail(baseContext(), 'verify_email', user.email, {
           name: user.name,
           verifyUrl: `${config.siteUrl}/app/auth/verify-email?token=${encodeURIComponent(token)}`,

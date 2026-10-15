@@ -9,7 +9,10 @@ server/core/services/storage/
   types.ts      StorageDriver contract
   index.ts      facade: uploadObject, deleteObject, presignPut, publicUrl, sniffImageType, assertUploadAllowed, stripExif
   r2.ts         Cloudflare R2 driver (S3 API signed with aws4fetch)
+  fake.ts       in-memory driver for tests
 ```
+
+In development the R2 driver talks to an S3-compatible mock in `docker/compose.dev.yml` (`adobe/s3mock`, via `R2_ENDPOINT`), so uploads work without Cloudflare credentials. (MinIO no longer publishes public Docker images.)
 
 ```ts
 export interface StorageDriver {

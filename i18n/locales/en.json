@@ -132,7 +132,8 @@
       }
     },
     "trialBanner": "{plan} trial active until {date}.",
-    "seePlans": "See plans"
+    "seePlans": "See plans",
+    "dismissConfirm": "Hide the getting-started guide? You can still use every feature."
   },
   "role": {
     "owner": {
@@ -196,5 +197,117 @@
     "seeAll": "See all notifications",
     "unreadOnly": "Unread only",
     "emptyUnread": "All caught up."
+  },
+  "profile": {
+    "title": "Profile",
+    "subtitle": "The name, photo and phone number on your account.",
+    "photo": "Profile photo",
+    "changePhoto": "Change photo",
+    "removePhoto": "Remove photo",
+    "photoTooLarge": "That photo is too large. Pick another one.",
+    "saved": "Profile saved.",
+    "emailHint": "Email can't be changed here."
+  },
+  "password": {
+    "title": "Change password",
+    "createTitle": "Create a password",
+    "createHint": "You sign in with Google. Create a password so you can also sign in with email.",
+    "current": "Current password",
+    "new": "New password",
+    "revokeOthers": "Sign out other devices",
+    "saved": "Password changed.",
+    "wrongCurrent": "Your current password is wrong."
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Account settings and your data.",
+    "workspaceName": "Account name",
+    "timezone": "Time zone",
+    "timezoneHint": "Used for post schedules and daily statistics.",
+    "niche": "Content category (optional)",
+    "nichePlaceholder": "For example fashion, beauty, gadgets",
+    "programs": "Affiliate programs you use (optional)",
+    "saved": "Settings saved.",
+    "dataTitle": "Your data",
+    "exportTitle": "Download all data",
+    "exportBody": "A JSON file with all your account data: posts, product links, storefront and more. No passwords or access keys.",
+    "exportButton": "Download data",
+    "deleteTitle": "Delete account",
+    "deleteBody": "Send an account deletion request. Our team handles it within {days} days.",
+    "deleteButton": "Send deletion request",
+    "deleteReason": "Reason (optional)",
+    "deleteConfirm": "I understand all data in this account will be deleted.",
+    "deleteSent": "Deletion request sent. We'll contact you by email.",
+    "deleteRequestedOn": "Deletion requested on {date}."
+  },
+  "timezones": {
+    "Asia/Jakarta": "WIB (Jakarta, Sumatra, Java, West & Central Kalimantan)",
+    "Asia/Makassar": "WITA (Bali, NTB, NTT, Sulawesi, East & South Kalimantan)",
+    "Asia/Jayapura": "WIT (Maluku, Papua)"
+  },
+  "programs": {
+    "shopee": "Shopee Affiliate",
+    "tiktok_shop": "TikTok Shop",
+    "tokopedia": "Tokopedia",
+    "lazada": "Lazada",
+    "other": "Other"
+  },
+  "team": {
+    "title": "Team",
+    "subtitle": "Invite an assistant or a small team to help run your account.",
+    "locked": "Team access is part of a higher plan.",
+    "lockedBody": "Upgrade to invite editors or viewers.",
+    "seePlans": "See plans",
+    "invite": "Invite member",
+    "inviteTitle": "Invite a team member",
+    "email": "Email",
+    "name": "Name (optional)",
+    "role": "Role",
+    "members": "Members",
+    "pending": "Pending invitations",
+    "expires": "Valid until {date}",
+    "revoke": "Revoke",
+    "deactivate": "Deactivate",
+    "reactivate": "Reactivate",
+    "inactive": "Inactive",
+    "you": "You",
+    "seats": "{used} of {limit} seats used",
+    "seatsUnlimited": "{used} seats used",
+    "invited": "Invitation sent to {email}.",
+    "revokeConfirm": "Revoke the invitation for {email}?",
+    "deactivateConfirm": "Deactivate {name}? They are signed out of this account right away.",
+    "saved": "Changes saved."
+  },
+  "invite": {
+    "title": "Team invitation",
+    "joinAs": "You've been invited to join {workspace} as {role}.",
+    "expires": "This invitation is valid until {date}.",
+    "accept": "Accept invitation",
+    "createPassword": "Create a password",
+    "yourName": "Your name",
+    "otherWorkspace": "This email is already used in {workspace}. One login can belong to one workspace.",
+    "invalid": "This invitation is no longer valid. Ask the account owner for a new one.",
+    "signInNow": "Invitation accepted. Sign in with your account to continue."
+  },
+  "legal": {
+    "deleteTitle": "How to delete your Socialz.id account",
+    "deletionStatusTitle": "Data deletion status",
+    "code": "Confirmation code",
+    "statusPending": "Being processed",
+    "statusCompleted": "Done: data from that social account has been deleted.",
+    "requestedAt": "Requested on",
+    "notFound": "Confirmation code not found.",
+    "deleteShort": "Delete account",
+    "deleteIntro": "You can ask us to delete your Socialz.id account at any time, in either of these ways:",
+    "deleteStep1": "Sign in, open {settings}, then choose {action}.",
+    "deleteStep1Settings": "Settings",
+    "deleteStep2": "Or email {email} from your account email address.",
+    "deleteSla": "We handle requests within {days} days. After that:",
+    "deleteAfter1": "Your account data, posts, product links, storefront and auto-reply rules are deleted from our systems.",
+    "deleteAfter2": "Socialz.id loses access to your Instagram, Threads and Facebook accounts.",
+    "deleteAfter3": "Backup copies are deleted automatically within {days} days.",
+    "deleteAfter4": "Payment records are kept for {years} years, as tax law requires.",
+    "deleteMeta": "If you remove Socialz.id from your Instagram or Facebook settings, we receive that request automatically and delete the data from that social account.",
+    "daysUnit": "{n} days"
   }
 }

@@ -45,6 +45,10 @@ const localePath = useLocalePath()
             :to="localePath('/page/privacy')"
             class="hover:text-default"
           >{{ t('auth.privacy') }}</NuxtLink>
+          <NuxtLink
+            :to="localePath('/hapus-akun')"
+            class="hover:text-default"
+          >{{ t('legal.deleteShort') }}</NuxtLink>
         </span>
       </UContainer>
     </footer>

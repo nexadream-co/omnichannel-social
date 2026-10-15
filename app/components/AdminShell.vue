@@ -32,6 +32,10 @@ const items = computed<NavigationMenuItem[][]>(() => [
 
 const userItems = computed<DropdownMenuItem[][]>(() => [
   [{ type: 'label', label: auth.profile.value?.user.email }],
+  [
+    { label: 'Profil', icon: 'i-lucide-user', to: '/admin/profile' },
+    { label: 'Ubah kata sandi', icon: 'i-lucide-key-round', to: '/admin/change-password' }
+  ],
   [{
     label: 'Mode gelap',
     icon: 'i-lucide-moon',
