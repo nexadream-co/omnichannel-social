@@ -19,6 +19,9 @@ for (const [device, viewport] of Object.entries(VIEWPORTS)) {
     const context = await browser.newContext({ viewport, colorScheme: scheme })
     const page = await context.newPage()
     page.on('pageerror', e => problems.push(`[${device}/${scheme}] pageerror: ${e.message}`))
+    page.on('response', (r) => {
+      if (r.url().includes('/api/') && r.status() >= 500) problems.push(`[${device}/${scheme}] API ${r.status()} ${new URL(r.url()).pathname}`)
+    })
     page.on('console', (m) => {
       if (m.type() === 'error' && !/401|Failed to load resource/.test(m.text())) problems.push(`[${device}/${scheme}] console: ${m.text()}`)
     })
@@ -39,6 +42,7 @@ for (const [device, viewport] of Object.entries(VIEWPORTS)) {
       await page.waitForLoadState('networkidle').catch(() => undefined)
       await page.waitForTimeout(600)
       if (response && response.status() >= 400) problems.push(`[${device}/${scheme}] ${path} → HTTP ${response.status()}`)
+      if (await page.getByText('Ada yang tidak beres').count()) problems.push(`[${device}/${scheme}] ${path} → error page`)
       // Anything visible that extends past the viewport, unless an ancestor deliberately scrolls or clips it.
       const overflowing = await page.evaluate(() => {
         const clipped = (el) => {

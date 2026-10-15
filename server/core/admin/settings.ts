@@ -32,6 +32,10 @@ export async function updateAdminSettings(ctx: StaffContext, input: z.infer<type
     if (!def) continue // a stale form can't fail the save
     if (def.isSecret && raw === MASKED_SECRET) continue
     const value = def.type === 'boolean' ? String(raw === 'true') : raw
+    // The global auto-reply kill switch is a superadmin decision (docs/blueprint/04 §1.2).
+    if (key === 'channels.autoReply.enabled' && value !== (before[key] ?? def.default) && !ctx.isSuperAdmin) {
+      throw appError(403, 'Hanya superadmin yang bisa mengubah saklar Balas Otomatis.', 'FORBIDDEN', { field: key })
+    }
     if (def.type === 'select' && !def.options?.some(o => o.value === value)) continue
     if (def.type === 'number' && value !== '' && !Number.isFinite(Number(value))) {
       throw appError(400, `${def.label} harus berupa angka.`, 'VALIDATION_FAILED', { field: key })

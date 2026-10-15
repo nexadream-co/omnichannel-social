@@ -820,5 +820,9 @@
     "selectSave": "Save choice",
     "selectUpgrade": "Upgrade to keep them all",
     "selectSaved": "Account choice saved."
+  },
+  "impersonation": {
+    "banner": "You are impersonating {name}. Every action is recorded.",
+    "stop": "Stop impersonating"
   }
 }

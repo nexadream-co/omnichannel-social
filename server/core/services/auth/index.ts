@@ -1,3 +1,4 @@
+import { serializeCookie, serializeSignedCookie } from 'better-call'
 import { eq } from 'drizzle-orm'
 import { getDb } from '../../db/client'
 import { accounts, sessions, staffSessions, users } from '../../db/schema'
@@ -8,6 +9,8 @@ import { staffAuth } from './staff'
 import type { Audience, SessionInfo } from './types'
 
 export type { Audience, AuthUserBase, SessionInfo } from './types'
+
+const IMPERSONATION_TTL_MS = 60 * 60_000
 export { CREATOR_BASE_PATH } from './creator'
 export { STAFF_BASE_PATH } from './staff'
 
@@ -25,13 +28,18 @@ export async function readSession(headers: Headers, audience: Audience): Promise
     : await staffAuth().api.getSession({ headers })
   if (!result) return null
   const session = result.session as typeof result.session & { activeWorkspaceId?: string | null, impersonatedBy?: string | null }
+  // Impersonation lasts one hour from its start, whatever the sliding refresh did to expiresAt.
+  if (session.impersonatedBy && Date.now() - new Date(session.createdAt).getTime() > IMPERSONATION_TTL_MS) {
+    await revokeSession(session.id, audience)
+    return null
+  }
   return {
     sessionId: session.id,
     userId: session.userId,
     audience,
     activeWorkspaceId: session.activeWorkspaceId ?? null,
     impersonatedBy: session.impersonatedBy ?? null,
-    expiresAt: new Date(session.expiresAt)
+    expiresAt: session.impersonatedBy ? new Date(new Date(session.createdAt).getTime() + IMPERSONATION_TTL_MS) : new Date(session.expiresAt)
   }
 }
 
@@ -84,4 +92,26 @@ export async function setInitialPassword(headers: Headers, newPassword: string):
 export async function hashPassword(password: string): Promise<string> {
   const { hashPassword: hash } = await import('better-auth/crypto')
   return hash(password)
+}
+
+/**
+ * Support impersonation (docs/blueprint/09 §3.2): a short creator session marked impersonatedBy, so the
+ * console shows a banner, billing is read-only and actions are audited. Returns the Set-Cookie header.
+ */
+export async function createImpersonationSession(userId: string, workspaceId: string, staffUserId: string): Promise<{ setCookie: string, sessionId: string }> {
+  const ctx = await creatorAuth().$context
+  const session = await ctx.internalAdapter.createSession(userId, true, {
+    impersonatedBy: staffUserId, activeWorkspaceId: workspaceId, expiresAt: new Date(Date.now() + IMPERSONATION_TTL_MS)
+  } as Record<string, unknown>, true) // overrideAll: otherwise the defaults replace expiresAt and the extra fields
+  if (!session) throw new Error('impersonation session not created')
+  const cookie = ctx.authCookies.sessionToken
+  const setCookie = await serializeSignedCookie(cookie.name, session.token, ctx.secret, { ...cookie.attributes, maxAge: IMPERSONATION_TTL_MS / 1000 })
+  return { setCookie, sessionId: session.id }
+}
+
+/** The creator session cookie, expired: what "Berhenti menyamar" sends back. */
+export async function clearedCreatorSessionCookie(): Promise<string> {
+  const ctx = await creatorAuth().$context
+  const cookie = ctx.authCookies.sessionToken
+  return serializeCookie(cookie.name, '', { ...cookie.attributes, maxAge: 0 })
 }

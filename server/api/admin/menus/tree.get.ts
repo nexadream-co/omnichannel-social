@@ -1,4 +1,4 @@
-import { staffMenuTree } from '../../core/access'
+import { staffMenuTree } from '../../../core/access'
 
 export default defineEventHandler(async (event) => {
   const ctx = await requireStaffContext(event)

@@ -820,5 +820,9 @@
     "selectSave": "Simpan pilihan",
     "selectUpgrade": "Upgrade supaya semua aktif",
     "selectSaved": "Pilihan akun disimpan."
+  },
+  "impersonation": {
+    "banner": "Kamu sedang menyamar sebagai {name}. Semua tindakan tercatat.",
+    "stop": "Berhenti menyamar"
   }
 }

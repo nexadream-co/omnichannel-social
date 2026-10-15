@@ -10,7 +10,7 @@ const menu = useState<MenuNode[] | null>('admin:menus', () => null)
 onMounted(async () => {
   if (menu.value) return
   try {
-    menu.value = (await apiFetch<{ items: MenuNode[] }>('/api/admin/menus')).items
+    menu.value = (await apiFetch<{ items: MenuNode[] }>('/api/admin/menus/tree')).items
   } catch {
     menu.value = []
   }
@@ -24,7 +24,10 @@ function toItem(node: MenuNode): NavigationMenuItem {
 
 // Fixed chrome first (Dasbor), then DB sections: a root without a path is a section header (docs/blueprint/04 §1.3).
 const items = computed<NavigationMenuItem[][]>(() => [
-  [{ label: 'Dasbor', icon: 'i-lucide-layout-dashboard', to: '/admin/dashboard' }],
+  [
+    { label: 'Dasbor', icon: 'i-lucide-layout-dashboard', to: '/admin/dashboard' },
+    ...(auth.hasPermission('reports.read') ? [{ label: 'Laporan', icon: 'i-lucide-chart-line', to: '/admin/reports' }] : [])
+  ],
   ...(menu.value ?? []).map(section => section.path
     ? [toItem(section)]
     : [{ label: section.label, type: 'label' as const }, ...section.children.map(toItem)])

@@ -126,6 +126,7 @@ const canCompose = computed(() => auth.hasAbility('posts.write'))
             <CreatorUserMenu />
           </template>
         </UDashboardNavbar>
+        <ImpersonationBanner />
         <TrialBanner />
       </template>
 
