@@ -36,7 +36,9 @@ export const shortLinks = pgTable('short_links', {
 }, t => [
   unique().on(t.workspaceId, t.id),
   foreignKey({ columns: [t.workspaceId, t.linkId], foreignColumns: [links.workspaceId, links.id] }),
-  foreignKey({ columns: [t.workspaceId, t.postTargetId], foreignColumns: [postTargets.workspaceId, postTargets.id] }),
+  foreignKey({ columns: [t.workspaceId, t.postTargetId], foreignColumns: [postTargets.workspaceId, postTargets.id] }).onDelete('cascade'),
+  // One attribution link per post target and product (ARCHITECTURE §10.2).
+  uniqueIndex('short_links_target_link_idx').on(t.postTargetId, t.linkId).where(sql`${t.postTargetId} is not null`),
   index().on(t.linkId),
   index().on(t.workspaceId)
 ])
@@ -67,8 +69,10 @@ export const bioPages = pgTable('bio_pages', {
   title: text(),
   bio: text(),
   avatarMediaId: text(),
+  avatarUrl: text(),
   theme: jsonb().$type<Record<string, unknown>>().notNull().default({}),
   seo: jsonb().$type<Record<string, unknown>>().notNull().default({}),
+  socials: jsonb().$type<Record<string, string>>().notNull().default({}),
   published: boolean().notNull().default(false),
   createdAt: createdAt(), updatedAt: updatedAt()
 }, t => [
@@ -114,6 +118,13 @@ export const bioItems = pgTable('bio_items', {
   foreignKey({ columns: [t.workspaceId, t.shortLinkId], foreignColumns: [shortLinks.workspaceId, shortLinks.id] }),
   index().on(t.bioPageId, t.position)
 ])
+
+/** Daily salt for ip_hash = sha256(ip ‖ salt): unique visitors without storing IPs. Deleted after 2 days. */
+export const ipSalts = pgTable('ip_salts', {
+  day: text().primaryKey(),
+  salt: text().notNull(),
+  createdAt: tstz().notNull().defaultNow()
+})
 
 /** Rollup for later (ARCHITECTURE §19); created now so the rollup job needs no migration. */
 export const linkClickDaily = pgTable('link_click_daily', {

@@ -27,6 +27,7 @@ export const purge: JobHandler = async (_job, ctx) => {
     ['payment_webhook_events', () => purgeBatched(db, 'payment_webhook_events', 'id', `created_at < now() - interval '180 days'`)],
     ['jobs_finished', () => purgeBatched(db, 'jobs', 'id', `status in ('done', 'cancelled') and finished_at < now() - interval '7 days'`)],
     ['jobs_dead', () => purgeBatched(db, 'jobs', 'id', `status = 'dead' and finished_at < now() - interval '30 days'`)],
+    ['ip_salts', async () => (await db.execute(sql`delete from ip_salts where created_at < now() - interval '2 days'`)).rowCount ?? 0],
     ['rate_limit_buckets', async () => (await db.execute(sql`delete from rate_limit_buckets where expires_at < now()`)).rowCount ?? 0],
     ['dm_comment_text', async () => (await db.execute(sql.raw(`update dm_events set comment_text = null where comment_text is not null and created_at < now() - interval '${commentDays} days'`))).rowCount ?? 0],
     ['sessions', () => purgeBatched(db, 'sessions', 'id', 'expires_at < now()')],

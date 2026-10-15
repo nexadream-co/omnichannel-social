@@ -1,7 +1,9 @@
 /** Route boundary guard; both consoles are client-only (docs/blueprint/13 §3). */
 export default defineNuxtRouteMiddleware(async (to) => {
   if (import.meta.server) return
-  const localePath = useLocalePath()
+  // Locale prefix from `to`, not useLocalePath(): that reads useRoute(), which is stale inside middleware (Nuxt E2005).
+  const prefix = /^\/en(?=\/|$)/.test(to.path) ? '/en' : ''
+  const localePath = (target: string) => `${prefix}${target}`
   const path = to.path.replace(/^\/en(?=\/|$)/, '') || '/'
   const isCreator = path === '/app' || path.startsWith('/app/')
   const isStaff = path === '/admin' || path.startsWith('/admin/')

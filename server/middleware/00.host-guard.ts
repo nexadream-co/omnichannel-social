@@ -16,7 +16,7 @@ export default defineEventHandler((event) => {
   if (SHORT_PATHS.some(pattern => pattern.test(path))) return
   const handle = /^\/@([\w.-]+)\/?$/.exec(path)
   if (handle) return sendRedirect(event, `/bio/${handle[1]}`, 307)
-  const slug = /^\/([0-9A-Za-z]{4,16})$/.exec(path)
+  const slug = /^\/([0-9A-Za-z_-]{3,32})$/.exec(path) // SLUG_PATTERN
   if (slug) return sendRedirect(event, `/r/${slug[1]}`, 307)
   throw createError({ statusCode: 404 })
 })

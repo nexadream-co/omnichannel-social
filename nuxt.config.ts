@@ -29,6 +29,8 @@ export default defineNuxtConfig({
     '/app/**': { ssr: false },
     '/en/app/**': { ssr: false },
     '/admin/**': { ssr: false },
+    // Public Etalase: server-rendered, zero client JS (fast on cheap phones, strict CSP holds).
+    '/bio/**': { noScripts: true },
     '/api/**': { cache: false }
   },
   compatibilityDate: '2026-10-01',

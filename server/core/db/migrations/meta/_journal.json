@@ -15,6 +15,20 @@
       "when": 1792081103606,
       "tag": "0001_channel_connect_sessions",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792083541403,
+      "tag": "0002_links_bio",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792083806639,
+      "tag": "0003_bio_avatar",
+      "breakpoints": true
     }
   ]
 }

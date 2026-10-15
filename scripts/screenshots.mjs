@@ -26,8 +26,9 @@ for (const [device, viewport] of Object.entries(VIEWPORTS)) {
     await page.evaluate(dark => localStorage.setItem('nuxt-color-mode', dark), scheme)
     const login = LOGINS[audience]
     if (login) {
-      await page.goto(BASE + login.url)
-      await page.waitForSelector('input[type=email]')
+      // A cold dev server reloads once while Vite optimises dependencies: retry the first navigation.
+      await page.goto(BASE + login.url).catch(() => page.waitForTimeout(3000).then(() => page.goto(BASE + login.url)))
+      await page.waitForSelector('input[type=email]', { timeout: 60_000 })
       await page.fill('input[type=email]', login.email)
       await page.fill('input[type=password]', login.password)
       await page.click('button[type=submit]')

@@ -24,4 +24,9 @@
 - Kalender: month view with drag-to-reschedule on desktop and a day list on phones; tap a day to create a post for it.
 - Posts publish automatically and reliably: a lost platform response is reconciled instead of posting twice, daily platform limits reschedule instead of failing, expired accounts pause their posts and ask for a reconnect, and the monthly plan allowance is shown before scheduling.
 - Beranda shows upcoming posts and a fix-it alert for failed posts.
+- Link Produk: paste a Shopee, Tokopedia, Lazada, TikTok Shop or other shop link and get a short link that counts clicks; the product name, photo and price fill in automatically. Copy, QR code, archive, and a per-product statistics page.
+- "Tambah link produk" in Buat Postingan puts a product's short link in the caption; each post and platform gets its own link, so clicks show which post sold.
+- Etalase: pick a name, and every product appears on one phone-first page for the bio link. Three themes, photo, short description, social links, categories, pin, labels, hide and reorder, a live preview, publish/hide, copy link and QR. The public page loads without any JavaScript, with search and category tabs.
+- Statistik: total and unique clicks per day, top products, top posts, and clicks by source, platform, device and city, for 7, 30 or 90 days (limited to the plan's history, with a note when shortened).
+- Clicks from bots and link previews are not counted; visitor IPs are never stored (daily salted hashes only).
 - Database schema for the platform and domain layers, with seeded permissions, roles, menus, settings, templates, plans, job schedules and legal pages.

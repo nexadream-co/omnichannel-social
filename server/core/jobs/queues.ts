@@ -24,7 +24,8 @@ export const QUEUES = {
   // publish.target polls containers inline for up to 15 s, so it needs a longer lease and budget.
   'publish.target': queue('publish.target', { maxAttempts: 4, leaseSeconds: 180, expectedMs: 30_000, concurrency: 10 }),
   'publish.poll': queue('publish.poll', { maxAttempts: 4, concurrency: 10 }),
-  'publish.reconcile': queue('publish.reconcile', { maxAttempts: 4, concurrency: 5 })
+  'publish.reconcile': queue('publish.reconcile', { maxAttempts: 4, concurrency: 5 }),
+  'links.unfurl': queue('links.unfurl', { maxAttempts: 2, concurrency: 3 })
 } as const satisfies Record<string, QueueDef>
 
 export type QueueName = keyof typeof QUEUES

@@ -33,6 +33,13 @@ const loading = ref(true)
 const submitting = ref<null | 'schedule' | 'now' | 'draft'>(null)
 const serverIssues = ref<(Issue & { socialAccountId?: string })[]>([])
 
+// "Tambah link produk": the vault short link goes into the caption; publishing swaps in a per-post link (attribution).
+const linkPickerOpen = ref(false)
+function insertLink(link: { shortUrl: string | null }) {
+  if (!link.shortUrl) return
+  caption.value = caption.value.trimEnd() ? `${caption.value.trimEnd()}\n\n${link.shortUrl}` : link.shortUrl
+}
+
 function ensureOptions(id: string) {
   options[id] ??= { captionOverride: '', format: null, firstComment: '', altText: '' }
   return options[id]!
@@ -200,7 +207,14 @@ async function submit(mode: 'schedule' | 'now' | 'draft') {
                 :placeholder="t('composer.captionPlaceholder')"
                 class="w-full"
               />
-              <div class="flex flex-wrap gap-3 mt-1.5 text-xs">
+              <div class="flex flex-wrap items-center gap-3 mt-1.5 text-xs">
+                <UButton
+                  size="xs"
+                  variant="soft"
+                  icon="i-lucide-link"
+                  :label="t('links.insert')"
+                  @click="linkPickerOpen = true"
+                />
                 <span
                   v-for="c in counters"
                   :key="c.platform"
@@ -410,5 +424,9 @@ async function submit(mode: 'schedule' | 'now' | 'draft') {
         </UCard>
       </div>
     </div>
+    <ProductLinkPicker
+      v-model:open="linkPickerOpen"
+      @pick="insertLink"
+    />
   </div>
 </template>

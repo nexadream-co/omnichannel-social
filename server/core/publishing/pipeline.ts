@@ -9,6 +9,7 @@ import { enqueue } from '../jobs/enqueue'
 import type { ClaimedJob, JobHandler, JobResult } from '../jobs/types'
 import { notifyWorkspaceOwners } from '../notifications'
 import { getSettingBool } from '../settings'
+import { attributeCaption } from '../links/service'
 import { decryptAccount, markNeedsReauth } from '../social-accounts'
 import { refreshPostStatus } from './status'
 
@@ -113,7 +114,8 @@ async function resolveTarget(db: Database, target: Target): Promise<ResolvedTarg
   const media = await db.select({ url: mediaAssets.publicUrl, kind: mediaAssets.kind, status: mediaAssets.status }).from(postMedia)
     .innerJoin(mediaAssets, eq(mediaAssets.id, postMedia.mediaId)).where(eq(postMedia.postId, target.postId)).orderBy(asc(postMedia.position))
   if (media.some(m => m.status !== 'ready' || !m.url)) return null
-  const caption = target.captionOverride?.trim() ? target.captionOverride : post?.caption ?? ''
+  // Vault short links become one attribution link per (target, product) right before publishing.
+  const caption = await attributeCaption(db, target, target.captionOverride?.trim() ? target.captionOverride : post?.caption ?? '')
   const options = target.options as { firstComment?: string, altText?: string }
   return {
     format: target.format,
