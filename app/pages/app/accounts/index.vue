@@ -193,5 +193,10 @@ async function disconnect(account: Account) {
       <USkeleton class="h-24 w-full" />
       <USkeleton class="h-40 w-full" />
     </div>
+    <AccountSelectionDialog
+      v-if="data"
+      :accounts="data.items"
+      @saved="load"
+    />
   </div>
 </template>

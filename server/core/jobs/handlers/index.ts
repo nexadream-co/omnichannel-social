@@ -1,6 +1,7 @@
 import type { JobHandler } from '../types'
 import { mediaWatchdogJob, processMediaJob } from '../../media/service'
 import { dmSendJob } from '../../autoreply/send'
+import { billingDailyJob, renewalRemindersJob } from '../../billing-jobs'
 import { webhookMetaJob } from '../../autoreply/webhook'
 import { unfurlLinkJob } from '../../links/unfurl-job'
 import { dataDeletionJob } from '../../meta-callbacks'
@@ -23,5 +24,7 @@ export const handlers: Record<string, JobHandler> = {
   'publish.reconcile': publishReconcileJob,
   'links.unfurl': unfurlLinkJob,
   'webhook.meta': webhookMetaJob,
-  'dm.send': dmSendJob
+  'dm.send': dmSendJob,
+  'billing.daily': billingDailyJob,
+  'billing.renewal-reminders': renewalRemindersJob
 }

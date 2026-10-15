@@ -32,7 +32,7 @@ for (const [device, viewport] of Object.entries(VIEWPORTS)) {
       await page.fill('input[type=email]', login.email)
       await page.fill('input[type=password]', login.password)
       await page.click('button[type=submit]')
-      await page.waitForURL(login.home, { timeout: 15_000 })
+      await page.waitForURL(u => !u.pathname.includes('/auth/'), { timeout: 15_000 })
     }
     for (const path of paths) {
       const response = await page.goto(BASE + path)

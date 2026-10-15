@@ -15,8 +15,8 @@ export interface ScheduleDef {
 
 /** docs/blueprint/15 §3.6. All local times are WIB. */
 export const SCHEDULES: ScheduleDef[] = [
-  { name: 'billing.daily', cron: '5 0 * * *', tz: 'Asia/Jakarta', enabled: false },
-  { name: 'billing.renewal-reminders', cron: '0 7 * * *', tz: 'Asia/Jakarta', enabled: false },
+  { name: 'billing.daily', cron: '5 0 * * *', tz: 'Asia/Jakarta', enabled: true },
+  { name: 'billing.renewal-reminders', cron: '0 7 * * *', tz: 'Asia/Jakarta', enabled: true },
   { name: 'engagement.inactivity', cron: '0 7 * * *', tz: 'Asia/Jakarta', enabled: false },
   { name: 'maintenance.purge', cron: '0 3 * * *', tz: 'Asia/Jakarta', enabled: true },
   { name: 'token.refresh', cron: '0 * * * *', tz: 'Asia/Jakarta', enabled: true },

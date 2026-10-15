@@ -1,3 +1,4 @@
+import { needsAccountSelection } from './subscriptions'
 import { and, asc, count, eq, inArray, isNull, or, sql } from 'drizzle-orm'
 import { abilitiesFor, type WorkspaceRoleSlug } from '../../shared/utils/workspace-abilities'
 import type { Executor } from './db/client'
@@ -121,7 +122,7 @@ export async function creatorProfile(db: Executor, access: CreatorAccess, sessio
       status: access.workspace.status,
       timezone: access.workspace.timezone,
       onboardingCompletedAt: access.workspace.onboardingCompletedAt,
-      needsAccountSelection: false // set by downgrade enforcement (M6)
+      needsAccountSelection: await needsAccountSelection(db, access.workspace.id)
     },
     subscription: {
       status: access.subscription.status,
