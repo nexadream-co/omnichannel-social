@@ -1,0 +1,11 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "regions": ["sin1"],
+  "buildCommand": "NITRO_PRESET=vercel npm run build",
+  "crons": [
+    { "path": "/api/internal/tick", "schedule": "* * * * *" }
+  ],
+  "functions": {
+    "api/**": { "maxDuration": 60 }
+  }
+}

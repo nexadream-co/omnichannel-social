@@ -46,4 +46,6 @@
 - SEO: page titles and descriptions, Open Graph, hreflang for Bahasa Indonesia and English, JSON-LD, robots.txt per domain (staging is never indexed; the short domain only exposes Etalase pages), sitemap.xml, favicon and touch icon.
 - Starter content for privacy policy, terms, payment policy, help and eight FAQ answers, written for Meta App Review and marked for legal review before launch.
 - Notifications with the same purpose are never duplicated, even when several background jobs fire at the same moment.
+- Deployment kits in `deploy/` for a Docker/VPS host (app, media processor, per-minute tick, optional Cloudflare Tunnel), Google Cloud Run, AWS Lambda and Vercel, with the shared release order, the Cloudflare short-domain rule and the back-office first-run checklist. The app and media processor images build and pass a smoke test.
+- End-to-end tests in a phone browser: a newcomer registers, verifies their email, connects a Page and schedules a first post (well under five minutes), then turns a product link into a published Etalase; plus the public site and the back-office. They also run in CI.
 - Database schema for the platform and domain layers, with seeded permissions, roles, menus, settings, templates, plans, job schedules and legal pages.

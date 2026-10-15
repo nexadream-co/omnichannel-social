@@ -3,7 +3,7 @@
 FROM node:24-slim AS build
 WORKDIR /src
 COPY package.json package-lock.json ./
-RUN npm ci --ignore-scripts --omit=optional
+RUN npm ci --ignore-scripts
 COPY server/core/jobs/signing.ts server/core/jobs/signing.ts
 COPY server/core/media/ffmpeg-args.ts server/core/media/ffmpeg-args.ts
 COPY services/media-processor services/media-processor

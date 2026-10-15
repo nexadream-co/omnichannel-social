@@ -1,30 +1,35 @@
-# Handoff — Socialz.id planning session (2026-10-12, updated 2026-10-15)
+# Handoff — Socialz.id (planning 2026-10-12, implementation through 2026-10-16)
 
 This file lets a new Claude session (or another account) continue exactly where planning stopped. Read `CLAUDE.md` first, then this file.
 
 ## 1. Status
 
-- **Phase:** **M1 foundation implemented locally (2026-10-15)**, not yet deployed. See §1.1.
-- **2026-10-15: architecture refactored to serverless, provider-agnostic** (user request). The VPS + Docker + Caddy + pg-boss worker topology is replaced by Nitro presets + a Postgres job table run by a per-minute HTTP tick + a separate ffmpeg media processor container. Spec: `docs/blueprint/19`, `docs/blueprint/15`, `docs/ARCHITECTURE.md` §2–3, §8.
-- **Git:** docs committed as `9608de1`; the M1 code is not committed yet (ask the user).
-- **Local environment:** Node **v22.16.0** at `/usr/local/bin/node` is too old (Nuxt 4.6 needs `^22.22.3 || ^24.15.0 || >=26`). Homebrew also has Node 24.1.0, also too old and shadowed by `/usr/local/bin`. The user chose **fnm + Node 24 LTS** (`brew install fnm`, shell hook in `~/.zshrc`, `.nvmrc` = `24`), but setup has **not** been run. Docker 29, psql 14 and bun 1.2.5 are installed; pnpm is not.
+- **Phase (2026-10-16): v1 feature-complete locally.** Every build phase of `docs/blueprint/17` (1–14) is implemented, tested and screenshot-reviewed on branch `develop` (one commit per phase). Nothing is deployed yet; the remaining work needs the user's accounts, keys and decisions (§5).
+- **2026-10-15: architecture refactored to serverless, provider-agnostic** (user request). Nitro presets + a Postgres job table run by a per-minute HTTP tick + a separate ffmpeg media processor container. Spec: `docs/blueprint/19`, `docs/blueprint/15`, `docs/ARCHITECTURE.md` §2–3, §8.
+- **Git:** `main` = M1 foundation (`391ac7d`). `develop` = phases 4–14 on top. Merge `develop` → `main` when the user approves (no remote configured yet, CI has not run on GitHub).
+- **Local environment:** Node 24.22 via fnm at `~/.local/share/fnm` (prefix `PATH=$HOME/.local/share/fnm/node-versions/v24.22.0/installation/bin:$PATH`; the shell runs under Rosetta). `docker compose -f docker/compose.dev.yml up -d` gives Postgres 17 (dev + test DBs), Mailpit (:8025) and an S3 mock (:9090, bucket `socialz-media`). `.env` uses `ADAPTER_MODE=fake` (no Meta keys needed).
 
-### 1.1 M1 status (2026-10-15)
+### 1.1 What exists (2026-10-16)
 
-Done and verified locally (Node 24.22 via fnm at `~/.local/share/fnm`, Docker `postgres:17` + Mailpit):
-- Scaffold: Nuxt 4.6.1, Nuxt UI 4.12, i18n id/en, better-auth 1.7.10, Drizzle 0.45, zod 4, TypeScript 5.9 (vue-tsc does not support TS 7 yet).
-- Full platform + domain schema (`server/core/db/schema/*`), first migration `0000_init.sql`, idempotent seed (permissions, roles, menus, settings, templates, plans, gateway row, job schedules, draft legal pages, FAQ, superadmin `admin@socialz.local`, dev demo creator `demo@socialz.local`).
-- Job system (`server/core/jobs`): jobs table, runner with leases + budget + SKIP LOCKED, slot-claimed schedules, kick, fan-out signing, `/api/internal/tick`, `/api/internal/jobs/run`, `/healthz`, `maintenance.purge` + `system.noop` handlers.
-- Auth: two better-auth instances behind the facade, register (workspace + 14-day trial), email verification and reset via Mailpit, per-email + per-IP limits in Postgres, gatekeepers, CSRF origin check, audit rows.
-- UI: landing, creator auth pages, Beranda with the onboarding checklist, creator shell (rail / phone bottom nav), admin auth + dashboard with DB-driven sidebar; light/dark, phone/desktop checked by screenshot.
-- Checks: `npm run lint`, `npm run typecheck`, `npm test` (34 tests, unit + integration on a real Postgres) all pass; `node-server`, `aws-lambda` and `vercel` presets build; the built `node-server` output passes a smoke test.
-- CI: `.github/workflows/ci.yml` (lint, typecheck, tests with Postgres, preset build matrix). Not run yet (no remote).
+| Area | Where | Notes |
+|---|---|---|
+| Foundation (M1) | jobs, auth, shells, i18n, CI | see `CHANGELOG.md` |
+| Notifications, settings, templates, profile, team, data rights, Meta callbacks | Phases 4–5 | |
+| Channel adapters (IG, Threads, FB) + fake adapter, account connect, media pipeline | Phase 6 | real adapters untested until Meta app IDs exist |
+| Plans & entitlements, upgrade dialog | Phase 7 | |
+| Composer, publishing pipeline (no blind retries), posts, calendar | Phase 8 | |
+| Balas Otomatis: Meta webhook, rules, DM guards, activity | Phase 9 | |
+| Link Produk, short links + clicks, Etalase (zero-JS public page), Statistik | Phase 10 | |
+| Billing: Nexadream hub driver, checkout, callbacks, reconcile, billing.daily, downgrade enforcement, /app/billing, admin billing | Phase 11 | `scripts/mock-payment-hub.ts` stands in for the hub locally |
+| Back-office: dashboard, reports, workspaces + impersonation, people & access, CMS, operations, audit, jobs | Phase 12 | |
+| Public site: landing, pricing, legal pages, contact, SEO, robots/sitemap, legal drafts | Phase 13 | legal drafts need counsel review |
+| Production readiness: `deploy/` (Docker/VPS, Cloud Run, AWS Lambda, Vercel), app + media images (built and smoke-tested), Playwright E2E (newcomer path < 5 min), CI e2e job | Phase 14 | |
 
-Not done in M1 (needs the user or a later step):
-- Staging deploy + cron entry: blocked on choosing the staging host (`blueprint/19` §4).
-- Google sign-in: code path in place; untested until `GOOGLE_CLIENT_ID/SECRET` exist.
-- Playwright E2E specs, change-password / profile pages, impersonation, invitations (later phases of `blueprint/17`).
-- Shell `!` tip: add the fnm hook to `~/.zshrc` (`eval "$(fnm env --use-on-cd --shell zsh)"`); the shell runs under Rosetta, so install Node with `fnm install 24 --arch arm64`.
+**Checks:** `npm run lint`, `npm run typecheck`, `npm test` (≈134 unit + integration tests on real Postgres) and `npm run test:e2e` (5 specs, phone viewport) pass. `NITRO_PRESET=node-server` build smoke-tested; app and media Docker images built and smoke-tested.
+
+**Run locally:** `npm run dev`, `npm run tick:dev` (jobs), `npm run media:dev` (ffmpeg processor), optionally `npx tsx scripts/mock-payment-hub.ts` (then activate the gateway at `/admin/payment-gateways` with base URL `http://localhost:3300`, any key, prefix `DEV`). Logins: `admin@socialz.local` / `admin12345` (`/admin`), `demo@socialz.local` / `demo12345` (`/app`).
+
+**Known gaps (deliberate, small):** staff-to-staff impersonation (creator impersonation exists); Etalase page has no SWR route cache (the public API is CDN-cached 15 s); engagement/insights schedules ship disabled; real Meta, R2, Resend and Google paths are unexercised until keys exist.
 
 ## 2. Document map
 
@@ -73,28 +78,20 @@ The original generic blueprint the platform docs were adapted from is at `~/Down
 
 ## 5. Open items (ask the user)
 
-1. Short link + Etalase domain name; media domain; support email (placeholders `{{SHORT_DOMAIN}}`, `media.socialz.id`, `halo@socialz.id`).
-2. Nexadream Payment Hub platform API key (`phk_live_…`) and the issued order prefix (`{{ORDER_PREFIX}}`).
-3. Meta: Business Verification status, Meta app ID(s) for Instagram Login, Threads and Facebook Login for Business.
-4. Approval to install fnm + Node 24 and to make the first commit.
-5. Reference staging host: function host + container host for the media processor (`blueprint/19` §4).
+1. Domains: short link + Etalase domain, media domain, support email (placeholders in `.env.production.example`).
+2. Nexadream Payment Hub platform API key (`phk_live_…`) and order prefix; register the webhook/redirect URLs listed in `deploy/README.md`.
+3. Meta: Business Verification status; app IDs/secrets for Instagram Login, Threads and Facebook Login for Business; webhook verify token. Then App Review (critical path).
+4. Hosting choice: function host (tier-1 options in `deploy/README.md`) + container host for the media processor; Neon project (staging + production branches); R2 bucket; Resend key + domain; Google OAuth client.
+5. Legal review of the seeded privacy policy, terms and payment policy (editable at `/admin/pages`).
+6. Approval to merge `develop` → `main` and to add a Git remote.
 
-## 6. Next step: M1 foundation (only after the user says start)
+## 6. Next steps
 
-Follow `docs/blueprint/17-implementation-plan.md` Phases 1–3. Concrete checklist:
-
-1. Install fnm, Node 24 LTS; add `.nvmrc` (`24`).
-2. `git init` (if approved); `.gitignore`; `CHANGELOG.md` with `## 0.1.0 (Draft)`.
-3. Scaffold Nuxt 4 (`npx nuxi@latest init` minimal template, npm) into the existing directory, keeping `docs/` and `CLAUDE.md`.
-4. Add modules: `@nuxt/ui`, `@nuxt/eslint`, `@nuxtjs/i18n`; ESLint stylistic config (`commaDangle: 'never'`, `braceStyle: '1tbs'`).
-5. Add deps: `drizzle-orm`, `drizzle-kit`, `pg`, `better-auth`, `zod`, `uuidv7`, `aws4fetch`, `cron-parser`, `p-limit`; dev: `tsx`, `vitest`, `@playwright/test`. (No `pg-boss`, no `esbuild` worker bundle.)
-6. `docker/compose.dev.yml`: `postgres:17` + Mailpit.
-7. `server/core/env.ts` (zod), `server/core/log.ts`, `server/core/db/client.ts` (one pooled `db`, small pool), `drizzle.config.ts` (direct URL), schema files from `docs/blueprint/02` (platform, incl. §3.7 jobs and rate limits) + `docs/ARCHITECTURE.md` §7 (domain), first migration, idempotent seed (incl. `job_schedules`).
-8. Shared catalogs stubs (`shared/utils/*`), `server/utils/{auth,validate,http}.ts`, `server/core/{crypto,rate-limit,money,timezone}.ts`.
-9. better-auth creator + staff instances, gatekeepers, auth pages, both shells (creator: bottom nav on phones), i18n id/en, dark mode.
-10. Job skeleton (`docs/blueprint/15`): `enqueue`, `runDue`, `kick`, `runTick`, `/api/internal/tick`, `/api/internal/jobs/run`, `scripts/dev-tick.ts`, `/healthz`; runtime-contract lint rules (`blueprint/19` §2).
-11. Portability spike: build `node-server`, `aws-lambda`, `vercel` presets in CI; on the chosen staging host verify `waitUntil`, `maxDuration`, region, Cloudflare short-domain rewrite, cron → tick.
-12. Verify: `docker compose -f docker/compose.dev.yml up -d`, `npm run db:migrate && npm run db:seed`, `npm run dev` + `npm run tick:dev`; sign up → verification email in Mailpit → log in (email; Google if keys set) → switch id/en; staff login at `/admin`; `/healthz` shows a fresh tick; a `system.noop` job runs via kick; `npm run lint`, `npm run typecheck`, `npm test` pass.
+1. User provides §5 items → create Neon branches, R2, Resend, Cloudflare zones (transform rule from `deploy/README.md`).
+2. Deploy staging with the chosen `deploy/<target>/`; run `npm run db:migrate` (direct URL) and `npm run db:seed` once; set the per-minute tick + a backup pinger; check `/healthz`.
+3. Configure `/admin`: settings, payment gateway, legal pages, staff. Run the hub end-to-end test from `blueprint/17` Phase 11 against the real hub with a low-price plan.
+4. Meta App Review submissions with the staging build (screencasts of connect → publish → comment-to-DM).
+5. Usability test with 5 first-time creators (target: first scheduled post in < 5 minutes), closed beta, then production.
 
 ## 7. In parallel (user, non-code, M0)
 

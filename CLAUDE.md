@@ -2,7 +2,7 @@
 
 Socialz.id is a multi-tenant SaaS for **Indonesian affiliate creators**, beginners included. Creators schedule posts to Instagram, Threads and Facebook Pages, keep affiliate product links as tracked short links, run a link-in-bio storefront (**Etalase**), and auto-DM product links when someone comments a keyword (**Balas Otomatis**). They pay a monthly or yearly subscription through the Nexadream Payment Hub.
 
-**Status:** M1 foundation implemented locally (see `docs/HANDOFF.md` §1.1); next: choose the staging host, then M2. Use Node 24 via fnm (`.nvmrc`); the system Node 22.16 is too old for Nuxt 4.6.
+**Status:** v1 implemented locally on branch `develop` (build phases 1–14 of `docs/blueprint/17`, see `docs/HANDOFF.md` §1.1), not deployed. Next: the user's keys, domains and hosting choice, then staging (`docs/HANDOFF.md` §5–6). Use Node 24 via fnm (`.nvmrc`); the system Node 22.16 is too old for Nuxt 4.6.
 
 **Commands:** `docker compose -f docker/compose.dev.yml up -d` · `npm run db:migrate && npm run db:seed` · `npm run dev` + `npm run tick:dev` · `npm run lint` · `npm run typecheck` · `npm test`. Dev logins: `admin@socialz.local` / `admin12345` (`/admin`), `demo@socialz.local` / `demo12345` (`/app`); emails land in Mailpit at http://localhost:8025.
 
