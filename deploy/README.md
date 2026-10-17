@@ -48,6 +48,8 @@ Sign in at `/admin`, change the superadmin password, then: Pengaturan (company, 
 billing, privacy, app, channels) → Payment gateway (hub key, base URL, order prefix → activate) → Paket (prices) →
 Halaman (review the legal drafts with counsel; privacy and terms must be live before Meta App Review) → Staf.
 
+Staging can run in **test mode** until the hub key exists: the seed activates the payment simulator in any non-production environment (`docs/blueprint/08` §11). Production never offers it.
+
 Register with the Payment Hub admin: webhook `https://<site>/api/webhooks/payments/nexadream_hub`,
 finish/error/pending redirects `https://<site>/app/billing?status=success|failed|pending`.
 

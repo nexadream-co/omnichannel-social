@@ -27,7 +27,7 @@ This file lets a new Claude session (or another account) continue exactly where 
 
 **Checks:** `npm run lint`, `npm run typecheck`, `npm test` (≈134 unit + integration tests on real Postgres) and `npm run test:e2e` (5 specs, phone viewport) pass. `NITRO_PRESET=node-server` build smoke-tested; app and media Docker images built and smoke-tested.
 
-**Run locally:** `npm run dev`, `npm run tick:dev` (jobs), `npm run media:dev` (ffmpeg processor), optionally `npx tsx scripts/mock-payment-hub.ts` (then activate the gateway at `/admin/payment-gateways` with base URL `http://localhost:3300`, any key, prefix `DEV`). Logins: `admin@socialz.local` / `admin12345` (`/admin`), `demo@socialz.local` / `demo12345` (`/app`).
+**Run locally:** `npm run dev`, `npm run tick:dev` (jobs), `npm run media:dev` (ffmpeg processor). **Payments run in test mode** (`blueprint/08` §11): the seed activates the payment simulator outside production, checkout opens `/pay/simulator/:orderId` where you pick the outcome, and `/admin/workspaces/:id` has "Mode uji: simulasi waktu" to end trials, trigger reminders, end periods and grace without waiting. `npx tsx scripts/mock-payment-hub.ts` is only for testing the real hub driver's HTTP. Logins: `admin@socialz.local` / `admin12345` (`/admin`), `demo@socialz.local` / `demo12345` (`/app`).
 
 **Known gaps (deliberate, small):** the Etalase page has no server route cache (its public API is CDN-cached 15 s); real Meta, R2, Resend and Google paths are unexercised until keys exist.
 

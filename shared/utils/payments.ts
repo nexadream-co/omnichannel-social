@@ -22,10 +22,24 @@ export interface PaymentProviderMeta {
   isImplemented: boolean
   supportsRecurring: boolean
   supportsSandbox: boolean
+  /** Test mode only: never offered, activated or used when NUXT_PUBLIC_APP_ENV is production. */
+  testOnly?: boolean
   fields: PaymentCredentialFieldMeta[]
 }
 
 export const PAYMENT_PROVIDERS: PaymentProviderMeta[] = [
+  {
+    value: 'simulator',
+    label: 'Simulator pembayaran (mode uji)',
+    description: 'Pembayaran pura-pura untuk pengembangan dan staging. Halaman bayar tiruan memilih hasilnya: berhasil, gagal, kedaluwarsa, ditinjau, dibatalkan atau dikembalikan. Tidak ada uang sungguhan. Tidak tersedia di produksi.',
+    icon: 'i-lucide-flask-conical',
+    docsUrl: '',
+    isImplemented: true,
+    supportsRecurring: false,
+    supportsSandbox: true,
+    testOnly: true,
+    fields: []
+  },
   {
     value: 'nexadream_hub',
     label: 'Nexadream Payment Hub',
@@ -56,4 +70,9 @@ export const PAYMENT_STATUS_KEYS: Record<PaymentStatusValue, string> = {
   refunded: 'billing.paymentStatus.refunded',
   cancelled: 'billing.paymentStatus.cancelled',
   challenge: 'billing.paymentStatus.challenge'
+}
+
+/** The raw words a card/QRIS gateway sends for each outcome; the simulator speaks them so the callback path is exercised. */
+export const SIMULATED_GATEWAY_WORDS: Record<PaymentStatusValue, string> = {
+  pending: 'pending', paid: 'settlement', failed: 'deny', expired: 'expire', refunded: 'refund', cancelled: 'cancel', challenge: 'challenge'
 }

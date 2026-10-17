@@ -422,3 +422,31 @@ export async function reconcilePendingPayments(): Promise<{ checked: number, upd
 5. If it signs webhooks with a shared secret: set `trustsWebhookPayload = true` and implement `verifyWebhook` + `normalizeWebhook`. If it supports mandates (for example recurring card or e-wallet auto-debit): implement `createSubscription` / `cancelSubscription` and store `subscriptions.providerRef`.
 
 Nothing else in the codebase should change.
+
+## 11. Test mode: the payment simulator
+
+Development and staging must be able to exercise the whole payment path before (and independently of) the
+Payment Hub. Test mode is a **real payment provider** (`simulator`, `server/core/services/payments/simulator.ts`)
+that plays the hub's role, so nothing in checkout, callbacks, `applyPayment` or reconciliation is special-cased.
+
+- **Same contract as the hub, on purpose:** `trustsWebhookPayload = false` (every callback is re-read with
+  `getStatus`), a prefixed gateway order id (`SIM-<orderId>`, matched exactly), a hosted page, cancel → 409 once
+  settled, an unpaid checkout reads as `expired` after its expiry. Its own state lives in `payment_simulations`
+  (Postgres, so it works on any serverless host); the app's `payments` row is still the app's truth.
+- **Hosted page** `/pay/simulator/:orderId` (data: `GET /api/test/payments/:orderId`, action:
+  `POST /api/test/payments/:orderId/outcome`). Outcomes: `paid`, `paid_no_callback` (tests reconciliation),
+  `challenge`, `failed`, `expired`, `cancelled`, and `refunded` once paid, with a chosen payment method. Each one
+  updates the simulator's record, then sends a gateway-style raw callback (`settlement`, `deny`, `expire`, …) through
+  `receivePaymentWebhook`, and redirects to the finish URL with display-only `reference` / `result` parameters.
+- **Simulated time** (`POST /api/admin/workspaces/:id/test-clock`, card on `/admin/workspaces/:id`): end the trial,
+  put the period end 3 days out (renewal reminder), end the period, end grace. It moves dates only, records a
+  `subscription_events` row (`test_clock`) and an audit row, then runs `billing.daily` / `billing.renewal-reminders`
+  immediately; statuses still change only through `transitionSubscription()`.
+- **Never in production.** When `NUXT_PUBLIC_APP_ENV=production` the provider is hidden from
+  `/admin/payment-gateways`, cannot be activated, `getActiveGateway()` ignores it, its endpoints answer 404 and the
+  test clock is refused. The gateway row ships inactive in migration `0006` and the seed; the seed activates it in
+  non-production environments when no other gateway is active.
+- **Visible everywhere it matters:** a "Mode uji" notice on `/app/billing`, a "MODE UJI" banner on the hosted page,
+  "Mode uji" on the gateway card and a "Simulasi" badge (with "Buka simulator") on `/admin/payments`.
+- `scripts/mock-payment-hub.ts` remains for testing the **hub driver's HTTP** against a local stand-in; the
+  simulator is what staging uses day to day.

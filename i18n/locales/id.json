@@ -899,7 +899,8 @@
     "selectCount": "{selected} dari {max} dipilih",
     "selectSave": "Simpan pilihan",
     "selectUpgrade": "Upgrade supaya semua aktif",
-    "selectSaved": "Pilihan akun disimpan."
+    "selectSaved": "Pilihan akun disimpan.",
+    "testMode": "Mode uji: pembayaran disimulasikan, tidak ada uang sungguhan. Di halaman bayar, kamu memilih sendiri hasilnya."
   },
   "impersonation": {
     "banner": "Kamu sedang menyamar sebagai {name}. Semua tindakan tercatat.",

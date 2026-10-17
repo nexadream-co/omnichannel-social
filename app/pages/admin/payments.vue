@@ -56,7 +56,17 @@ const columns: TableColumn<Row>[] = [
         </template>
         <template #orderId-cell="{ row }">
           <div class="font-mono text-xs">
-            <p>{{ row.original.orderId }}</p>
+            <p>
+              {{ row.original.orderId }}
+              <UBadge
+                v-if="row.original.provider === 'simulator'"
+                size="sm"
+                color="warning"
+                variant="subtle"
+                label="Simulasi"
+                class="ml-1 font-sans"
+              />
+            </p>
             <p class="text-muted">
               {{ row.original.gatewayOrderId ?? '—' }}
             </p>
@@ -78,6 +88,14 @@ const columns: TableColumn<Row>[] = [
             <p class="text-xs text-muted">
               {{ [row.original.rawStatus, row.original.paymentType].filter(Boolean).join(' · ') }}
             </p>
+            <ULink
+              v-if="row.original.provider === 'simulator' && ['pending', 'challenge', 'paid'].includes(row.original.status)"
+              :to="`/pay/simulator/${row.original.orderId}`"
+              target="_blank"
+              class="text-xs text-primary"
+            >
+              Buka simulator
+            </ULink>
           </div>
         </template>
       </UTable>

@@ -97,3 +97,24 @@ export const paymentWebhookEvents = pgTable('payment_webhook_events', {
   replayCount: integer().notNull().default(0),
   createdAt: createdAt()
 }, t => [index().on(t.provider), index().on(t.orderId), index().on(t.createdAt)])
+
+/**
+ * Test mode only (docs/blueprint/08 §11): the payment simulator's own record of each charge, playing the part
+ * the Payment Hub plays in production. The app's `payments` row stays the source of truth for the app.
+ */
+export const paymentSimulations = pgTable('payment_simulations', {
+  id: id(),
+  orderId: text().notNull().unique(), // OUR order id (the hub's "reference")
+  gatewayOrderId: text().notNull().unique(), // what callbacks carry, like the hub's prefixed id
+  amount: integer().notNull(),
+  currency: text().notNull().default('IDR'),
+  status: paymentStatus().notNull().default('pending'),
+  itemName: text().notNull(),
+  customerName: text(),
+  finishUrl: text(),
+  paymentType: text(),
+  metadata: jsonb(),
+  expiresAt: tstz(),
+  settledAt: tstz(),
+  createdAt: createdAt(), updatedAt: updatedAt()
+}, t => [index().on(t.status)])

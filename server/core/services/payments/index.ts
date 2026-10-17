@@ -4,14 +4,17 @@ import type { Executor } from '../../db/client'
 import { getDb } from '../../db/client'
 import { paymentGateways } from '../../db/schema'
 import { appError } from '../../errors'
+import { PAYMENT_PROVIDERS } from '../../../../shared/utils/payments'
 import { nexadreamHubDriver } from './nexadream-hub'
+import { simulatorAllowed, simulatorDriver } from './simulator'
 import type { GatewayCredentials, PaymentDriver } from './types'
 
 export type * from './types'
 
 /** Adding a gateway = one driver file + one line here + one PAYMENT_PROVIDERS entry (docs/blueprint/08 §10). */
 const DRIVERS: Record<string, PaymentDriver> = {
-  [nexadreamHubDriver.provider]: nexadreamHubDriver
+  [nexadreamHubDriver.provider]: nexadreamHubDriver,
+  [simulatorDriver.provider]: simulatorDriver
 }
 
 /** Tests only: swap a driver for a fake. */
@@ -19,8 +22,19 @@ export function registerPaymentDriver(driver: PaymentDriver) {
   DRIVERS[driver.provider] = driver
 }
 
+/** Test-only providers (the simulator) don't exist in production: not listed, not activatable, never used. */
+export function isProviderAvailable(provider: string): boolean {
+  const meta = PAYMENT_PROVIDERS.find(p => p.value === provider)
+  return Boolean(meta) && (!meta!.testOnly || simulatorAllowed())
+}
+
 export function isSupportedProvider(provider: string): boolean {
-  return Object.hasOwn(DRIVERS, provider)
+  return Object.hasOwn(DRIVERS, provider) && isProviderAvailable(provider)
+}
+
+/** A gateway is usable when every secret its catalog entry asks for is stored (the simulator asks for none). */
+function needsServerKey(provider: string): boolean {
+  return PAYMENT_PROVIDERS.find(p => p.value === provider)?.fields.some(f => f.key === 'serverKey') ?? true
 }
 
 export function getPaymentDriver(provider: string): PaymentDriver {
@@ -52,17 +66,17 @@ function toCredentials(row: typeof paymentGateways.$inferSelect): GatewayCredent
 
 export async function getActiveGateway(db: Executor = getDb()): Promise<{ driver: PaymentDriver, creds: GatewayCredentials } | null> {
   const [row] = await db.select().from(paymentGateways).where(eq(paymentGateways.isActive, true)).limit(1)
-  if (!row?.serverKey || !isSupportedProvider(row.provider)) return null
+  if (!row || !isSupportedProvider(row.provider)) return null
   const creds = toCredentials(row)
-  if (!creds.serverKey) return null
+  if (needsServerKey(row.provider) && !creds.serverKey) return null
   return { driver: getPaymentDriver(row.provider), creds }
 }
 
 export async function getGatewayCredentials(provider: string, db: Executor = getDb()): Promise<GatewayCredentials | null> {
   const [row] = await db.select().from(paymentGateways).where(eq(paymentGateways.provider, provider)).limit(1)
-  if (!row?.serverKey) return null
+  if (!row || !isProviderAvailable(provider)) return null
   const creds = toCredentials(row)
-  return creds.serverKey ? creds : null
+  return !needsServerKey(provider) || creds.serverKey ? creds : null
 }
 
 export function requireActiveGateway<T>(gateway: T | null): T {

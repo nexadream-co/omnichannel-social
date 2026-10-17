@@ -7,7 +7,9 @@ import { entitlementUsage, getEntitlements, invalidateEntitlements } from '../en
 import { appError } from '../errors'
 import { enqueue } from '../jobs/enqueue'
 import { notifyWorkspaceOwners } from '../notifications'
+import { billingDailyJob, renewalRemindersJob } from '../billing-jobs'
 import { createImpersonationSession } from '../services/auth'
+import { simulatorAllowed } from '../services/payments/simulator'
 import { enforceWorkspaceLimits, transitionSubscription } from '../subscriptions'
 
 const meta = (page: number, limit: number, total: number) => ({ page, limit, total, pageCount: Math.max(1, Math.ceil(total / limit)) })
@@ -86,6 +88,7 @@ export async function getWorkspaceDetail(ctx: StaffContext, id: string) {
     subscription: sub ? { status: sub.sub.status, period: sub.sub.period, trialEndsAt: sub.sub.trialEndsAt, currentPeriodEnd: sub.sub.currentPeriodEnd, graceEndsAt: sub.sub.graceEndsAt, cancelledAt: sub.sub.cancelledAt, planSlug: sub.plan.slug, planName: sub.plan.name } : null,
     entitlements: { effectivePlanSlug: entitlements.effectivePlanSlug, limits: entitlements.limits, features: entitlements.features, usage },
     members, payments: recentPayments, deleteRequest: deleteRequest[0] ?? null, plans: planRows,
+    testMode: simulatorAllowed(),
     drillDown: { accounts, targets, linkCount: linkCount?.n ?? 0, bio, ruleCount: ruleCount?.n ?? 0 }
   }
 }
@@ -196,4 +199,38 @@ export async function impersonateCreator(ctx: StaffContext, input: { workspaceId
   const session = await createImpersonationSession(member.userId, member.workspaceId, ctx.staffUserId)
   await recordAudit(ctx, { audience: 'staff', action: 'workspace.impersonate_start', actorId: ctx.staffUserId, actorName: ctx.staffName, workspaceId: member.workspaceId, targetType: 'user', targetId: member.userId, metadata: { sessionId: session.sessionId } })
   return session
+}
+
+export const testClockSchema = z.object({ action: z.enum(['end_trial', 'end_period', 'end_grace', 'renewal_in_3_days']) })
+
+/**
+ * Test mode only (docs/blueprint/08 §11): move a subscription's clock so trial endings, renewal reminders,
+ * grace and downgrades can be tried in minutes, then run the billing jobs right away. Dates only; the status
+ * still changes solely through transitionSubscription() inside the jobs. Every shift is recorded as an event.
+ */
+export async function shiftTestClock(ctx: StaffContext, id: string, action: z.infer<typeof testClockSchema>['action']) {
+  assertPermission(ctx, 'subscriptions.write')
+  if (!simulatorAllowed()) throw appError(404, 'Tidak tersedia di produksi.', 'NOT_FOUND')
+  await loadWorkspace(ctx, id)
+  const [row] = await ctx.db.select({ sub: subscriptions, planSlug: plans.slug }).from(subscriptions).innerJoin(plans, eq(plans.id, subscriptions.planId)).where(eq(subscriptions.workspaceId, id)).limit(1)
+  if (!row) throw appError(404, 'Langganan tidak ditemukan.', 'NOT_FOUND')
+  const past = new Date(Date.now() - 60_000)
+  const NEEDS: Record<typeof action, { status: string[], set: Partial<typeof subscriptions.$inferInsert>, message: string }> = {
+    end_trial: { status: ['trialing'], set: { trialEndsAt: past }, message: 'Langganan ini tidak sedang uji coba.' },
+    end_period: { status: ['active', 'cancelled'], set: { currentPeriodEnd: past }, message: 'Langganan ini tidak punya periode berbayar.' },
+    end_grace: { status: ['past_due'], set: { graceEndsAt: past }, message: 'Langganan ini tidak sedang masa tenggang.' },
+    renewal_in_3_days: { status: ['active'], set: { currentPeriodEnd: new Date(Date.now() + 3 * 86_400_000 + 3_600_000) }, message: 'Pengingat perpanjangan hanya untuk langganan aktif.' }
+  }
+  const step = NEEDS[action]
+  if (!step.status.includes(row.sub.status)) throw appError(409, step.message, 'CONFLICT')
+  await ctx.db.transaction(async (tx) => {
+    await tx.update(subscriptions).set({ ...step.set, updatedAt: new Date() }).where(eq(subscriptions.id, row.sub.id))
+    await tx.insert(subscriptionEvents).values({ workspaceId: id, transition: 'test_clock', fromStatus: row.sub.status, toStatus: row.sub.status, fromPlanSlug: row.planSlug, toPlanSlug: row.planSlug, period: row.sub.period })
+  })
+  const job = { id: `test-clock-${Date.now()}`, queue: 'billing.daily', payload: { manual: true }, workspaceId: null, attempts: 1, maxAttempts: 1, runAt: new Date() }
+  if (action === 'renewal_in_3_days') await renewalRemindersJob(job, ctx)
+  else await billingDailyJob(job, ctx)
+  await recordAudit(ctx, { audience: 'staff', action: 'subscription.test_clock', actorId: ctx.staffUserId, actorName: ctx.staffName, workspaceId: id, targetType: 'subscription', targetId: row.sub.id, metadata: { action } })
+  const [after] = await ctx.db.select({ status: subscriptions.status }).from(subscriptions).where(eq(subscriptions.workspaceId, id))
+  return { before: row.sub.status, after: after?.status ?? row.sub.status }
 }

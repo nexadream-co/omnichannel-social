@@ -9,6 +9,7 @@ interface Detail {
   payments: { id: string, orderId: string, amount: number, status: string, planSlug: string | null, period: string, createdAt: string }[]
   deleteRequest: { actorName: string | null, createdAt: string, metadata: { reason?: string } | null } | null
   plans: { slug: string, name: string }[]
+  testMode: boolean
   drillDown: {
     accounts: { id: string, platform: string, username: string | null, status: string, tokenExpiresAt: string | null }[]
     targets: { id: string, platform: string, format: string, status: string, scheduledAt: string | null, lastErrorCode: string | null, updatedAt: string }[]
@@ -84,6 +85,25 @@ async function impersonate() {
     window.location.href = result.redirect
   } catch (caught) {
     toast.add({ title: extractErrorMessage(caught, 'Terjadi kesalahan.'), color: 'error' })
+    busy.value = null
+  }
+}
+const CLOCK_ACTIONS = [
+  { action: 'end_trial', label: 'Akhiri uji coba sekarang', hint: 'Uji coba habis → turun ke Gratis, akun lebih dari batas dinonaktifkan.', when: ['trialing'] },
+  { action: 'renewal_in_3_days', label: 'Periode berakhir 3 hari lagi', hint: 'Kirim pengingat perpanjangan sekarang.', when: ['active'] },
+  { action: 'end_period', label: 'Akhiri periode sekarang', hint: 'Periode habis tanpa bayar → masa tenggang (atau Gratis jika sudah dibatalkan).', when: ['active', 'cancelled'] },
+  { action: 'end_grace', label: 'Akhiri masa tenggang sekarang', hint: 'Masa tenggang habis → turun ke Gratis.', when: ['past_due'] }
+] as const
+const clockActions = computed(() => CLOCK_ACTIONS.filter(a => (a.when as readonly string[]).includes(data.value?.subscription?.status ?? '')))
+async function shiftClock(action: string) {
+  busy.value = action
+  try {
+    const result = await apiFetch<{ before: string, after: string }>(`/api/admin/workspaces/${id}/test-clock`, { method: 'POST', body: { action } })
+    toast.add({ title: `Waktu disimulasikan: ${statusOf(SUBSCRIPTION_STATUS, result.before).label} → ${statusOf(SUBSCRIPTION_STATUS, result.after).label}`, color: 'success' })
+    await load()
+  } catch (caught) {
+    toast.add({ title: extractErrorMessage(caught, 'Gagal mensimulasikan waktu.'), color: 'error' })
+  } finally {
     busy.value = null
   }
 }
@@ -246,6 +266,45 @@ const SHOWN_LIMITS = LIMIT_KEYS.filter(k => k !== 'activityLogRetentionDays')
         </div>
       </UCard>
     </div>
+
+    <UCard
+      v-if="data.testMode && can('subscriptions.write')"
+      class="ring-1 ring-warning/40"
+    >
+      <template #header>
+        <div class="flex items-center gap-2">
+          <UIcon
+            name="i-lucide-flask-conical"
+            class="size-4 text-warning"
+          />
+          <p class="font-semibold text-highlighted">
+            Mode uji: simulasi waktu
+          </p>
+        </div>
+        <p class="text-sm text-muted">
+          Majukan tanggal langganan lalu jalankan pekerjaan penagihan sekarang, supaya uji coba habis, pengingat, masa tenggang dan turun paket bisa dicoba tanpa menunggu. Tidak tersedia di produksi.
+        </p>
+      </template>
+      <p
+        v-if="!clockActions.length"
+        class="text-sm text-muted"
+      >
+        Tidak ada simulasi untuk status langganan ini.
+      </p>
+      <div class="grid gap-2 sm:grid-cols-2">
+        <button
+          v-for="item in clockActions"
+          :key="item.action"
+          type="button"
+          class="text-left rounded-lg border border-default p-3 hover:bg-elevated/60 disabled:opacity-60"
+          :disabled="busy !== null"
+          @click="shiftClock(item.action)"
+        >
+          <span class="block text-sm font-medium text-highlighted">{{ item.label }}</span>
+          <span class="block text-xs text-muted">{{ item.hint }}</span>
+        </button>
+      </div>
+    </UCard>
 
     <UCard :ui="{ body: 'p-0 sm:p-0' }">
       <template #header>

@@ -89,6 +89,12 @@ step('payment gateway (inactive, no credentials)')
 await db.insert(schema.paymentGateways).values({
   id: 'gateway-nexadream_hub', provider: 'nexadream_hub', label: 'Nexadream Payment Hub', isActive: false, isSandbox: false, baseUrl: 'https://nexadream.id'
 }).onConflictDoNothing()
+await db.insert(schema.paymentGateways).values({ id: 'gateway-simulator', provider: 'simulator', label: 'Simulator pembayaran', isActive: false, isSandbox: true }).onConflictDoNothing()
+if (!isProduction) {
+  // Development and staging start in test mode, so checkout works before the hub key exists (docs/blueprint/08 §11).
+  const active = await db.select({ id: schema.paymentGateways.id }).from(schema.paymentGateways).where(eq(schema.paymentGateways.isActive, true))
+  if (!active.length) await db.update(schema.paymentGateways).set({ isActive: true }).where(eq(schema.paymentGateways.id, 'gateway-simulator'))
+}
 
 step('job schedules')
 for (const schedule of SCHEDULES) {

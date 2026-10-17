@@ -54,4 +54,6 @@
 - A win-back email goes to owners who haven't opened Socialz.id for 10 days.
 - Back-office: superadmins can impersonate another staff member (never another superadmin) and return to their own session; impersonated sessions can't change passwords or email.
 - Fix: the nightly billing job declared a run time longer than the tick budget, so it would never have started. Every queue is now checked against the budget by a test.
+- Test mode for payments: a payment simulator that stands in for the Payment Hub in development and staging. Checkout opens a clearly marked simulated payment page where you choose the outcome (paid, paid with the callback lost, under review, failed, expired, cancelled, refunded) and the method; it goes through exactly the same callback, status re-read and reconciliation path as the real hub. The billing page says when payments are simulated. Never available in production.
+- Test mode: "simulasi waktu" on the back-office workspace page ends a trial, sends the renewal reminder, ends a paid period or ends grace right away, so the whole renewal and downgrade cycle can be tried in minutes. Recorded in the subscription history and the audit log.
 - Database schema for the platform and domain layers, with seeded permissions, roles, menus, settings, templates, plans, job schedules and legal pages.

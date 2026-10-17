@@ -899,7 +899,8 @@
     "selectCount": "{selected} of {max} selected",
     "selectSave": "Save choice",
     "selectUpgrade": "Upgrade to keep them all",
-    "selectSaved": "Account choice saved."
+    "selectSaved": "Account choice saved.",
+    "testMode": "Test mode: payments are simulated and no real money moves. On the payment page you choose the outcome."
   },
   "impersonation": {
     "banner": "You are impersonating {name}. Every action is recorded.",

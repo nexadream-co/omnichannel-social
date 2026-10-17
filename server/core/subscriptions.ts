@@ -288,7 +288,9 @@ export async function getSubscriptionView(ctx: WorkspaceContext) {
     plans: planRows.map(p => ({ slug: p.slug, name: p.name, description: p.description, priceMonthly: p.priceMonthly, priceYearly: p.priceYearly, limits: p.limits, features: p.features, trialDays: p.trialDays })),
     pendingPayments: pending.filter(p => isAwaitingPayment(p)).map(paymentView),
     needsAccountSelection: selection,
-    checkoutAvailable: Boolean(gateway)
+    checkoutAvailable: Boolean(gateway),
+    // Test mode: payments are simulated (docs/blueprint/08 §11); the page says so plainly.
+    testMode: gateway?.driver.provider === 'simulator'
   }
 }
 

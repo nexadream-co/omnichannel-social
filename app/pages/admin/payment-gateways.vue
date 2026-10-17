@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { PaymentProviderMeta } from '#shared/utils/payments'
 
-interface Gateway { id: string, provider: string, label: string, isActive: boolean, isSandbox: boolean, merchantId: string | null, baseUrl: string | null, orderPrefix: string | null, serverKeyMasked: string | null, clientKeyMasked: string | null, hasServerKey: boolean, hasClientKey: boolean, updatedAt: string }
+interface Gateway { id: string, testOnly: boolean, provider: string, label: string, isActive: boolean, isSandbox: boolean, merchantId: string | null, baseUrl: string | null, orderPrefix: string | null, serverKeyMasked: string | null, clientKeyMasked: string | null, hasServerKey: boolean, hasClientKey: boolean, updatedAt: string }
 
 definePageMeta({ layout: 'admin' })
 useHead({ title: 'Payment gateway' })
@@ -82,12 +82,20 @@ const registration = computed(() => [
                 </p>
               </div>
             </div>
-            <UBadge
-              :color="gateway.isActive ? 'success' : 'neutral'"
-              variant="subtle"
-              :label="gateway.isActive ? 'Aktif' : 'Nonaktif'"
-              class="shrink-0"
-            />
+            <div class="flex flex-col items-end gap-1 shrink-0">
+              <UBadge
+                :color="gateway.isActive ? 'success' : 'neutral'"
+                variant="subtle"
+                :label="gateway.isActive ? 'Aktif' : 'Nonaktif'"
+                class="shrink-0"
+              />
+              <UBadge
+                v-if="gateway.testOnly"
+                color="warning"
+                variant="subtle"
+                label="Mode uji"
+              />
+            </div>
           </div>
         </template>
         <form

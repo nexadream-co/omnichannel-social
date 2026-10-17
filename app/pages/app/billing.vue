@@ -11,6 +11,7 @@ interface View {
   plans: PlanCard[]
   pendingPayments: Payment[]
   checkoutAvailable: boolean
+  testMode: boolean
 }
 
 definePageMeta({ layout: 'creator' })
@@ -167,6 +168,13 @@ const paymentColor = (status: PaymentStatusValue) => (status === 'paid' ? 'succe
     </div>
 
     <template v-else>
+      <UAlert
+        v-if="view.testMode"
+        color="info"
+        variant="subtle"
+        icon="i-lucide-flask-conical"
+        :title="t('billing.testMode')"
+      />
       <UAlert
         v-if="impersonating"
         color="warning"

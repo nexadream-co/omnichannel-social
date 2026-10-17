@@ -6,7 +6,7 @@ import { assertPermission, type StaffContext } from '../context'
 import { decrypt, encrypt, maskSecret } from '../crypto'
 import { paymentGateways, payments, plans, subscriptions, workspaces } from '../db/schema'
 import { appError } from '../errors'
-import { gatewaySecretAad } from '../services/payments'
+import { gatewaySecretAad, isProviderAvailable } from '../services/payments'
 
 const listQuery = z.object({
   page: z.coerce.number().int().min(1).default(1),
@@ -18,10 +18,12 @@ const meta = (page: number, limit: number, total: number) => ({ page, limit, tot
 /** docs/blueprint/08 §9. Secrets come back masked only. */
 export async function listGateways(ctx: StaffContext) {
   assertPermission(ctx, 'payments.read')
-  const rows = await ctx.db.select().from(paymentGateways).orderBy(paymentGateways.provider)
+  // Test-only providers (the simulator) are invisible in production.
+  const rows = (await ctx.db.select().from(paymentGateways).orderBy(paymentGateways.provider)).filter(row => isProviderAvailable(row.provider))
   return {
-    providers: PAYMENT_PROVIDERS,
+    providers: PAYMENT_PROVIDERS.filter(p => isProviderAvailable(p.value)),
     items: rows.map(row => ({
+      testOnly: Boolean(PAYMENT_PROVIDERS.find(p => p.value === row.provider)?.testOnly),
       id: row.id, provider: row.provider, label: row.label, isActive: row.isActive, isSandbox: row.isSandbox, merchantId: row.merchantId,
       baseUrl: row.baseUrl, orderPrefix: row.orderPrefix, updatedAt: row.updatedAt,
       serverKeyMasked: row.serverKey ? maskSecret(decrypt(row.serverKey, gatewaySecretAad(row.provider, 'serverKey'))) : null,
@@ -45,7 +47,7 @@ export const gatewayPatchSchema = z.object({
 export async function updateGateway(ctx: StaffContext, id: string, input: z.infer<typeof gatewayPatchSchema>) {
   assertPermission(ctx, 'payments.write')
   const [row] = await ctx.db.select().from(paymentGateways).where(eq(paymentGateways.id, id)).limit(1)
-  if (!row) throw appError(404, 'Gateway tidak ditemukan.', 'NOT_FOUND')
+  if (!row || !isProviderAvailable(row.provider)) throw appError(404, 'Gateway tidak ditemukan.', 'NOT_FOUND')
   const provider = PAYMENT_PROVIDERS.find(p => p.value === row.provider)
   const blank = (v: string | null | undefined) => (v === '' ? null : v)
   const next = {

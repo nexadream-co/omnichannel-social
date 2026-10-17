@@ -43,6 +43,7 @@ export const AUDIT_ACTION_LABELS: Record<string, string> = {
   'staff.invite': 'Staf diundang',
   'subscription.downgrade': 'Langganan dibatalkan',
   'subscription.plan_change': 'Paket diubah staf',
+  'subscription.test_clock': 'Simulasi waktu langganan (mode uji)',
   'system.job_run': 'Pekerjaan dijalankan manual',
   'system.job_retry': 'Pekerjaan gagal dicoba lagi',
   'team.invite': 'Anggota tim diundang',
