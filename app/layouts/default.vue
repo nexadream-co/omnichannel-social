@@ -24,6 +24,29 @@ watch(() => route.fullPath, () => {
   menuOpen.value = false
 })
 
+// Highlight the landing section in view, so the nav shows where the reader is.
+const activeSection = ref<string | null>(null)
+let sectionObserver: IntersectionObserver | null = null
+function observeSections() {
+  sectionObserver?.disconnect()
+  activeSection.value = null
+  if (!onLanding.value) return
+  sectionObserver = new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+      if (entry.isIntersecting) activeSection.value = entry.target.id
+    }
+  }, { rootMargin: '-45% 0px -50% 0px' })
+  for (const s of sections.value) {
+    const el = document.getElementById(s.id)
+    if (el) sectionObserver.observe(el)
+  }
+}
+onMounted(() => {
+  observeSections()
+  watch(onLanding, () => nextTick(observeSections))
+})
+onBeforeUnmount(() => sectionObserver?.disconnect())
+
 const socials = computed(() => {
   const c = site.value?.company
   if (!c) return []
@@ -53,7 +76,7 @@ const socials = computed(() => {
             v-for="s in sections"
             :key="s.id"
             :to="sectionLink(s.id)"
-            color="neutral"
+            :color="activeSection === s.id ? 'primary' : 'neutral'"
             variant="ghost"
             :label="s.label"
           />

@@ -1,13 +1,14 @@
 <script setup lang="ts">
+interface Plan { slug: string, name: string, description: string | null, priceMonthly: number, priceYearly: number, trialDays: number, limits: Record<string, number>, features: Record<string, boolean> }
 interface Landing {
-  plans: { slug: string, name: string, description: string | null, priceMonthly: number, priceYearly: number, trialDays: number, limits: Record<string, number>, features: Record<string, boolean> }[]
+  plans: Plan[]
   faqs: { id: string, question: string, answer: string, category: string }[]
   company: { name: string, tagline: string, email: string, whatsapp: string, instagram: string, threads: string, tiktok: string, youtube: string }
   trialPlanSlug: string
   registrationOpen: boolean
 }
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const localePath = useLocalePath()
 const config = useRuntimeConfig()
 const { data } = await useFetch<Landing>('/api/public/landing')
@@ -34,23 +35,42 @@ useHead(() => ({
   }]
 }))
 
-const features = [
-  { icon: 'i-lucide-calendar-clock', title: 'landing.feature1Title', body: 'landing.feature1Body' },
-  { icon: 'i-lucide-store', title: 'landing.feature2Title', body: 'landing.feature2Body' },
-  { icon: 'i-lucide-message-circle-reply', title: 'landing.feature3Title', body: 'landing.feature3Body' }
+const registrationOpen = computed(() => data.value?.registrationOpen !== false)
+// Hero price chips come from the plans themselves, so they never disagree with the pricing section.
+const planChips = computed(() => {
+  const plans = data.value?.plans ?? []
+  const free = plans.find(p => p.priceMonthly === 0)
+  const paid = plans.filter(p => p.priceMonthly > 0).sort((a, b) => a.priceMonthly - b.priceMonthly)[0]
+  const trial = plans.find(p => p.slug === data.value?.trialPlanSlug && p.trialDays > 0)
+  return [
+    free && t('landing.plan.free', { plan: free.name }),
+    paid && t('landing.plan.paid', { plan: paid.name, price: formatIDR(paid.priceMonthly, locale.value) }),
+    trial && t('landing.trialBadge', { n: trial.trialDays })
+  ].filter(Boolean) as string[]
+})
+
+const soon = [
+  { name: 'TikTok', icon: 'i-simple-icons-tiktok' },
+  { name: 'YouTube', icon: 'i-simple-icons-youtube' },
+  { name: 'X', icon: 'i-simple-icons-x' }
+]
+// Each feature as a tiny flow of icons: what goes in, what happens, what comes out.
+const cards = [
+  { key: 'schedule', flow: [['i-lucide-pen-line'], ['i-lucide-clock'], ['i-simple-icons-instagram', 'i-simple-icons-threads', 'i-simple-icons-facebook']] },
+  { key: 'links', flow: [['i-lucide-link'], ['i-lucide-mouse-pointer-click'], ['i-lucide-chart-column']] },
+  { key: 'etalase', flow: [['i-simple-icons-instagram'], ['i-lucide-link-2'], ['i-lucide-store']] },
+  { key: 'reply', flow: [['i-lucide-message-circle'], ['i-lucide-message-circle-reply'], ['i-lucide-send']] }
 ]
 const steps = [
-  { icon: 'i-simple-icons-instagram', title: 'landing.step1Title', body: 'landing.step1Body' },
+  { icon: 'i-lucide-plug', title: 'landing.step1Title', body: 'landing.step1Body' },
   { icon: 'i-lucide-link', title: 'landing.step2Title', body: 'landing.step2Body' },
   { icon: 'i-lucide-calendar-check', title: 'landing.step3Title', body: 'landing.step3Body' }
 ]
-const platforms = [
-  { name: 'Instagram', icon: 'i-simple-icons-instagram', live: true },
-  { name: 'Threads', icon: 'i-simple-icons-threads', live: true },
-  { name: 'Facebook', icon: 'i-simple-icons-facebook', live: true },
-  { name: 'TikTok', icon: 'i-simple-icons-tiktok', live: false },
-  { name: 'YouTube', icon: 'i-simple-icons-youtube', live: false },
-  { name: 'X', icon: 'i-simple-icons-x', live: false }
+const payMethods = [
+  { key: 'qris', icon: 'i-lucide-qr-code' },
+  { key: 'ewallet', icon: 'i-lucide-wallet' },
+  { key: 'va', icon: 'i-lucide-landmark' },
+  { key: 'card', icon: 'i-lucide-credit-card' }
 ]
 const faqItems = computed(() => (data.value?.faqs ?? []).map(f => ({ label: f.question, content: f.answer, value: f.id })))
 const whatsappUrl = computed(() => data.value?.company.whatsapp ? `https://wa.me/${data.value.company.whatsapp.replace(/\D/g, '')}` : null)
@@ -58,22 +78,22 @@ const whatsappUrl = computed(() => data.value?.company.whatsapp ? `https://wa.me
 
 <template>
   <div>
-    <!-- Hero -->
+    <!-- Hero: one sentence, the price, and the many-to-one picture -->
     <section
       id="beranda"
-      class="scroll-mt-20 overflow-hidden"
+      class="scroll-mt-20 pt-12 pb-14 sm:pt-16 sm:pb-20"
     >
-      <UContainer class="grid gap-12 lg:grid-cols-[1.1fr_1fr] items-center py-14 sm:py-20">
-        <div class="space-y-6 text-center lg:text-left">
+      <UContainer class="space-y-10 sm:space-y-12">
+        <div class="mx-auto max-w-2xl space-y-5 text-center">
           <h1 class="text-4xl sm:text-5xl font-bold tracking-tight text-highlighted text-balance">
             {{ t('landing.heroTitle') }}
           </h1>
           <p class="text-lg text-muted text-pretty">
             {{ t('landing.heroBody') }}
           </p>
-          <div class="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start">
+          <div class="flex flex-col sm:flex-row gap-3 justify-center">
             <UButton
-              v-if="data?.registrationOpen !== false"
+              v-if="registrationOpen"
               :to="localePath('/app/auth/register')"
               size="xl"
               class="justify-center"
@@ -98,184 +118,145 @@ const whatsappUrl = computed(() => data.value?.company.whatsapp ? `https://wa.me
               :label="t('landing.ctaLogin')"
             />
           </div>
-          <p class="text-sm text-muted">
-            {{ t('landing.noCard') }}
-          </p>
-        </div>
-        <!-- Phone mockup: a scheduled post and the Etalase it sells through -->
-        <div
-          class="relative mx-auto w-full max-w-sm"
-          aria-hidden="true"
-        >
-          <div class="absolute -inset-8 bg-primary/10 blur-3xl rounded-full" />
-          <div class="relative rounded-[2.5rem] border-8 border-neutral-900 dark:border-neutral-700 bg-default shadow-2xl overflow-hidden">
-            <div class="p-4 space-y-3 bg-elevated/40">
-              <div class="rounded-xl bg-default border border-default p-3 space-y-2">
-                <div class="flex items-center gap-2">
-                  <div class="size-7 rounded-full bg-gradient-to-br from-amber-400 via-pink-500 to-purple-600" />
-                  <span class="text-xs font-semibold text-highlighted">kreator.hemat</span>
-                  <UIcon
-                    name="i-simple-icons-instagram"
-                    class="size-3.5 ml-auto text-muted"
-                  />
-                </div>
-                <div class="aspect-[4/3] rounded-lg bg-gradient-to-br from-rose-200 via-pink-300 to-fuchsia-300 dark:from-rose-900 dark:via-pink-800 dark:to-fuchsia-900 flex items-center justify-center">
-                  <UIcon
-                    name="i-lucide-sparkles"
-                    class="size-10 text-white/80"
-                  />
-                </div>
-                <p class="text-xs text-default leading-snug">
-                  {{ t('landing.mockCaption') }}
-                </p>
-                <span class="inline-flex items-center gap-1 text-[11px] font-medium text-primary"><UIcon
-                  name="i-lucide-clock"
-                  class="size-3"
-                />{{ t('landing.mockScheduled') }}</span>
-              </div>
-              <div class="rounded-xl bg-default border border-default p-3">
-                <p class="text-[11px] font-semibold text-muted mb-2">
-                  ETALASE
-                </p>
-                <div class="grid grid-cols-3 gap-2">
-                  <div
-                    v-for="(c, i) in ['from-emerald-200 to-teal-300', 'from-sky-200 to-indigo-300', 'from-amber-200 to-orange-300']"
-                    :key="i"
-                    class="space-y-1"
-                  >
-                    <div
-                      class="aspect-square rounded-md bg-gradient-to-br"
-                      :class="c"
-                    />
-                    <div class="h-1.5 rounded bg-elevated" />
-                    <div class="h-4 rounded bg-primary/80" />
-                  </div>
-                </div>
-              </div>
-              <div class="rounded-xl bg-default border border-default p-3 flex items-start gap-2">
-                <UIcon
-                  name="i-lucide-message-circle-reply"
-                  class="size-4 text-primary shrink-0 mt-0.5"
-                />
-                <p class="text-xs text-default">
-                  <b>@sari.belanja</b> "mau kak" → <span class="text-primary font-medium">DM terkirim</span>
-                </p>
-              </div>
-            </div>
+          <div class="flex flex-wrap justify-center gap-2">
+            <UBadge
+              v-for="chip in planChips"
+              :key="chip"
+              color="neutral"
+              variant="outline"
+              size="lg"
+              :label="chip"
+            />
           </div>
         </div>
+
+        <LandingUnifyFlow v-reveal />
+
+        <p class="flex items-center justify-center gap-2 text-sm text-muted">
+          {{ t('landing.soon') }}
+          <UIcon
+            v-for="p in soon"
+            :key="p.name"
+            :name="p.icon"
+            class="size-4"
+            :aria-label="p.name"
+          />
+        </p>
       </UContainer>
     </section>
 
-    <!-- Features -->
+    <!-- Features: four cards, each a small icon flow and one line -->
     <section
       id="fitur"
-      class="scroll-mt-20 py-16 sm:py-20 bg-elevated/40"
+      class="scroll-mt-20 border-t border-default py-14 sm:py-20"
     >
       <UContainer class="space-y-10">
         <h2
           v-reveal
-          class="text-3xl font-bold text-center text-highlighted text-balance"
+          class="text-center text-2xl sm:text-3xl font-bold tracking-tight text-highlighted text-balance"
         >
           {{ t('landing.featuresTitle') }}
         </h2>
-        <div class="grid gap-6 md:grid-cols-3">
+        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div
-            v-for="feature in features"
-            :key="feature.title"
+            v-for="card in cards"
+            :key="card.key"
             v-reveal
-            class="rounded-2xl bg-default border border-default p-6"
+            class="rounded-xl border border-default p-5 space-y-4"
           >
-            <div class="size-11 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
-              <UIcon
-                :name="feature.icon"
-                class="size-6"
-              />
+            <div
+              class="flex items-center gap-1.5"
+              aria-hidden="true"
+            >
+              <template
+                v-for="(step, i) in card.flow"
+                :key="i"
+              >
+                <span
+                  class="h-10 min-w-10 px-2 rounded-lg flex items-center justify-center gap-1"
+                  :class="i === card.flow.length - 1 ? 'bg-primary text-inverted' : 'bg-elevated text-default'"
+                >
+                  <UIcon
+                    v-for="icon in step"
+                    :key="icon"
+                    :name="icon"
+                    class="size-4"
+                  />
+                </span>
+                <UIcon
+                  v-if="i < card.flow.length - 1"
+                  name="i-lucide-arrow-right"
+                  class="size-3.5 text-dimmed"
+                />
+              </template>
             </div>
-            <h3 class="mt-4 font-semibold text-lg text-highlighted">
-              {{ t(feature.title) }}
-            </h3>
-            <p class="mt-2 text-sm text-muted leading-relaxed">
-              {{ t(feature.body) }}
-            </p>
+            <div>
+              <h3 class="font-semibold text-highlighted">
+                {{ t(`landing.cards.${card.key}.title`) }}
+              </h3>
+              <p class="mt-1 text-sm text-muted">
+                {{ t(`landing.cards.${card.key}.body`) }}
+              </p>
+            </div>
           </div>
         </div>
       </UContainer>
     </section>
 
-    <!-- How it works -->
+    <!-- How it works: three steps joined by arrows -->
     <section
       id="cara-kerja"
-      class="scroll-mt-20 py-16 sm:py-20"
+      class="scroll-mt-20 border-t border-default py-14 sm:py-20"
     >
       <UContainer class="space-y-10">
         <h2
           v-reveal
-          class="text-3xl font-bold text-center text-highlighted"
+          class="text-center text-2xl sm:text-3xl font-bold tracking-tight text-highlighted"
         >
           {{ t('landing.howTitle') }}
         </h2>
-        <ol class="grid gap-6 md:grid-cols-3">
+        <ol class="grid gap-8 md:grid-cols-3 md:gap-4">
           <li
             v-for="(step, index) in steps"
             :key="step.title"
             v-reveal
-            class="text-center space-y-3"
+            class="relative flex flex-col items-center text-center gap-3"
           >
-            <div class="mx-auto size-14 rounded-full bg-primary text-inverted flex items-center justify-center text-xl font-bold">
-              {{ index + 1 }}
-            </div>
+            <span class="relative size-14 rounded-2xl border border-default flex items-center justify-center">
+              <UIcon
+                :name="step.icon"
+                class="size-6 text-primary"
+              />
+              <span class="absolute -top-2 -right-2 size-6 rounded-full bg-primary text-inverted text-xs font-semibold flex items-center justify-center">{{ index + 1 }}</span>
+            </span>
+            <UIcon
+              v-if="index < steps.length - 1"
+              name="i-lucide-arrow-right"
+              class="hidden md:block absolute top-5 -right-3 size-5 text-dimmed"
+              aria-hidden="true"
+            />
             <h3 class="font-semibold text-highlighted">
               {{ t(step.title) }}
             </h3>
-            <p class="text-sm text-muted max-w-xs mx-auto">
+            <p class="text-sm text-muted max-w-56">
               {{ t(step.body) }}
             </p>
           </li>
         </ol>
-        <div
-          v-reveal
-          class="pt-6"
-        >
-          <p class="text-center text-sm font-medium text-muted mb-4">
-            {{ t('landing.platformsTitle') }}
-          </p>
-          <div class="flex flex-wrap justify-center gap-3">
-            <div
-              v-for="p in platforms"
-              :key="p.name"
-              class="flex items-center gap-2 rounded-full border border-default px-4 py-2"
-              :class="p.live ? 'text-default' : 'text-muted opacity-70'"
-            >
-              <UIcon
-                :name="p.icon"
-                class="size-4"
-              />
-              <span class="text-sm">{{ p.name }}</span>
-              <UBadge
-                v-if="!p.live"
-                size="sm"
-                color="neutral"
-                variant="subtle"
-                :label="t('landing.comingSoon')"
-              />
-            </div>
-          </div>
-        </div>
       </UContainer>
     </section>
 
     <!-- Pricing -->
     <section
       id="harga"
-      class="scroll-mt-20 py-16 sm:py-20 bg-elevated/40"
+      class="scroll-mt-20 border-t border-default py-14 sm:py-20"
     >
       <UContainer class="space-y-8">
         <div
           v-reveal
           class="text-center space-y-2"
         >
-          <h2 class="text-3xl font-bold text-highlighted">
+          <h2 class="text-2xl sm:text-3xl font-bold tracking-tight text-highlighted">
             {{ t('landing.pricingTitle') }}
           </h2>
           <p class="text-muted">
@@ -288,6 +269,20 @@ const whatsappUrl = computed(() => data.value?.company.whatsapp ? `https://wa.me
           :trial-plan-slug="data.trialPlanSlug"
           :registration-open="data.registrationOpen"
         />
+        <div class="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm text-muted">
+          <span>{{ t('landing.pay.title') }}</span>
+          <span
+            v-for="m in payMethods"
+            :key="m.key"
+            class="inline-flex items-center gap-1.5 text-default"
+          >
+            <UIcon
+              :name="m.icon"
+              class="size-4"
+            />
+            {{ t(`landing.pay.${m.key}`) }}
+          </span>
+        </div>
       </UContainer>
     </section>
 
@@ -295,12 +290,12 @@ const whatsappUrl = computed(() => data.value?.company.whatsapp ? `https://wa.me
     <section
       v-if="faqItems.length"
       id="faq"
-      class="scroll-mt-20 py-16 sm:py-20"
+      class="scroll-mt-20 border-t border-default py-14 sm:py-20"
     >
       <UContainer class="max-w-3xl space-y-8">
         <h2
           v-reveal
-          class="text-3xl font-bold text-center text-highlighted"
+          class="text-center text-2xl sm:text-3xl font-bold tracking-tight text-highlighted"
         >
           {{ t('landing.faqTitle') }}
         </h2>
@@ -315,14 +310,11 @@ const whatsappUrl = computed(() => data.value?.company.whatsapp ? `https://wa.me
     <!-- Contact -->
     <section
       id="kontak"
-      class="scroll-mt-20 py-16 sm:py-20 bg-elevated/40"
+      class="scroll-mt-20 border-t border-default py-14 sm:py-20"
     >
-      <UContainer class="grid gap-10 lg:grid-cols-[1fr_1.4fr]">
-        <div
-          v-reveal
-          class="space-y-4"
-        >
-          <h2 class="text-3xl font-bold text-highlighted">
+      <UContainer class="grid gap-8 lg:grid-cols-[1fr_1.6fr] lg:gap-14">
+        <div class="space-y-4">
+          <h2 class="text-2xl sm:text-3xl font-bold tracking-tight text-highlighted">
             {{ t('landing.contactTitle') }}
           </h2>
           <p class="text-muted">
@@ -351,7 +343,7 @@ const whatsappUrl = computed(() => data.value?.company.whatsapp ? `https://wa.me
             />
           </div>
         </div>
-        <UCard v-reveal>
+        <UCard>
           <LandingContactForm />
         </UCard>
       </UContainer>
@@ -359,29 +351,19 @@ const whatsappUrl = computed(() => data.value?.company.whatsapp ? `https://wa.me
 
     <!-- Final CTA -->
     <section
-      v-if="data?.registrationOpen !== false"
-      class="py-16 sm:py-20"
+      v-if="registrationOpen"
+      class="border-t border-default py-14 sm:py-20"
     >
-      <UContainer>
-        <div
-          v-reveal
-          class="rounded-3xl bg-primary px-6 py-12 text-center space-y-4"
-        >
-          <h2 class="text-3xl font-bold text-inverted text-balance">
-            {{ t('landing.finalTitle') }}
-          </h2>
-          <p class="text-inverted/90 max-w-xl mx-auto">
-            {{ t('landing.finalBody') }}
-          </p>
-          <UButton
-            :to="localePath('/app/auth/register')"
-            size="xl"
-            color="neutral"
-            variant="solid"
-            :label="t('landing.ctaRegister')"
-            trailing-icon="i-lucide-arrow-right"
-          />
-        </div>
+      <UContainer class="text-center space-y-5">
+        <h2 class="text-2xl sm:text-3xl font-bold tracking-tight text-highlighted text-balance">
+          {{ t('landing.finalTitle') }}
+        </h2>
+        <UButton
+          :to="localePath('/app/auth/register')"
+          size="xl"
+          :label="t('landing.ctaRegister')"
+          trailing-icon="i-lucide-arrow-right"
+        />
       </UContainer>
     </section>
   </div>

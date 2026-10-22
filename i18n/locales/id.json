@@ -214,8 +214,8 @@
     }
   },
   "landing": {
-    "heroTitle": "Jualan afiliasi jadi lebih ringan",
-    "heroBody": "Jadwalkan postingan ke Instagram, Threads dan Facebook, simpan link produk di Etalase, dan kirim link otomatis saat ada yang berkomentar.",
+    "heroTitle": "Semua alat jualan afiliasi, jadi satu",
+    "heroBody": "Jadwalkan postingan, kumpulkan link produk, dan balas komentar otomatis untuk Instagram, Threads dan Facebook.",
     "ctaRegister": "Coba gratis",
     "ctaLogin": "Masuk",
     "ctaClosed": "Pendaftaran sedang ditutup",
@@ -227,22 +227,14 @@
       "faq": "FAQ",
       "contact": "Kontak"
     },
-    "feature1Title": "Jadwalkan sekali, terbit di semua akun",
-    "feature1Body": "Tulis postingan sekali, pilih jam, dan Socialz.id yang menerbitkannya ke Instagram, Threads dan Facebook.",
-    "feature2Title": "Link produk & Etalase",
-    "feature2Body": "Tempel link Shopee, Tokopedia atau TikTok Shop. Jadi link pendek yang menghitung klik, dan langsung tampil di Etalase untuk link di bio.",
-    "feature3Title": "Balas Otomatis",
-    "feature3Body": "Ada yang komen \"mau\"? Link produknya langsung terkirim lewat DM, dan komentarnya dibalas \"Cek DM ya kak!\".",
     "featuresTitle": "Semua yang kamu butuhkan untuk jualan lewat konten",
     "howTitle": "Mulai dalam 3 langkah",
-    "step1Title": "Hubungkan Instagram",
-    "step1Body": "Masuk dengan akun Instagram bisnis atau kreator. Satu klik.",
+    "step1Title": "Hubungkan akun",
+    "step1Body": "Instagram Bisnis/Kreator, Threads, Halaman Facebook",
     "step2Title": "Tempel link produk",
-    "step2Body": "Judul, foto dan harga terisi sendiri. Produk langsung masuk Etalase.",
-    "step3Title": "Jadwalkan postingan",
-    "step3Body": "Pilih jam yang disarankan. Selesai, postingan terbit otomatis.",
-    "platformsTitle": "Platform yang didukung",
-    "comingSoon": "Segera hadir",
+    "step2Body": "Shopee, Tokopedia, TikTok Shop, Lazada",
+    "step3Title": "Jadwalkan",
+    "step3Body": "Pilih jam, terbit otomatis",
     "pricingTitle": "Harga sederhana",
     "pricingBody": "Mulai gratis. Upgrade kapan saja saat jualanmu tumbuh.",
     "monthly": "Bulanan",
@@ -268,7 +260,6 @@
       "sent": "Pesan terkirim. Kami akan membalas lewat email."
     },
     "finalTitle": "Siap jualan lebih ringan?",
-    "finalBody": "Daftar gratis, hubungkan Instagram, dan jadwalkan postingan pertamamu hari ini.",
     "footer": {
       "product": "Produk",
       "legal": "Legal",
@@ -276,9 +267,59 @@
       "paymentPolicy": "Kebijakan pembayaran",
       "help": "Bantuan"
     },
-    "mockCaption": "Serum favorit lagi diskon 40%! Komen \"mau\" ya, link aku kirim ke DM 💌",
-    "mockScheduled": "Terjadwal · Besok 19.00",
-    "notFound": "Halaman tidak ditemukan"
+    "notFound": "Halaman tidak ditemukan",
+    "plan": {
+      "free": "{plan} untuk mulai",
+      "paid": "{plan} {price}/bulan"
+    },
+    "soon": "Segera hadir",
+    "flow": {
+      "alt": "Dulu: posting di tiap aplikasi, alarm jam posting, aplikasi link di bio, pemendek link, balas DM satu-satu dan cari tagar sendiri. Sekarang semuanya ada di Socialz.id: jadwal, link dan klik, Etalase, dan Balas Otomatis, lalu terbit otomatis ke Instagram, Threads dan Facebook.",
+      "caption": {
+        "before": "Dulu: banyak aplikasi",
+        "hub": "Sekarang: satu tempat",
+        "after": "Terbit otomatis"
+      },
+      "tools": {
+        "post": "Posting di tiap aplikasi",
+        "alarm": "Alarm jam posting",
+        "bio": "Aplikasi link di bio",
+        "shortener": "Pemendek link",
+        "dm": "Balas DM satu-satu",
+        "hashtag": "Cari tagar sendiri"
+      },
+      "hub": {
+        "schedule": "Jadwal",
+        "links": "Link & klik",
+        "etalase": "Etalase",
+        "reply": "Balas Otomatis"
+      }
+    },
+    "cards": {
+      "schedule": {
+        "title": "Jadwalkan sekali",
+        "body": "Satu caption, terbit di semua akun."
+      },
+      "links": {
+        "title": "Link pendek",
+        "body": "Lihat produk mana yang paling diklik."
+      },
+      "etalase": {
+        "title": "Etalase",
+        "body": "Satu link di bio untuk semua produk."
+      },
+      "reply": {
+        "title": "Balas Otomatis",
+        "body": "Ada yang komen \"mau\", link langsung ke DM."
+      }
+    },
+    "pay": {
+      "title": "Bayar dengan",
+      "qris": "QRIS",
+      "ewallet": "E-wallet",
+      "va": "Transfer bank",
+      "card": "Kartu"
+    }
   },
   "error": {
     "notFoundTitle": "Halaman tidak ditemukan",

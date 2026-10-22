@@ -214,8 +214,8 @@
     }
   },
   "landing": {
-    "heroTitle": "Affiliate selling, made lighter",
-    "heroBody": "Schedule posts to Instagram, Threads and Facebook, keep product links in one Storefront, and send links automatically when someone comments.",
+    "heroTitle": "All your affiliate selling tools, in one place",
+    "heroBody": "Schedule posts, collect product links and reply to comments automatically for Instagram, Threads and Facebook.",
     "ctaRegister": "Try free",
     "ctaLogin": "Sign in",
     "ctaClosed": "Registration is closed for now",
@@ -227,22 +227,14 @@
       "faq": "FAQ",
       "contact": "Contact"
     },
-    "feature1Title": "Schedule once, publish everywhere",
-    "feature1Body": "Write a post once, pick a time, and Socialz.id publishes it to Instagram, Threads and Facebook.",
-    "feature2Title": "Product links & Storefront",
-    "feature2Body": "Paste a Shopee, Tokopedia or TikTok Shop link. It becomes a short link that counts clicks and shows up in your link-in-bio Storefront.",
-    "feature3Title": "Auto Reply",
-    "feature3Body": "Someone comments \"want\"? The product link goes to their DMs right away, and the comment gets a \"Check your DM!\" reply.",
     "featuresTitle": "Everything you need to sell through content",
     "howTitle": "Start in 3 steps",
-    "step1Title": "Connect Instagram",
-    "step1Body": "Sign in with an Instagram business or creator account. One click.",
-    "step2Title": "Paste a product link",
-    "step2Body": "Title, photo and price fill in by themselves. The product joins your Storefront.",
-    "step3Title": "Schedule a post",
-    "step3Body": "Pick the suggested time. Done, it publishes automatically.",
-    "platformsTitle": "Supported platforms",
-    "comingSoon": "Coming soon",
+    "step1Title": "Connect accounts",
+    "step1Body": "Instagram Business/Creator, Threads, Facebook Page",
+    "step2Title": "Paste product links",
+    "step2Body": "Shopee, Tokopedia, TikTok Shop, Lazada",
+    "step3Title": "Schedule",
+    "step3Body": "Pick a time, it publishes itself",
     "pricingTitle": "Simple pricing",
     "pricingBody": "Start free. Upgrade any time as your sales grow.",
     "monthly": "Monthly",
@@ -268,7 +260,6 @@
       "sent": "Message sent. We'll reply by email."
     },
     "finalTitle": "Ready to sell with less effort?",
-    "finalBody": "Sign up free, connect Instagram, and schedule your first post today.",
     "footer": {
       "product": "Product",
       "legal": "Legal",
@@ -276,9 +267,59 @@
       "paymentPolicy": "Payment policy",
       "help": "Help"
     },
-    "mockCaption": "My favourite serum is 40% off! Comment \"want\" and I'll DM you the link 💌",
-    "mockScheduled": "Scheduled · Tomorrow 7 PM",
-    "notFound": "Page not found"
+    "notFound": "Page not found",
+    "plan": {
+      "free": "Start on {plan}",
+      "paid": "{plan} {price}/month"
+    },
+    "soon": "Coming soon",
+    "flow": {
+      "alt": "Before: posting in each app, posting-time alarms, a link-in-bio app, a link shortener, answering DMs one by one and hunting for hashtags. Now it is all in Socialz.id: scheduling, links and clicks, Storefront and Auto Reply, publishing automatically to Instagram, Threads and Facebook.",
+      "caption": {
+        "before": "Before: many apps",
+        "hub": "Now: one place",
+        "after": "Published automatically"
+      },
+      "tools": {
+        "post": "Posting in each app",
+        "alarm": "Posting-time alarms",
+        "bio": "Link-in-bio app",
+        "shortener": "Link shortener",
+        "dm": "DMs one by one",
+        "hashtag": "Hunting for hashtags"
+      },
+      "hub": {
+        "schedule": "Schedule",
+        "links": "Links & clicks",
+        "etalase": "Storefront",
+        "reply": "Auto Reply"
+      }
+    },
+    "cards": {
+      "schedule": {
+        "title": "Schedule once",
+        "body": "One caption, published on every account."
+      },
+      "links": {
+        "title": "Short links",
+        "body": "See which products get the most clicks."
+      },
+      "etalase": {
+        "title": "Storefront",
+        "body": "One bio link for all your products."
+      },
+      "reply": {
+        "title": "Auto Reply",
+        "body": "Someone comments \"want\", the link goes to their DMs."
+      }
+    },
+    "pay": {
+      "title": "Pay with",
+      "qris": "QRIS",
+      "ewallet": "E-wallet",
+      "va": "Bank transfer",
+      "card": "Card"
+    }
   },
   "error": {
     "notFoundTitle": "Page not found",

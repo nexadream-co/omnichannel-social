@@ -34,3 +34,29 @@
     transform: none;
   }
 }
+
+/* In-page links on the landing page scroll instead of jumping, unless motion is unwelcome. */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* Landing "many to unified" diagram: dots flow along the lines into the hub and out to the platforms. */
+@media (prefers-reduced-motion: no-preference) {
+  .unify-flow {
+    animation: unify-flow 1s linear infinite;
+  }
+  .unify-pulse {
+    animation: unify-pulse 2.4s ease-out infinite;
+  }
+}
+
+@keyframes unify-flow {
+  to { stroke-dashoffset: -20; }
+}
+
+@keyframes unify-pulse {
+  0% { opacity: 0.6; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.08); }
+}
