@@ -43,6 +43,10 @@ export default defineNuxtConfig({
     '/api/**': { cache: false }
   },
   compatibilityDate: '2026-10-01',
+  vite: {
+    // Dev only: lets an https tunnel set as NUXT_PUBLIC_SITE_URL reach the dev server (Meta login needs https callbacks).
+    server: { allowedHosts: [new URL(process.env.NUXT_PUBLIC_SITE_URL || 'http://localhost:3000').hostname] }
+  },
   nitro: {
     // The host is chosen at build time with NITRO_PRESET (docs/blueprint/19 §4).
     experimental: { asyncContext: false }

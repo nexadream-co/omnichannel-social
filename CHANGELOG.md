@@ -15,6 +15,8 @@
 - Meta data deletion and deauthorize callbacks, with a public status page.
 - The onboarding guide on Beranda can be hidden.
 - Akun Sosial: connect Instagram (Business/Creator), Threads and Facebook Pages, pick which Pages to add, reconnect and disconnect; clear messages for personal Instagram accounts, plan limits and accounts already used elsewhere. TikTok, YouTube and X show "Segera hadir".
+- Local development can run behind an https tunnel (set `NUXT_PUBLIC_SITE_URL` to it, and the media storage behind a second hostname) so real Instagram, Threads and Facebook accounts can be connected and posts published.
+- README with local development, the tunnel setup for real social accounts, deployment and troubleshooting. `npm run media:dev` now reads `.env` itself.
 - Tokens are stored encrypted and bound to their account; tokens near expiry refresh automatically every hour, and the owner is told when an account needs reconnecting.
 - Media uploads go straight to storage; photos are converted to JPEG and videos (including iPhone HEVC) to H.264 MP4 ready for Reels, automatically.
 - Plans: what a workspace may do follows its plan in force; a lapsed trial falls back to Gratis immediately. Limits show friendly messages, a quiet trial/grace banner sits under the top bar, an upgrade dialog opens only when a limit is hit, and the rail shows an Upgrade button when there is something to upgrade to.
