@@ -81,7 +81,7 @@ export const instagramAdapter: ChannelAdapter = {
     }
     const item = t.media[0]
     if (!item) throw new ChannelError({ kind: 'validation', code: 'NO_MEDIA', message: 'Instagram posts need media' })
-    if (t.format === 'reel') return { containerIds: [(await create({ media_type: 'REELS', video_url: item.url, caption: t.caption, share_to_feed: true })).id] }
+    if (t.format === 'reel') return { containerIds: [(await create({ media_type: 'REELS', video_url: item.url, caption: t.caption, share_to_feed: true, ...(item.coverMs ? { thumb_offset: String(item.coverMs) } : {}) })).id] }
     if (t.format === 'story') return { containerIds: [(await create({ media_type: 'STORIES', ...(item.kind === 'image' ? { image_url: item.url } : { video_url: item.url }) })).id] }
     return { containerIds: [(await create({ image_url: item.url, caption: t.caption, alt_text: t.options.altText })).id] }
   },

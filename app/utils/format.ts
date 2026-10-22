@@ -28,6 +28,24 @@ export function formatRelative(value: string | Date, locale?: string): string {
   return formatDate(value, { locale })
 }
 
+/** 1.2 GB / 340 MB / 12 KB (storage used in Galeri Media). */
+export function formatBytes(bytes: number, locale?: string): string {
+  const units = ['B', 'KB', 'MB', 'GB']
+  let value = bytes
+  let unit = 0
+  while (value >= 1024 && unit < units.length - 1) {
+    value /= 1024
+    unit++
+  }
+  return `${new Intl.NumberFormat(intlLocale(locale), { maximumFractionDigits: value < 10 && unit > 1 ? 1 : 0 }).format(value)} ${units[unit]}`
+}
+
+/** 0:07 / 12:30 (video length). */
+export function formatDuration(ms: number): string {
+  const total = Math.round(ms / 1000)
+  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`
+}
+
 export function formatCompact(value: number, locale?: string): string {
   return new Intl.NumberFormat(intlLocale(locale), { notation: 'compact', maximumFractionDigits: 1 }).format(value)
 }

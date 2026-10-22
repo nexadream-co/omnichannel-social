@@ -1,5 +1,5 @@
 import type { JobHandler } from '../types'
-import { mediaWatchdogJob, processMediaJob } from '../../media/service'
+import { mediaWatchdogJob, processMediaJob, purgeMediaJob } from '../../media/service'
 import { dmSendJob } from '../../autoreply/send'
 import { billingDailyJob, renewalRemindersJob } from '../../billing-jobs'
 import { inactivityJob, insightsDailyJob, insightsSyncJob } from '../../engagement-jobs'
@@ -21,6 +21,7 @@ export const handlers: Record<string, JobHandler> = {
   'token.refresh.one': tokenRefreshOne,
   'media.process': processMediaJob,
   'media.watchdog': mediaWatchdogJob,
+  'media.purge': purgeMediaJob,
   'publish.target': publishTargetJob,
   'publish.poll': publishPollJob,
   'publish.reconcile': publishReconcileJob,

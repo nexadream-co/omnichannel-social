@@ -46,7 +46,8 @@
     "groupBusiness": "Business",
     "groupApp": "App",
     "collapse": "Collapse menu",
-    "expand": "Expand menu"
+    "expand": "Expand menu",
+    "media": "Media Gallery"
   },
   "auth": {
     "email": "Email",
@@ -376,7 +377,19 @@
     "deleteReason": "Reason (optional)",
     "deleteConfirm": "I understand all data in this account will be deleted.",
     "deleteSent": "Deletion request sent. We'll contact you by email.",
-    "deleteRequestedOn": "Deletion requested on {date}."
+    "deleteRequestedOn": "Deletion requested on {date}.",
+    "watermark": {
+      "title": "Watermark",
+      "subtitle": "Your shop logo, ready to place on photos and videos in the editor with one tap.",
+      "positionLabel": "Starting position",
+      "position": {
+        "top-left": "Top left",
+        "top-right": "Top right",
+        "bottom-left": "Bottom left",
+        "bottom-right": "Bottom right",
+        "center": "Centre"
+      }
+    }
   },
   "timezones": {
     "Asia/Jakarta": "WIB (Jakarta, Sumatra, Java, West & Central Kalimantan)",
@@ -593,6 +606,139 @@
     "fixFirst": "Some things need fixing first.",
     "mediaPending": "Wait for the media to finish preparing.",
     "pastTime": "That time has passed. Pick a future time."
+  },
+  "mediaEditor": {
+    "open": "Edit",
+    "titleImage": "Edit photo",
+    "titleVideo": "Edit video",
+    "description": "Crop, adjust colours, add text and stickers. The result is saved as a new copy; the original stays.",
+    "save": "Save",
+    "saving": "Saving…",
+    "saveFailed": "The edit couldn't be saved. Please try again.",
+    "notReady": "This media is still being prepared. Wait a moment and open it again.",
+    "cannotOpen": "This photo can't be opened in the editor. Try reloading the page.",
+    "nothingChanged": "Nothing has changed yet.",
+    "discardTitle": "Discard changes?",
+    "discardBody": "Your edit hasn't been saved.",
+    "discard": "Discard",
+    "play": "Play",
+    "pause": "Pause",
+    "removeLayer": "Remove selected",
+    "fixCrop": "Adjust crop",
+    "fixTrim": "Trim video",
+    "rotate": "Rotate",
+    "flip": "Mirror",
+    "fitBlur": "Fit + blurred background",
+    "fitBlurHint": "The whole photo/video stays visible; the rest of the frame shows a blurred copy.",
+    "cropHint": "Drag the box to choose the part to keep.",
+    "tab": {
+      "trim": "Length",
+      "crop": "Crop",
+      "adjust": "Adjust",
+      "filter": "Filter",
+      "text": "Text",
+      "sticker": "Stickers",
+      "logo": "Logo",
+      "cover": "Cover",
+      "sound": "Sound"
+    },
+    "aspect": {
+      "original": "Original",
+      "square": "Square 1:1",
+      "portrait": "Feed 4:5",
+      "story": "Reels/Story 9:16",
+      "landscape": "Wide 1.91:1",
+      "wide": "Video 16:9",
+      "free": "Free"
+    },
+    "preset": {
+      "original": "Original",
+      "bright": "Bright",
+      "vivid": "Vivid",
+      "warm": "Warm",
+      "cool": "Cool",
+      "vintage": "Classic",
+      "bw": "Black & white"
+    },
+    "adjust": {
+      "brightness": "Brightness",
+      "contrast": "Contrast",
+      "saturation": "Saturation",
+      "hue": "Hue",
+      "sepia": "Sepia",
+      "grayscale": "Black & white"
+    },
+    "text": {
+      "add": "Add text",
+      "addAnother": "Add more text",
+      "placeholder": "Type here",
+      "hint": "Tap text on the picture to change it. Drag to move, pinch to resize.",
+      "style": {
+        "plain": "Plain",
+        "box": "Box",
+        "outline": "Outline"
+      }
+    },
+    "font": {
+      "jakarta": "Bold",
+      "poppins": "Modern",
+      "bebas": "HEADLINE",
+      "pacifico": "Casual"
+    },
+    "sticker": {
+      "price": "Rp 99.000",
+      "discount": "50% off",
+      "promo": "PROMO",
+      "freeShipping": "Free shipping",
+      "linkInBio": "Link in bio",
+      "checkout": "Check out now",
+      "limited": "Limited stock",
+      "new": "NEW",
+      "fromProduct": "Use a product link"
+    },
+    "logo": {
+      "upload": "Upload logo",
+      "change": "Change logo",
+      "place": "Add logo",
+      "reset": "Reset position",
+      "opacity": "Opacity",
+      "hint": "Drag the logo where you want it. It's saved for your next edits.",
+      "empty": "Use a PNG with a transparent background for a clean look (max 4 MB).",
+      "tooBig": "The logo can be at most 4 MB."
+    },
+    "trim": {
+      "kept": "Keeping {length}",
+      "hint": "Drag both ends to choose the part of the video to keep."
+    },
+    "cover": {
+      "hint": "This frame becomes the Reels cover."
+    },
+    "sound": {
+      "mute": "Mute sound",
+      "hint": "The video's original sound is removed from the edit."
+    }
+  },
+  "mediaLibrary": {
+    "title": "Media Gallery",
+    "subtitle": "All your photos and videos. Edit, reuse or delete them.",
+    "upload": "Upload",
+    "storage": "Storage used",
+    "empty": "No photos or videos yet.",
+    "edited": "Edited",
+    "usePost": "Use in a post",
+    "editSaved": "Your edit was saved as a new copy.",
+    "deleteTitle": "Delete this media?",
+    "deleteBody": "The file is permanently removed from storage.",
+    "deleted": "Media deleted.",
+    "pickFrom": "Pick from Gallery",
+    "pickTitle": "Pick from Gallery",
+    "pickHint": "Pick up to {max} photos or videos.",
+    "add": "Add ({n})",
+    "kind": {
+      "all": "All",
+      "image": "Photos",
+      "video": "Videos"
+    }
   },
   "posts": {
     "title": "Posts",

@@ -2,6 +2,7 @@ import { and, desc, eq, isNull, ne } from 'drizzle-orm'
 import { z } from 'zod'
 import { isValidIndonesianPhone, normalizeIndonesianPhone } from '../../shared/utils/phone'
 import { INDONESIAN_TIMEZONES } from '../../shared/utils/auth'
+import { watermarkSchema } from '../../shared/media/edit-spec'
 import { recordAudit } from './audit'
 import { assertAbility, type StaffContext, type WorkspaceContext } from './context'
 import {
@@ -11,6 +12,7 @@ import {
 import { appError } from './errors'
 import { notifyStaff } from './notifications'
 import { getSettingNumber } from './settings'
+import { storage } from './services/storage'
 
 const phoneField = z.string().trim().max(20).refine(value => !value || isValidIndonesianPhone(value), 'Nomor HP tidak valid.').optional()
 
@@ -56,15 +58,20 @@ export const workspaceSettingsSchema = z.object({
   name: z.string().trim().min(2, 'Nama minimal 2 karakter.').max(100, 'Nama terlalu panjang.').optional(),
   timezone: z.enum(INDONESIAN_TIMEZONES).optional(),
   niche: z.string().trim().max(60).nullable().optional(),
-  affiliatePrograms: z.array(z.enum(['shopee', 'tiktok_shop', 'tokopedia', 'lazada', 'other'])).max(5).optional()
+  affiliatePrograms: z.array(z.enum(['shopee', 'tiktok_shop', 'tokopedia', 'lazada', 'other'])).max(5).optional(),
+  watermark: watermarkSchema.nullable().optional()
 })
 
 /** PATCH /api/app/settings (docs/blueprint/05 §6). Paid options are gated only when chosen (none yet). */
 export async function updateWorkspaceSettings(ctx: WorkspaceContext, input: z.infer<typeof workspaceSettingsSchema>) {
   assertAbility(ctx, 'settings.manage')
+  // The editor draws the logo on a canvas, so it must come from our own media storage (POST /api/app/uploads).
+  if (input.watermark && !input.watermark.url.startsWith(storage().publicUrl(`w/${ctx.workspaceId}/`))) {
+    throw appError(422, 'Unggah logo lewat tombol "Unggah logo".', 'VALIDATION_FAILED', { field: 'watermark' })
+  }
   const [row] = await ctx.db.update(workspaces).set({ ...input, updatedAt: new Date() })
     .where(eq(workspaces.id, ctx.workspaceId))
-    .returning({ id: workspaces.id, name: workspaces.name, timezone: workspaces.timezone, niche: workspaces.niche, affiliatePrograms: workspaces.affiliatePrograms })
+    .returning({ id: workspaces.id, name: workspaces.name, timezone: workspaces.timezone, niche: workspaces.niche, affiliatePrograms: workspaces.affiliatePrograms, watermark: workspaces.watermark })
   await recordAudit(ctx, { audience: 'creator', action: 'settings.update', workspaceId: ctx.workspaceId, metadata: { userId: ctx.userId, fields: Object.keys(input) } })
   return row
 }

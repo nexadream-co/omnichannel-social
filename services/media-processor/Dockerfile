@@ -6,6 +6,7 @@ COPY package.json package-lock.json ./
 RUN npm ci --ignore-scripts
 COPY server/core/jobs/signing.ts server/core/jobs/signing.ts
 COPY server/core/media/ffmpeg-args.ts server/core/media/ffmpeg-args.ts
+COPY shared/media shared/media
 COPY services/media-processor services/media-processor
 RUN npx esbuild services/media-processor/server.ts --bundle --platform=node --format=esm --target=node24 --outfile=dist/media-processor.mjs
 

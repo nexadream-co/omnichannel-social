@@ -99,6 +99,7 @@ export const CREATOR_NAV: CreatorNavItem[] = [
   { key: 'compose', labelKey: 'nav.compose', to: '/app/compose', icon: 'i-lucide-square-pen', ability: 'posts.write' },
   { key: 'calendar', labelKey: 'nav.calendar', to: '/app/calendar', icon: 'i-lucide-calendar', ability: 'posts.read', bottomNav: true },
   { key: 'posts', labelKey: 'nav.posts', to: '/app/posts', icon: 'i-lucide-list', ability: 'posts.read' },
+  { key: 'media', labelKey: 'nav.media', to: '/app/media', icon: 'i-lucide-images', ability: 'posts.read' },
   { key: 'links', labelKey: 'nav.links', to: '/app/links', icon: 'i-lucide-link', ability: 'links.manage', bottomNav: true },
   { key: 'bio', labelKey: 'nav.bio', to: '/app/bio', icon: 'i-lucide-store', ability: 'bio.manage', bottomNav: true },
   { key: 'autoReply', labelKey: 'nav.autoReply', to: '/app/auto-reply', icon: 'i-lucide-message-circle-reply', ability: 'autoreply.manage' },

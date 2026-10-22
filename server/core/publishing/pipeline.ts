@@ -111,7 +111,7 @@ async function routeError(ctx: CoreContext, job: ClaimedJob, target: Target, acc
 /** The publish payload: caption override, ordered public media URLs, per-target options. */
 async function resolveTarget(db: Database, target: Target): Promise<ResolvedTarget | null> {
   const [post] = await db.select({ caption: posts.baseCaption }).from(posts).where(eq(posts.id, target.postId))
-  const media = await db.select({ url: mediaAssets.publicUrl, kind: mediaAssets.kind, status: mediaAssets.status }).from(postMedia)
+  const media = await db.select({ url: mediaAssets.publicUrl, kind: mediaAssets.kind, status: mediaAssets.status, editSpec: mediaAssets.editSpec }).from(postMedia)
     .innerJoin(mediaAssets, eq(mediaAssets.id, postMedia.mediaId)).where(eq(postMedia.postId, target.postId)).orderBy(asc(postMedia.position))
   if (media.some(m => m.status !== 'ready' || !m.url)) return null
   // Vault short links become one attribution link per (target, product) right before publishing.
@@ -120,7 +120,7 @@ async function resolveTarget(db: Database, target: Target): Promise<ResolvedTarg
   return {
     format: target.format,
     caption,
-    media: media.map(m => ({ url: m.url!, kind: m.kind })),
+    media: media.map(m => ({ url: m.url!, kind: m.kind, coverMs: m.editSpec?.coverMs ?? null })),
     options: { ...options, linkAttachment: target.platform === 'threads' && target.format === 'text' ? caption.match(/https?:\/\/\S+/)?.[0] : undefined }
   }
 }

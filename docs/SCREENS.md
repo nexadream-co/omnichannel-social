@@ -92,8 +92,11 @@ Needs: tabs (Terjadwal, Draf, Terbit, Gagal), simple filters, status per platfor
 **18. Post detail.** Purpose: what happened to one post.
 Needs: preview, per-platform status in plain words, a reason and fix button for failures, a link to the live post, basic numbers (views, likes, comments), clicks on attached links, auto-replies sent, edit, duplicate and delete.
 
-**19. Media library.** Purpose: reuse photos and videos.
-Needs: grid, upload, search, delete, storage used. Optional, so keep it simple.
+**19. Media library (Galeri Media, `/app/media`).** Purpose: reuse photos and videos.
+Needs: grid with a Semua/Foto/Video filter, upload, edit (saves a copy), "Pakai di postingan", delete (refused while a post uses it), storage used. The composer opens it as "Pilih dari Galeri". No search: media has no names worth searching.
+
+**19a. Media editor.** Purpose: fix and dress up a photo or video before posting, without leaving the app.
+Needs: full screen, phone first; preview on top, one tool row at the bottom: Durasi (video), Potong (plain-language shapes: Kotak 1:1, Feed 4:5, Reels/Story 9:16…, Putar, Cermin, "Pas + latar blur"), Sesuaikan (3 sliders; hue/sepia/black-and-white under "Opsi lanjutan"), Filter (one-tap looks), Teks (fonts, Polos/Kotak/Garis, colours), Stiker (price tag, discount, "Link di bio"…, price from a product link), Logo (workspace logo from Pengaturan → Tanda air), Sampul and Suara (video). Save makes a new copy; the original stays and a re-edit restores every step. Opened from a composer tile ("Edit"), from the composer hints ("Atur potongan", "Potong video") and from Galeri Media.
 
 ## D. Product links (Link Produk)
 

@@ -85,7 +85,7 @@ services/media-processor/
   Dockerfile          node:24-slim + ffmpeg/ffprobe, non-root, read-only rootfs except /tmp
   server.ts           POST /process  (HMAC-verified)  → 202, work async, callback
                       GET  /healthz
-  transcode.ts        imports server/core/media/{probe,ffmpeg-args}.ts (pure, shared)
+  transcode.ts        imports server/core/media/ffmpeg-args.ts and shared/media/* (pure, shared)
 ```
 
 - **Contract** (`server/core/services/media/types.ts`; the request also carries the signed `callbackUrl`, so the processor knows nothing about the app):
@@ -93,7 +93,8 @@ services/media-processor/
   ```ts
   interface MediaProcessor {
     submit(job: { assetId: string; ref: string; sourceUrl: string; kind: 'image' | 'video';
-                  outputs: { variant: string; putUrl: string; contentType: string }[] }): Promise<void>
+                  outputs: { variant: string; putUrl: string; contentType: string }[];
+                  edit?: { spec: EditSpec; overlayUrl: string | null } }): Promise<void>
     status(ref: string): Promise<'unknown' | 'working' | 'done' | 'failed'>
   }
   ```
@@ -102,6 +103,8 @@ services/media-processor/
 - **No secrets and no database inside the processor.** It downloads from a presigned GET, uploads to presigned PUTs, and reports through the signed callback (`15` §2.1). It only knows `MEDIA_PROCESSOR_SECRET` and the callback URL.
 - **Scales to zero** on Cloud Run, Lambda, Fly Machines or Azure Container Apps. Concurrency 1 per instance (ffmpeg uses all cores), max instances from config.
 - **Output rules** are unchanged: images → JPEG (EXIF stripped); video → H.264/AAC, ≤ 1080p, `+faststart`.
+- **Outputs:** `main` comes first; videos also ask for `poster` (a JPEG ≤ 720 px wide taken from the finished `main`, at `edit.spec.coverMs` or 1 s). With `edit`, the processor renders the media editor's recipe (`editVideoArgs`, ARCHITECTURE §8.5) from the source and the overlay PNG instead of the plain transcode.
+- **Deploy order:** a processor change that adds a request field ships **before** the app that sends it. An older processor would treat `poster` as a second full transcode and ignore `edit`.
 
 ## 6. State that used to live in memory
 

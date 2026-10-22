@@ -193,7 +193,7 @@ The app is **one Nitro build that runs on any host**; the host is chosen at buil
 |---|---|---|
 | App (functions) | Any host: VPS / Docker (`node-server`), Cloud Run, AWS Lambda, Vercel Pro… | `deploy/<target>/`; region Singapore |
 | Database | Neon Postgres | **Pooled** URL in `DATABASE_URL` for the app; **direct** URL only for migrations in CI |
-| Media storage | Cloudflare R2 bucket with a public media domain | `R2_*`, `NUXT_PUBLIC_MEDIA_URL`; leave `R2_ENDPOINT` empty |
+| Media storage | Cloudflare R2 bucket with a public media domain, CORS allowing `GET` from the app origin (the photo editor draws on a canvas) | `R2_*`, `NUXT_PUBLIC_MEDIA_URL`; leave `R2_ENDPOINT` empty |
 | Media processor | `services/media-processor/Dockerfile` on any container host | Reachable at `MEDIA_PROCESSOR_URL`, shares `MEDIA_PROCESSOR_SECRET` |
 | Tick | One cron entry every minute + a backup pinger | `GET https://<site>/api/internal/tick` with `Authorization: Bearer $CRON_SECRET` |
 | Email | Resend | Key set in `/admin` → Pengaturan |

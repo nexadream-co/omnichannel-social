@@ -3,6 +3,9 @@ import { defaultFormat } from '#shared/channels/formats'
 import { CHANNELS, PLATFORM_META } from '#shared/channels/registry'
 import type { Issue, MediaMeta, Platform, PostFormat } from '#shared/channels/types'
 import { countChars, validateTarget } from '#shared/channels/validate'
+import type { Aspect } from '#shared/media/edit-spec'
+import { suggestAspect } from '#shared/media/presets'
+import type { MediaView } from '#shared/media/types'
 import type { UploadItem } from '~/components/MediaUploader.vue'
 
 interface Account { id: string, platform: Platform, username: string | null, avatarUrl: string | null, status: string }
@@ -25,6 +28,7 @@ const accounts = ref<Account[]>([])
 const selected = ref<string[]>([])
 const caption = ref('')
 const media = ref<UploadItem[]>([])
+const uploader = useTemplateRef<{ edit: (key: string, aspect?: Aspect) => Promise<void> }>('uploader')
 const options = reactive<Record<string, TargetOptions>>({})
 const slot = reactive(suggestedSlot(tz.value))
 // Calendar: tapping an empty day opens the composer on that date.
@@ -64,6 +68,12 @@ onMounted(async () => {
     selected.value = post.targets.map(t => t.socialAccountId).filter(id => accounts.value.some(a => a.id === id))
     for (const target of post.targets) Object.assign(ensureOptions(target.socialAccountId), { captionOverride: target.captionOverride ?? '', format: target.format, firstComment: target.options.firstComment ?? '', altText: target.options.altText ?? '' })
     if (editId && post.scheduledAt && new Date(post.scheduledAt) > new Date()) Object.assign(slot, zonedParts(new Date(post.scheduledAt), tz.value))
+  } else if (typeof route.query.media === 'string') {
+    // Galeri Media → "Pakai di postingan".
+    const picked = await apiFetch<MediaView>(`/api/app/media/${route.query.media}`).catch(() => null)
+    if (picked?.status === 'ready') {
+      media.value = [{ key: picked.id, mediaId: picked.id, previewUrl: picked.url ?? picked.posterUrl, posterUrl: picked.posterUrl, kind: picked.kind, mime: picked.mime, bytes: picked.bytes, status: 'ready', progress: 100, error: null, width: picked.width, height: picked.height, durationMs: picked.durationMs }]
+    }
   }
   loading.value = false
 })
@@ -88,6 +98,22 @@ const blocking = computed(() => issues.value.some(i => i.level === 'error'))
 // opening an empty composer isn't greeted by red boxes.
 const attempted = ref(false)
 const visibleIssues = computed(() => issues.value.filter(i => i.level === 'warning' || attempted.value))
+/** "Atur potongan" / "Potong video" on a media hint: opens the editor on that item, on the shape the platform keeps. */
+function fixAction(issue: Issue & { account: Account }) {
+  const index = Number(issue.field?.split('.')[1])
+  const item = Number.isInteger(index) ? media.value[index] : undefined
+  if (!item || item.status !== 'ready') return undefined
+  if (issue.code === 'channel.imageWillBeCropped' && item.width && item.height) {
+    const bounds = CHANNELS[issue.account.platform].media[formatFor(issue.account)]?.image?.aspect
+    const aspect = suggestAspect(item.width / item.height, bounds)
+    return [{ label: t('mediaEditor.fixCrop'), color: 'warning' as const, variant: 'solid' as const, size: 'xs' as const, onClick: () => uploader.value?.edit(item.key, aspect) }]
+  }
+  if (issue.code === 'channel.videoTooLong') {
+    return [{ label: t('mediaEditor.fixTrim'), color: 'error' as const, variant: 'solid' as const, size: 'xs' as const, onClick: () => uploader.value?.edit(item.key) }]
+  }
+  return undefined
+}
+
 const counters = computed(() => [...new Set(selectedAccounts.value.map(a => a.platform))].map(platform => ({ platform, count: countChars(caption.value), max: CHANNELS[platform].maxChars })))
 
 const remaining = computed(() => entitlements.isUnlimited('scheduledPostsPerMonth') ? null : entitlements.remaining('scheduledPostsPerMonth'))
@@ -247,6 +273,7 @@ async function submit(mode: 'schedule' | 'now' | 'draft') {
                 {{ t('composer.media') }}
               </p>
               <MediaUploader
+                ref="uploader"
                 v-model="media"
                 :max="10"
               />
@@ -267,6 +294,7 @@ async function submit(mode: 'schedule' | 'now' | 'draft') {
               variant="subtle"
               :icon="PLATFORM_META[issue.account.platform].icon"
               :title="t(issue.code, issue.params ?? {})"
+              :actions="fixAction(issue)"
             />
           </li>
         </ul>

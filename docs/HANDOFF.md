@@ -61,6 +61,7 @@ The original generic blueprint the platform docs were adapted from is at `~/Down
 | Hosting (2026-10-15) | **Serverless, provider-agnostic**: Nitro preset chosen at build; Cloudflare in front of every domain; function region pinned to Singapore | Replaces "VPS + Docker + Caddy". Not tied to Vercel or Netlify (explicit user requirement). VPS stays valid as the `node-server` target |
 | Jobs (2026-10-15) | Postgres `jobs` table + per-minute HTTP tick (`Authorization: Bearer CRON_SECRET`, Vercel's convention, which any cron source can send) + `waitUntil` kicks + leases + fan-out | Replaces the pg-boss worker. Rejected: QStash, Inngest / Trigger.dev, host queues (vendor coupling) |
 | Media (2026-10-15) | ffmpeg in a separate media processor container behind a `MediaProcessor` adapter; presigned URLs + signed callback, no secrets inside | Runs on any container host. Rejected: transcoding SaaS (extra vendor), ffmpeg.wasm (slow on phones) |
+| Media editor (2026-10-22) | Non-destructive recipe (`EditSpec`) saved as a **new** media row; photos rendered in the browser (Konva + canvas), videos by the existing ffmpeg processor from the same recipe plus one browser-drawn overlay PNG; free on every plan (edited copies count toward storage) | Rejected again: ffmpeg.wasm (phones). Auto subtitles from speech deferred (needs a speech-to-text vendor; the layer schema already has `startMs/endMs`) |
 | Reference staging host | **Open**, pick at M1 from `blueprint/19` §4 tier 1 | Note: per-minute cron on Vercel needs Pro (Hobby is once a day) |
 | Auth | Email + password and Google | Two better-auth instances: creator and staff |
 | Payments | **Nexadream Payment Hub** (no recurring; manual renewal with reminders) | Midtrans was chosen earlier, then replaced |
@@ -89,7 +90,7 @@ The original generic blueprint the platform docs were adapted from is at `~/Down
 ## 6. Next steps
 
 1. User provides §5 items → create Neon branches, R2, Resend, Cloudflare zones (transform rule from `deploy/README.md`).
-2. Deploy staging with the chosen `deploy/<target>/`; run `npm run db:migrate` (direct URL) and `npm run db:seed` once; set the per-minute tick + a backup pinger; check `/healthz`.
+2. Deploy staging with the chosen `deploy/<target>/` (the media processor **before** the app; give the R2 media domain a CORS rule allowing `GET` from the app origin, which the photo editor needs to draw on a canvas); run `npm run db:migrate` (direct URL) and `npm run db:seed` once; set the per-minute tick + a backup pinger; check `/healthz`.
 3. Configure `/admin`: settings, payment gateway, legal pages, staff. Run the hub end-to-end test from `blueprint/17` Phase 11 against the real hub with a low-price plan.
 4. Meta App Review submissions with the staging build (screencasts of connect → publish → comment-to-DM). Include `threads_keyword_search` (tag research); after approval turn on `channels.hashtags.threadsSearchEnabled` in `/admin/settings` and ask Threads users to reconnect.
 5. Usability test with 5 first-time creators (target: first scheduled post in < 5 minutes), closed beta, then production.

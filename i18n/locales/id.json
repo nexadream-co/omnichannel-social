@@ -46,7 +46,8 @@
     "groupBusiness": "Bisnis",
     "groupApp": "Aplikasi",
     "collapse": "Ciutkan menu",
-    "expand": "Buka menu"
+    "expand": "Buka menu",
+    "media": "Galeri Media"
   },
   "auth": {
     "email": "Email",
@@ -376,7 +377,19 @@
     "deleteReason": "Alasan (opsional)",
     "deleteConfirm": "Saya paham semua data akun ini akan dihapus.",
     "deleteSent": "Permintaan hapus akun sudah dikirim. Kami akan menghubungimu lewat email.",
-    "deleteRequestedOn": "Permintaan hapus akun dikirim pada {date}."
+    "deleteRequestedOn": "Permintaan hapus akun dikirim pada {date}.",
+    "watermark": {
+      "title": "Tanda air",
+      "subtitle": "Logo toko kamu, siap ditempel di foto dan video lewat editor dengan sekali ketuk.",
+      "positionLabel": "Posisi awal",
+      "position": {
+        "top-left": "Kiri atas",
+        "top-right": "Kanan atas",
+        "bottom-left": "Kiri bawah",
+        "bottom-right": "Kanan bawah",
+        "center": "Tengah"
+      }
+    }
   },
   "timezones": {
     "Asia/Jakarta": "WIB (Jakarta, Sumatra, Jawa, Kalimantan Barat & Tengah)",
@@ -593,6 +606,139 @@
     "fixFirst": "Ada yang perlu diperbaiki dulu.",
     "mediaPending": "Tunggu media selesai disiapkan.",
     "pastTime": "Waktu sudah lewat. Pilih waktu yang akan datang."
+  },
+  "mediaEditor": {
+    "open": "Edit",
+    "titleImage": "Edit foto",
+    "titleVideo": "Edit video",
+    "description": "Potong, atur warna, tambah teks dan stiker. Hasilnya disimpan sebagai salinan baru, aslinya tetap ada.",
+    "save": "Simpan",
+    "saving": "Menyimpan…",
+    "saveFailed": "Hasil edit gagal disimpan. Coba lagi.",
+    "notReady": "Media ini masih disiapkan. Tunggu sebentar lalu buka lagi.",
+    "cannotOpen": "Foto ini tidak bisa dibuka di editor. Coba muat ulang halaman.",
+    "nothingChanged": "Belum ada yang diubah.",
+    "discardTitle": "Buang perubahan?",
+    "discardBody": "Hasil edit belum disimpan.",
+    "discard": "Buang",
+    "play": "Putar",
+    "pause": "Jeda",
+    "removeLayer": "Hapus yang dipilih",
+    "fixCrop": "Atur potongan",
+    "fixTrim": "Potong video",
+    "rotate": "Putar",
+    "flip": "Cermin",
+    "fitBlur": "Pas + latar blur",
+    "fitBlurHint": "Seluruh foto/video tetap terlihat, sisa bingkai diisi versi buram.",
+    "cropHint": "Geser kotak untuk memilih bagian yang dipakai.",
+    "tab": {
+      "trim": "Durasi",
+      "crop": "Potong",
+      "adjust": "Sesuaikan",
+      "filter": "Filter",
+      "text": "Teks",
+      "sticker": "Stiker",
+      "logo": "Logo",
+      "cover": "Sampul",
+      "sound": "Suara"
+    },
+    "aspect": {
+      "original": "Asli",
+      "square": "Kotak 1:1",
+      "portrait": "Feed 4:5",
+      "story": "Reels/Story 9:16",
+      "landscape": "Lebar 1.91:1",
+      "wide": "Video 16:9",
+      "free": "Bebas"
+    },
+    "preset": {
+      "original": "Asli",
+      "bright": "Cerah",
+      "vivid": "Tajam",
+      "warm": "Hangat",
+      "cool": "Sejuk",
+      "vintage": "Klasik",
+      "bw": "Hitam Putih"
+    },
+    "adjust": {
+      "brightness": "Kecerahan",
+      "contrast": "Kontras",
+      "saturation": "Saturasi",
+      "hue": "Rona",
+      "sepia": "Sepia",
+      "grayscale": "Hitam putih"
+    },
+    "text": {
+      "add": "Tambah teks",
+      "addAnother": "Tambah teks lain",
+      "placeholder": "Tulis di sini",
+      "hint": "Ketuk teks di gambar untuk mengubahnya. Geser untuk memindahkan, cubit untuk memperbesar.",
+      "style": {
+        "plain": "Polos",
+        "box": "Kotak",
+        "outline": "Garis"
+      }
+    },
+    "font": {
+      "jakarta": "Tegas",
+      "poppins": "Modern",
+      "bebas": "JUDUL",
+      "pacifico": "Santai"
+    },
+    "sticker": {
+      "price": "Rp 99.000",
+      "discount": "Diskon 50%",
+      "promo": "PROMO",
+      "freeShipping": "Gratis Ongkir",
+      "linkInBio": "Link di bio",
+      "checkout": "Checkout sekarang",
+      "limited": "Stok terbatas",
+      "new": "BARU",
+      "fromProduct": "Ambil dari Link Produk"
+    },
+    "logo": {
+      "upload": "Unggah logo",
+      "change": "Ganti logo",
+      "place": "Pasang logo",
+      "reset": "Kembalikan posisi",
+      "opacity": "Transparansi",
+      "hint": "Geser logo ke posisi yang kamu mau. Logo ini tersimpan untuk edit berikutnya.",
+      "empty": "Pakai PNG dengan latar transparan supaya hasilnya rapi (maks 4 MB).",
+      "tooBig": "Ukuran logo maksimal 4 MB."
+    },
+    "trim": {
+      "kept": "Dipakai {length}",
+      "hint": "Geser kedua ujung untuk memilih bagian video yang dipakai."
+    },
+    "cover": {
+      "hint": "Bingkai ini jadi sampul Reels."
+    },
+    "sound": {
+      "mute": "Bisukan suara",
+      "hint": "Suara asli video dihapus dari hasil edit."
+    }
+  },
+  "mediaLibrary": {
+    "title": "Galeri Media",
+    "subtitle": "Semua foto dan video kamu. Edit, pakai lagi, atau hapus.",
+    "upload": "Unggah",
+    "storage": "Penyimpanan terpakai",
+    "empty": "Belum ada foto atau video.",
+    "edited": "Diedit",
+    "usePost": "Pakai di postingan",
+    "editSaved": "Hasil edit disimpan sebagai salinan baru.",
+    "deleteTitle": "Hapus media ini?",
+    "deleteBody": "File dihapus permanen dari penyimpanan.",
+    "deleted": "Media dihapus.",
+    "pickFrom": "Pilih dari Galeri",
+    "pickTitle": "Pilih dari Galeri",
+    "pickHint": "Pilih sampai {max} foto atau video.",
+    "add": "Tambahkan ({n})",
+    "kind": {
+      "all": "Semua",
+      "image": "Foto",
+      "video": "Video"
+    }
   },
   "posts": {
     "title": "Postingan",

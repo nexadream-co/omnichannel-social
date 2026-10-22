@@ -428,10 +428,19 @@ Jobs are rows in `jobs`, enqueued in the same transaction as the business write 
 1. The browser uploads straight to R2 (presigned PUT), then calls `POST /api/app/media/:id/complete`, which enqueues and kicks `media.process`.
 2. `media.process` sniffs the file. A JPEG or PNG that already meets every channel rule becomes `ready` inline (most phone photos). Everything else (HEIC, WebP, video) is submitted to the `MediaProcessor` adapter with a presigned GET for the source and presigned PUTs for each variant; the asset stays `processing` with a new `processor_ref`.
 3. The media processor (ffmpeg container) probes, converts images to JPEG (EXIF stripped) and video to H.264/AAC ≤ 1080p `+faststart`, uploads the variants, and calls the signed `/api/internal/media/callback`.
-4. The callback applies the result only if `processor_ref` still matches (`WHERE status = 'processing' AND processor_ref = $ref`), and sets `ready` or `failed` with a plain reason ("Video terlalu panjang untuk Reels (maks 15 menit)").
+4. The callback applies the result only if `processor_ref` still matches (`WHERE status = 'processing' AND processor_ref = $ref`), and sets `ready` or `failed` with a plain reason ("Video terlalu panjang. Potong menjadi maksimal 20 menit…"). Every video also gets a `poster` JPEG (UI thumbnails, the Reels cover).
 5. `media.watchdog` handles a callback that never arrives.
 
 The composer shows "Sedang menyiapkan video…" while processing; the creator never sees a codec.
+
+**Media editor (copies, never overwrites).** Creators edit from the composer (an "Edit" button on each ready tile, and "Atur potongan" / "Potong video" on the matching hint) and from Galeri Media (`/app/media`). The recipe is an `EditSpec` (`shared/media/edit-spec.ts`): rotation and flips, a crop on the rotated frame, a fit (`crop`, or `blur` = fit inside the shape over a blurred copy), colour adjustments, layers (text, stickers, the workspace logo) and, for video, trim, mute and a cover frame. Saving always creates a **new** `media_assets` row with `source_media_id` and `edit_spec`; the source stays untouched, and re-opening an edited copy restores the recipe on its source, so every step can be undone.
+
+- **Photos are rendered in the browser** (`app/utils/media-editor/render.ts`): canvas geometry, then colour, then the Konva overlay, exported as a JPEG ≤ 1440 px and uploaded through the normal presign → PUT → complete flow (the inline `ready` path above; no processor).
+- **Videos are rendered by the media processor.** `POST /api/app/media/:id/edits` validates the spec against the source, reserves storage for the kept part, and returns a presigned PUT for **one transparent overlay PNG** that the browser draws at the exact output size (text looks exactly like the preview; the container needs no fonts). After `/complete`, `media.process` submits `ProcessRequest.edit` with the source's processed MP4: trim → transpose/flip → crop or fit-blur → scale (short side ≤ 1080, never upscaled) → colour → overlay → the usual encode, plus a poster at `coverMs`.
+- **Colour parity:** `shared/media/adjust.ts` turns adjustments into one ordered list of operations with the CSS Filter Effects maths. The preview uses the CSS `filter` string, the photo export applies the same maths to pixels (Safari has no `ctx.filter`), and ffmpeg gets `colorchannelmixer` + `lutrgb` with the same numbers.
+- The cover frame reaches Instagram Reels as `thumb_offset` (inside the Instagram adapter only).
+- Deleting media (`DELETE /api/app/media/:id`) is refused while a post or an Etalase photo uses it; otherwise the row goes and `media.purge` removes its files. An edit whose source was deleted before rendering fails with a plain reason.
+- Edited copies count toward `mediaStorageMb`; the editor itself is on every plan.
 
 ---
 

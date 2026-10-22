@@ -126,6 +126,8 @@ async function requestDelete() {
       </form>
     </UCard>
 
+    <WatermarkSettings v-if="canManage" />
+
     <UCard v-if="canAccount">
       <template #header>
         <h2 class="font-semibold text-highlighted">

@@ -6,7 +6,7 @@ Facts from official docs that shape the design. Re-verify before each milestone,
 - **API:** Instagram API with Instagram Login. No Facebook Page needed. Scopes: `instagram_business_basic`, `instagram_business_content_publish`. (H)
 - **Formats:** feed image (**JPEG only**), video, carousel (≤10 items, counts as 1 post), Reels, Stories. Shopping tags, filters and Story stickers are not supported. (H)
 - **Publish limit:** 50–100 API posts per rolling 24h; plan for 50. Check with `GET /<IG_ID>/content_publishing_limit`. (M)
-- **Reels:** 3s–15min, ≤300 MB, MP4/MOV, H.264 or HEVC, 23–60 fps, 9:16 recommended. **Stories video:** 3–60s, ≤100 MB. (H)
+- **Reels:** 3s–15min, ≤300 MB, MP4/MOV, H.264 or HEVC, 23–60 fps, 9:16 recommended. Cover: `thumb_offset` (ms from the start) on the REELS container picks the frame; the media editor's Sampul sets it. **Stories video:** 3–60s, ≤100 MB. (H)
 - **Caption:** 2,200 chars, **5 hashtags** per feed post or Reel (since 18 Dec 2025, was 30; hashtags in comments count toward the same 5; Stories keep their own allowance), 20 mentions. **Links are not clickable.** Some Meta developer pages still say 30; the Help Center says 5. (H, checked 2026-10-22)
 - **Hashtag search** (`ig_hashtag_search`, `top_media` / `recent_media`) exists **only for Instagram API with Facebook Login** and needs the "Instagram Public Content Access" feature (App Review). At most 30 unique hashtags per Instagram account per rolling 7 days; no post counts, only media. We use Instagram Login, so tag research doesn't use it (phase 2: an optional "connect via Facebook" step). (H, checked 2026-10-22)
 - **Flow:** create a container from a public media URL → poll `status_code` until `FINISHED` → `media_publish`. (H)

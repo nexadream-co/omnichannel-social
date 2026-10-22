@@ -5,11 +5,12 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { Readable } from 'node:stream'
 import { pipeline } from 'node:stream/promises'
-import { ffprobeArgs, imageToJpegArgs, MAX_VIDEO_MS, parseProbe, videoToMp4Args, type ProcessRequest, type ProcessResult, type ProbeResult } from '../../server/core/media/ffmpeg-args'
+import { editVideoArgs, ffprobeArgs, imageToJpegArgs, MAX_VIDEO_MS, parseProbe, posterArgs, videoToMp4Args, type ProcessRequest, type ProcessResult, type ProbeResult } from '../../server/core/media/ffmpeg-args'
 import { SIGNATURE_HEADER, signBody } from '../../server/core/jobs/signing'
 
 const FFMPEG = process.env.FFMPEG_PATH || 'ffmpeg'
 const FFPROBE = process.env.FFPROBE_PATH || 'ffprobe'
+const DEFAULT_POSTER_MS = 1000 // past the black first frames most phone videos start with
 
 function run(command: string, args: string[], timeoutMs: number): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -77,13 +78,27 @@ export async function transcodeJob(job: ProcessRequest, secret: string): Promise
       return
     }
     const outputs: NonNullable<ProcessResult['outputs']> = []
+    const isVideo = probe.kind === 'video'
+    const main = join(dir, isVideo ? 'out.mp4' : 'out.jpg')
+    let overlay: string | null = null
+    if (job.edit?.overlayUrl) {
+      overlay = join(dir, 'overlay.png')
+      await download(job.edit.overlayUrl, overlay)
+    }
     for (const output of job.outputs) {
-      const isVideo = probe.kind === 'video'
-      const file = join(dir, isVideo ? 'out.mp4' : 'out.jpg')
-      await run(FFMPEG, isVideo ? videoToMp4Args(input, file, probe.hasAudio) : imageToJpegArgs(input, file), 30 * 60_000)
+      // `poster` is a still of the finished main output (edited videos only), so main always comes first.
+      const poster = output.variant === 'poster'
+      const file = poster ? join(dir, 'poster.jpg') : main
+      if (poster) {
+        await run(FFMPEG, posterArgs(main, job.edit?.spec.coverMs ?? DEFAULT_POSTER_MS, outputs[0]?.durationMs ?? null, file), 5 * 60_000)
+      } else if (isVideo && job.edit) {
+        await run(FFMPEG, editVideoArgs(job.edit.spec, probe, input, overlay, file), 30 * 60_000)
+      } else {
+        await run(FFMPEG, isVideo ? videoToMp4Args(input, file, probe.hasAudio) : imageToJpegArgs(input, file), 30 * 60_000)
+      }
       const result = parseProbe(await run(FFPROBE, ffprobeArgs(file), 60_000))
-      const bytes = await upload(output.putUrl, file, isVideo ? 'video/mp4' : 'image/jpeg')
-      outputs.push({ variant: output.variant, bytes: bytes || (await stat(file)).size, width: result.width, height: result.height, durationMs: result.durationMs, codec: result.codec })
+      const bytes = await upload(output.putUrl, file, output.contentType)
+      outputs.push({ variant: output.variant, bytes: bytes || (await stat(file)).size, width: result.width, height: result.height, durationMs: poster ? null : result.durationMs, codec: result.codec })
     }
     log('media-processor.done', { kind: probe.kind })
     await callback(job, { assetId: job.assetId, ref: job.ref, status: 'done', probe, outputs }, secret)

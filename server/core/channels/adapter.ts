@@ -43,7 +43,8 @@ export interface TokenBundle {
 export interface ResolvedTarget {
   format: PostFormat
   caption: string
-  media: { url: string, kind: MediaKind }[]
+  /** `coverMs`: the frame the creator picked as the video cover (media editor), from the start of the video. */
+  media: { url: string, kind: MediaKind, coverMs?: number | null }[]
   options: { firstComment?: string, altText?: string, linkAttachment?: string }
 }
 

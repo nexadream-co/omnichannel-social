@@ -1,8 +1,12 @@
 <script setup lang="ts">
+import type { Aspect } from '#shared/media/edit-spec'
+import type { MediaView } from '#shared/media/types'
+
 export interface UploadItem {
   key: string
   mediaId: string | null
   previewUrl: string | null
+  posterUrl?: string | null
   kind: 'image' | 'video'
   mime: string
   bytes: number
@@ -19,34 +23,28 @@ const props = defineProps<{ max?: number }>()
 const { t } = useI18n()
 const toast = useToast()
 const entitlements = useEntitlements()
+const uploads = useMediaUpload()
+const editor = useMediaEditor()
 const input = useTemplateRef<HTMLInputElement>('file')
+const libraryOpen = ref(false)
 
 function patch(key: string, values: Partial<UploadItem>) {
   items.value = items.value.map(item => item.key === key ? { ...item, ...values } : item)
 }
 
-/** PUT straight to storage with real progress (XHR: fetch has no upload progress). */
-function put(url: string, file: File, onProgress: (p: number) => void) {
-  return new Promise<void>((resolve, reject) => {
-    const xhr = new XMLHttpRequest()
-    xhr.open('PUT', url)
-    xhr.setRequestHeader('content-type', file.type)
-    xhr.upload.onprogress = event => event.lengthComputable && onProgress(Math.round((event.loaded / event.total) * 100))
-    xhr.onload = () => (xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(new Error(`upload ${xhr.status}`)))
-    xhr.onerror = () => reject(new Error('network'))
-    xhr.send(file)
-  })
+function fromView(media: MediaView): Partial<UploadItem> {
+  return {
+    mediaId: media.id, status: media.status, error: media.error, width: media.width, height: media.height, durationMs: media.durationMs,
+    mime: media.mime, bytes: media.bytes, posterUrl: media.posterUrl, kind: media.kind,
+    previewUrl: media.url ?? media.posterUrl ?? null
+  }
 }
 
 async function waitReady(key: string, mediaId: string) {
-  for (let attempt = 0; attempt < 600; attempt++) {
-    const media = await apiFetch<{ status: UploadItem['status'], url: string | null, error: string | null, width: number | null, height: number | null, durationMs: number | null, mime: string }>(`/api/app/media/${mediaId}`)
-    if (media.status === 'ready' || media.status === 'failed') {
-      patch(key, { status: media.status, error: media.error, width: media.width, height: media.height, durationMs: media.durationMs, mime: media.mime, previewUrl: media.url ?? items.value.find(i => i.key === key)?.previewUrl ?? null })
-      return
-    }
-    await new Promise(resolve => setTimeout(resolve, attempt < 10 ? 1000 : 3000))
-  }
+  const media = await uploads.waitReady(mediaId)
+  if (!media) return
+  const current = items.value.find(i => i.key === key)
+  patch(key, { ...fromView(media), previewUrl: media.url ?? current?.previewUrl ?? null })
 }
 
 async function upload(file: File) {
@@ -54,12 +52,8 @@ async function upload(file: File) {
   const kind = file.type.startsWith('video/') ? 'video' : 'image'
   items.value = [...items.value, { key, mediaId: null, previewUrl: kind === 'image' ? URL.createObjectURL(file) : null, kind, mime: file.type, bytes: file.size, status: 'uploading', progress: 0, error: null }]
   try {
-    const mime = file.type || (file.name.toLowerCase().endsWith('.heic') ? 'image/heic' : '')
-    const { mediaId, uploadUrl } = await apiFetch<{ mediaId: string, uploadUrl: string }>('/api/app/media/presign', { method: 'POST', body: { filename: file.name, mime, bytes: file.size } })
-    patch(key, { mediaId })
-    await put(uploadUrl, file, progress => patch(key, { progress }))
+    const mediaId = await uploads.upload(file, { filename: file.name, onUploaded: id => patch(key, { mediaId: id }), onProgress: progress => patch(key, { progress }) })
     patch(key, { status: 'processing' })
-    await apiFetch(`/api/app/media/${mediaId}/complete`, { method: 'POST' })
     await waitReady(key, mediaId)
   } catch (caught) {
     if (entitlements.handlePlanError(caught)) {
@@ -81,6 +75,25 @@ function onFiles(event: Event) {
 function remove(key: string) {
   items.value = items.value.filter(item => item.key !== key)
 }
+
+/** Opens the editor; the edited copy takes the same place, so a carousel keeps its order. */
+async function edit(key: string, aspect?: Aspect) {
+  const item = items.value.find(i => i.key === key)
+  if (!item?.mediaId || item.status !== 'ready') return
+  const mediaId = await editor.edit({ mediaId: item.mediaId, aspect })
+  if (!mediaId) return
+  patch(key, { mediaId, status: 'processing', progress: 100, error: null })
+  await waitReady(key, mediaId)
+}
+
+/** Attaches media already in Galeri Media (no new upload). */
+function addFromLibrary(picked: MediaView[]) {
+  const room = (props.max ?? 10) - items.value.length
+  const added = picked.slice(0, Math.max(0, room)).map(media => ({ key: `${Date.now()}-${Math.random()}`, progress: 100, ...fromView(media) }) as UploadItem)
+  items.value = [...items.value, ...added]
+}
+
+defineExpose({ edit, addFromLibrary })
 </script>
 
 <template>
@@ -94,6 +107,12 @@ function remove(key: string) {
         <img
           v-if="item.previewUrl && item.kind === 'image'"
           :src="item.previewUrl"
+          alt=""
+          class="size-full object-cover"
+        >
+        <img
+          v-else-if="item.posterUrl && item.kind === 'video'"
+          :src="item.posterUrl"
           alt=""
           class="size-full object-cover"
         >
@@ -113,6 +132,11 @@ function remove(key: string) {
             class="size-8 text-muted"
           />
         </div>
+        <UIcon
+          v-if="item.kind === 'video' && item.status === 'ready'"
+          name="i-lucide-play"
+          class="absolute bottom-1.5 left-1.5 size-4 text-white drop-shadow"
+        />
         <div
           v-if="item.status === 'uploading' || item.status === 'processing'"
           class="absolute inset-0 bg-default/70 flex flex-col items-center justify-center gap-1 text-xs text-default"
@@ -129,6 +153,16 @@ function remove(key: string) {
         >
           {{ item.error }}
         </div>
+        <UButton
+          v-if="item.status === 'ready' && item.mediaId"
+          icon="i-lucide-wand-sparkles"
+          size="xs"
+          color="neutral"
+          variant="solid"
+          class="absolute top-1 left-1 rounded-full"
+          :aria-label="t('mediaEditor.open')"
+          @click="edit(item.key)"
+        />
         <UButton
           icon="i-lucide-x"
           size="xs"
@@ -152,6 +186,16 @@ function remove(key: string) {
         {{ t('composer.addMedia') }}
       </button>
     </div>
+    <UButton
+      v-if="items.length < (max ?? 10)"
+      icon="i-lucide-images"
+      :label="t('mediaLibrary.pickFrom')"
+      color="neutral"
+      variant="link"
+      size="sm"
+      class="px-0"
+      @click="libraryOpen = true"
+    />
     <input
       ref="file"
       type="file"
@@ -160,5 +204,11 @@ function remove(key: string) {
       class="hidden"
       @change="onFiles"
     >
+    <MediaLibraryPicker
+      v-if="libraryOpen"
+      v-model:open="libraryOpen"
+      :max="(max ?? 10) - items.length"
+      @pick="addFromLibrary"
+    />
   </div>
 </template>

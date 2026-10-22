@@ -203,5 +203,6 @@ const canCompose = computed(() => auth.hasAbility('posts.write'))
     </UDrawer>
     <ConfirmDialog />
     <UpgradeDialog />
+    <MediaEditorHost />
   </UDashboardGroup>
 </template>

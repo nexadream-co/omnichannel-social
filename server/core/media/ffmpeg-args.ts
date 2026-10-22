@@ -1,7 +1,10 @@
 /**
  * Pure ffmpeg/ffprobe helpers shared by the app and the media processor container (docs/blueprint/19 §5).
- * No imports: the processor bundles this file on its own.
+ * Imports only the pure editor helpers in shared/media: the processor bundles these files on their own.
  */
+import { ffmpegColorFilters } from '../../../shared/media/adjust'
+import { cropPixels, editedDurationMs, outputSize, type EditSpec } from '../../../shared/media/edit-spec'
+
 export interface ProbeResult {
   kind: 'image' | 'video'
   width: number | null
@@ -62,13 +65,73 @@ export function videoToMp4Args(input: string, output: string, hasAudio: boolean)
   ]
 }
 
+const seconds = (ms: number) => (ms / 1000).toFixed(3)
+
+/**
+ * The editor's video render (ARCHITECTURE §8.5): trim → rotate/flip → crop, or fit inside the frame over a blurred
+ * copy → colour → the browser-drawn overlay PNG (text, stickers, watermark) → the same H.264/AAC encode as uploads.
+ * `probe` describes the source, which is always an upright processed MP4.
+ */
+export function editVideoArgs(spec: EditSpec, probe: Pick<ProbeResult, 'width' | 'height' | 'durationMs' | 'hasAudio'>, input: string, overlay: string | null, output: string): string[] {
+  const width = probe.width ?? 0
+  const height = probe.height ?? 0
+  const box = cropPixels(spec, width, height)
+  const out = outputSize(spec, width, height)
+  const orient: string[] = []
+  if (spec.rotate === 90) orient.push('transpose=clock')
+  if (spec.rotate === 270) orient.push('transpose=cclock')
+  if (spec.rotate === 180) orient.push('hflip', 'vflip')
+  if (spec.flipH) orient.push('hflip')
+  if (spec.flipV) orient.push('vflip')
+  orient.push(`crop=${box.w}:${box.h}:${box.x}:${box.y}`)
+  const finish = ['setsar=1', ...ffmpegColorFilters(spec.adjust), 'fps=fps=\'min(60,source_fps)\'']
+  const graph = spec.fit === 'blur'
+    ? [
+        `[0:v]${orient.join(',')},split[fgsrc][bgsrc]`,
+        `[bgsrc]scale=${out.width}:${out.height}:force_original_aspect_ratio=increase,crop=${out.width}:${out.height},gblur=sigma=40[bg]`,
+        `[fgsrc]scale=${out.width}:${out.height}:force_original_aspect_ratio=decrease[fg]`,
+        `[bg][fg]overlay=(W-w)/2:(H-h)/2,${finish.join(',')}[base]`
+      ]
+    : [`[0:v]${orient.join(',')},scale=${out.width}:${out.height},${finish.join(',')}[base]`]
+  graph.push(overlay ? '[base][1:v]overlay=0:0:format=auto,format=yuv420p[v]' : '[base]format=yuv420p[v]')
+  const trimmed = spec.trim && probe.durationMs ? editedDurationMs(spec, probe.durationMs) : null
+  const audio = probe.hasAudio && !spec.mute
+  return [
+    '-y',
+    ...(spec.trim ? ['-ss', seconds(spec.trim.startMs)] : []),
+    '-i', input,
+    ...(overlay ? ['-i', overlay] : []),
+    ...(trimmed ? ['-t', seconds(trimmed)] : []),
+    '-map_metadata', '-1',
+    '-filter_complex', graph.join(';'),
+    '-map', '[v]',
+    ...(audio ? ['-map', '0:a:0', '-c:a', 'aac', '-b:a', '128k', '-ac', '2'] : ['-an']),
+    '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '23', '-pix_fmt', 'yuv420p', '-profile:v', 'high',
+    '-movflags', '+faststart', output
+  ]
+}
+
+/** A JPEG still (≤ 720 px wide) for grids and the Reels cover. `atMs` is clamped inside the video. */
+export function posterArgs(input: string, atMs: number, durationMs: number | null, output: string): string[] {
+  const at = Math.max(0, Math.min(atMs, (durationMs ?? atMs + 1) - 100))
+  return ['-y', '-ss', seconds(at), '-i', input, '-frames:v', '1', '-vf', 'scale=\'min(720,iw)\':-2', '-q:v', '3', output]
+}
+
+/** The editor's part of a processor request: the spec plus a presigned GET for the overlay PNG, if any. */
+export interface VideoEditRequest {
+  spec: EditSpec
+  overlayUrl: string | null
+}
+
 export interface ProcessRequest {
   assetId: string
   ref: string
   kind: 'image' | 'video'
   sourceUrl: string
   callbackUrl: string
+  /** `main` is always first; edited videos also ask for a `poster` JPEG. */
   outputs: { variant: string, putUrl: string, contentType: string }[]
+  edit?: VideoEditRequest
 }
 
 export interface ProcessResult {

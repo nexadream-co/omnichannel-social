@@ -56,6 +56,15 @@ export default defineNuxtConfig({
       stylistic: { commaDangle: 'never', braceStyle: '1tbs' }
     }
   },
+  // Media editor text fonts (app/assets/css/main.css): only the weights the editor draws with.
+  fonts: {
+    families: [
+      { name: 'Plus Jakarta Sans', weights: [800] },
+      { name: 'Poppins', weights: [600] },
+      { name: 'Bebas Neue', weights: [400] },
+      { name: 'Pacifico', weights: [400] }
+    ]
+  },
   i18n: {
     strategy: 'prefix_except_default',
     defaultLocale: 'id',

@@ -21,6 +21,7 @@ export const QUEUES = {
   'token.refresh.one': queue('token.refresh.one', { maxAttempts: 4 }),
   'media.process': queue('media.process', { maxAttempts: 4 }),
   'media.watchdog': queue('media.watchdog', { maxAttempts: 3 }),
+  'media.purge': queue('media.purge', { maxAttempts: 5, concurrency: 2 }),
   // publish.target polls containers inline for up to 15 s, so it needs a longer lease and budget.
   'publish.target': queue('publish.target', { maxAttempts: 4, leaseSeconds: 180, expectedMs: 30_000, concurrency: 10 }),
   'publish.poll': queue('publish.poll', { maxAttempts: 4, concurrency: 10 }),

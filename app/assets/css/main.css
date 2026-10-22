@@ -22,6 +22,15 @@
   --ui-radius: 0.375rem;
 }
 
+/*
+ * Media editor text fonts (shared/media/presets.ts TEXT_FONT_META). Naming them here lets @nuxt/fonts self-host
+ * them; browsers download a font only when the editor asks for it (document.fonts.load).
+ */
+.font-editor-jakarta { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; }
+.font-editor-poppins { font-family: 'Poppins', sans-serif; font-weight: 600; }
+.font-editor-bebas { font-family: 'Bebas Neue', sans-serif; }
+.font-editor-pacifico { font-family: 'Pacifico', cursive; }
+
 /* v-reveal (app/plugins/reveal.ts): hidden only once JS has marked <html>, and only when motion is welcome. */
 @media (prefers-reduced-motion: no-preference) {
   .reveal-ready .reveal {

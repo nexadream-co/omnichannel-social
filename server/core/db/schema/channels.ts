@@ -1,5 +1,6 @@
 import { sql } from 'drizzle-orm'
-import { bigint, foreignKey, index, integer, jsonb, pgEnum, pgTable, primaryKey, text, unique, uniqueIndex } from 'drizzle-orm/pg-core'
+import { bigint, foreignKey, type AnyPgColumn, index, integer, jsonb, pgEnum, pgTable, primaryKey, text, unique, uniqueIndex } from 'drizzle-orm/pg-core'
+import type { EditSpec } from '../../../../shared/media/edit-spec'
 import { createdAt, id, tstz, updatedAt } from './_shared'
 import { users } from './creators'
 import { workspaces } from './tenancy'
@@ -54,8 +55,11 @@ export const mediaAssets = pgTable('media_assets', {
   processorSubmittedAt: tstz(),
   variants: jsonb().$type<Record<string, unknown>>().notNull().default({}),
   error: text(),
+  // Editor copies (ARCHITECTURE §8.5): the untouched source and the recipe, so a re-edit starts from the original.
+  sourceMediaId: text().references((): AnyPgColumn => mediaAssets.id, { onDelete: 'set null' }),
+  editSpec: jsonb().$type<EditSpec>(),
   createdAt: createdAt(), updatedAt: updatedAt()
-}, t => [unique().on(t.workspaceId, t.id), index().on(t.workspaceId, t.createdAt), index().on(t.status)])
+}, t => [unique().on(t.workspaceId, t.id), index().on(t.workspaceId, t.createdAt), index().on(t.status), index().on(t.sourceMediaId)])
 
 export const posts = pgTable('posts', {
   id: id(),
