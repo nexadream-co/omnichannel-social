@@ -50,7 +50,7 @@ const canCompose = computed(() => auth.hasAbility('posts.write'))
       collapsible
       :default-size="16"
       :collapsed-size="4.5"
-      :ui="{ root: 'hidden lg:flex', footer: 'border-t border-default' }"
+      :ui="{ root: 'hidden lg:flex', footer: 'border-t border-default flex-col items-stretch' }"
     >
       <template #header="{ collapsed }">
         <NuxtLink
