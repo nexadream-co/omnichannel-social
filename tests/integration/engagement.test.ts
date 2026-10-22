@@ -2,11 +2,11 @@ import { eq } from 'drizzle-orm'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { impersonateStaff } from '../../server/core/admin/people'
 import { homeSummary } from '../../server/core/analytics/service'
-import { resetFakeChannels } from '../../server/core/channels/fake'
+import { fakeEditedCaptions, fakeRemovedPosts, resetFakeChannels } from '../../server/core/channels/fake'
 import type { StaffContext, WorkspaceContext } from '../../server/core/context'
 import { closeDb, getDb } from '../../server/core/db/client'
 import { insightSnapshots, plans, posts, postTargets, roles, staffUsers, users } from '../../server/core/db/schema'
-import { inactivityJob, insightsDailyJob } from '../../server/core/engagement-jobs'
+import { inactivityJob, insightsDailyJob, insightsSyncJob, startWorkspaceSync, syncPost } from '../../server/core/engagement-jobs'
 import { resetEnvCache } from '../../server/core/env'
 import type { ClaimedJob } from '../../server/core/jobs'
 import { getPost } from '../../server/core/publishing/service'
@@ -28,7 +28,7 @@ beforeAll(async () => {
 })
 beforeEach(async () => {
   resetFakeChannels()
-  await truncate('insight_snapshots', 'post_targets', 'posts', 'social_accounts', 'staff_sessions', 'staff_users', 'roles', 'jobs', 'notifications', 'trial_claims', 'subscription_events', 'subscriptions', 'workspace_members', 'workspaces', 'users', 'audit_logs')
+  await truncate('rate_limit_buckets', 'post_target_changes', 'insight_snapshots', 'post_targets', 'posts', 'social_accounts', 'staff_sessions', 'staff_users', 'roles', 'jobs', 'notifications', 'trial_claims', 'subscription_events', 'subscriptions', 'workspace_members', 'workspaces', 'users', 'audit_logs')
   const base = testContext()
   const [user] = await getDb().insert(users).values({ name: 'Rina', email: 'rina@x.id', emailVerified: true }).returning({ id: users.id })
   const { workspaceId } = await provisionWorkspace(base, user!.id, { name: 'Rina', email: 'rina@x.id' })
@@ -47,6 +47,88 @@ describe('insights.daily', () => {
     expect(await getDb().select().from(insightSnapshots)).toHaveLength(1)
     const detail = await getPost(ws, post!.id)
     expect(detail.targets[0]).toMatchObject({ insights: { metrics: { views: 120, likes: 12, comments: 3 } }, clicks: 0, autoReplies: 0 })
+  })
+
+  it('marks a post deleted on the platform without stopping the others, and a sync brings it back', async () => {
+    const [accountId] = (await connectAccounts(ws, 'instagram', [{ externalId: 'ig-del', username: 'rina', avatarUrl: null, accessToken: 't', refreshToken: null, tokenExpiresAt: null, scopes: [], meta: {} }])).connected
+    const [post] = await getDb().insert(posts).values({ workspaceId: ws.workspaceId, baseCaption: 'x', status: 'published' }).returning()
+    const target = { workspaceId: ws.workspaceId, postId: post!.id, socialAccountId: accountId!, platform: 'instagram' as const, format: 'feed' as const, status: 'published' as const, publishedAt: new Date() }
+    const [gone] = await getDb().insert(postTargets).values({ ...target, externalId: 'media-gone', permalink: 'https://instagram.com/p/gone' }).returning()
+    await getDb().insert(postTargets).values({ ...target, externalId: 'media-kept' })
+    fakeRemovedPosts.add('media-gone')
+
+    await insightsDailyJob(job, testContext())
+    expect(await getDb().select().from(insightSnapshots)).toHaveLength(1)
+    const removed = (await getPost(ws, post!.id)).targets.find(t => t.id === gone!.id)!
+    expect(removed.removedAt).toBeInstanceOf(Date)
+    expect(removed).toMatchObject({ status: 'published', permalink: null, changes: [{ kind: 'removed' }] })
+
+    // A nightly run never asks again about a post it already found deleted.
+    fakeRemovedPosts.delete('media-gone')
+    await getDb().update(postTargets).set({ syncedAt: null })
+    await insightsDailyJob(job, testContext())
+    expect((await getPost(ws, post!.id)).targets.find(t => t.id === gone!.id)!.removedAt).toBeInstanceOf(Date)
+
+    // "Sinkronkan" on the post does re-check it: it answers again, so the mark goes.
+    expect(await syncPost(ws, post!.id)).toMatchObject({ removed: 0, restored: 1, failed: 0 })
+    expect((await getPost(ws, post!.id)).targets.find(t => t.id === gone!.id)).toMatchObject({
+      removedAt: null, permalink: 'https://instagram.com/p/gone', changes: [{ kind: 'restored' }, { kind: 'removed' }]
+    })
+  })
+
+  it('adopts a caption edited on the platform and logs it; a first sync only records the baseline', async () => {
+    const [accountId] = (await connectAccounts(ws, 'instagram', [{ externalId: 'ig-cap', username: 'rina', avatarUrl: null, accessToken: 't', refreshToken: null, tokenExpiresAt: null, scopes: [], meta: {} }])).connected
+    const target = { workspaceId: ws.workspaceId, socialAccountId: accountId!, platform: 'instagram' as const, format: 'feed' as const, status: 'published' as const, publishedAt: new Date() }
+    // One account: the post itself takes the platform's caption.
+    const [solo] = await getDb().insert(posts).values({ workspaceId: ws.workspaceId, baseCaption: 'Promo hari ini', status: 'published' }).returning()
+    await getDb().insert(postTargets).values({ ...target, postId: solo!.id, externalId: 'm-solo', platformCaption: 'Promo hari ini\n' })
+    // Legacy: no platform caption recorded at publish, so the first sync can't tell an edit from a short-link swap.
+    const [legacy] = await getDb().insert(posts).values({ workspaceId: ws.workspaceId, baseCaption: 'Lama', status: 'published' }).returning()
+    await getDb().insert(postTargets).values({ ...target, postId: legacy!.id, externalId: 'm-legacy' })
+    fakeEditedCaptions.set('m-solo', 'Promo hari ini (stok terbatas)')
+    fakeEditedCaptions.set('m-legacy', 'Lama, sudah diubah')
+
+    expect(await syncPost(ws, solo!.id)).toMatchObject({ edited: 1 })
+    const detail = await getPost(ws, solo!.id)
+    expect(detail.caption).toBe('Promo hari ini (stok terbatas)')
+    expect(detail.targets[0]).toMatchObject({ caption: 'Promo hari ini (stok terbatas)', changes: [{ kind: 'caption_changed', before: 'Promo hari ini\n', after: 'Promo hari ini (stok terbatas)' }] })
+    expect(detail.targets[0]!.syncedAt).toBeInstanceOf(Date)
+
+    expect(await syncPost(ws, legacy!.id)).toMatchObject({ edited: 0 })
+    expect((await getPost(ws, legacy!.id)).caption).toBe('Lama')
+    // Whitespace-only differences are not edits; a real edit after the baseline is.
+    fakeEditedCaptions.set('m-legacy', '  Lama, sudah diubah\r\n')
+    expect(await syncPost(ws, legacy!.id)).toMatchObject({ edited: 0 })
+    fakeEditedCaptions.set('m-legacy', 'Lama, diubah lagi')
+    expect(await syncPost(ws, legacy!.id)).toMatchObject({ edited: 1 })
+    expect((await getPost(ws, legacy!.id)).caption).toBe('Lama, diubah lagi')
+  })
+
+  it('a post sent to several accounts keeps its caption and gets one per edited account', async () => {
+    const [ig] = (await connectAccounts(ws, 'instagram', [{ externalId: 'ig-multi', username: 'rina', avatarUrl: null, accessToken: 't', refreshToken: null, tokenExpiresAt: null, scopes: [], meta: {} }])).connected
+    const [th] = (await connectAccounts(ws, 'threads', [{ externalId: 'th-multi', username: 'rina', avatarUrl: null, accessToken: 't', refreshToken: null, tokenExpiresAt: null, scopes: [], meta: {} }])).connected
+    const [post] = await getDb().insert(posts).values({ workspaceId: ws.workspaceId, baseCaption: 'Sama', status: 'published' }).returning()
+    const base = { workspaceId: ws.workspaceId, postId: post!.id, format: 'feed' as const, status: 'published' as const, publishedAt: new Date(), platformCaption: 'Sama' }
+    await getDb().insert(postTargets).values([{ ...base, socialAccountId: ig!, platform: 'instagram', externalId: 'm-ig' }, { ...base, socialAccountId: th!, platform: 'threads', format: 'text', externalId: 'm-th' }])
+    fakeEditedCaptions.set('m-ig', 'Beda di Instagram')
+    fakeEditedCaptions.set('m-th', 'Sama')
+    await syncPost(ws, post!.id)
+    const detail = await getPost(ws, post!.id)
+    expect(detail.caption).toBe('Sama')
+    expect(detail.targets.find(t => t.platform === 'instagram')).toMatchObject({ caption: 'Beda di Instagram', captionOverride: 'Beda di Instagram' })
+    expect(detail.targets.find(t => t.platform === 'threads')).toMatchObject({ caption: 'Sama', changes: [] })
+  })
+
+  it('workspace sync runs in the background, once every few minutes', async () => {
+    const [accountId] = (await connectAccounts(ws, 'threads', [{ externalId: 'th-sync', username: 'rina', avatarUrl: null, accessToken: 't', refreshToken: null, tokenExpiresAt: null, scopes: [], meta: {} }])).connected
+    const [post] = await getDb().insert(posts).values({ workspaceId: ws.workspaceId, baseCaption: 'x', status: 'published' }).returning()
+    await getDb().insert(postTargets).values({ workspaceId: ws.workspaceId, postId: post!.id, socialAccountId: accountId!, platform: 'threads', format: 'text', status: 'published', externalId: 'th-gone', publishedAt: new Date() })
+    fakeRemovedPosts.add('th-gone')
+    const { jobId } = await startWorkspaceSync(ws)
+    expect(jobId).toBeTruthy()
+    await expect(startWorkspaceSync(ws)).rejects.toMatchObject({ statusCode: 429 })
+    await insightsSyncJob({ ...job, payload: { workspaceId: ws.workspaceId } }, testContext())
+    expect((await getPost(ws, post!.id)).targets[0]!.removedAt).toBeInstanceOf(Date)
   })
 })
 

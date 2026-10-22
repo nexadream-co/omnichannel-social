@@ -31,6 +31,7 @@ export const QUEUES = {
   'dm.send': queue('dm.send', { maxAttempts: 3, concurrency: 10 }),
   'billing.daily': queue('billing.daily', { maxAttempts: 3, leaseSeconds: 300, expectedMs: 30_000, concurrency: 1 }),
   'insights.daily': queue('insights.daily', { maxAttempts: 2, leaseSeconds: 300, expectedMs: 30_000, concurrency: 1 }),
+  'insights.sync': queue('insights.sync', { maxAttempts: 1, leaseSeconds: 300, expectedMs: 30_000, concurrency: 2 }),
   'engagement.inactivity': queue('engagement.inactivity', { maxAttempts: 2, leaseSeconds: 300, expectedMs: 30_000, concurrency: 1 }),
   'billing.renewal-reminders': queue('billing.renewal-reminders', { maxAttempts: 3, leaseSeconds: 300, expectedMs: 30_000, concurrency: 1 })
 } as const satisfies Record<string, QueueDef>

@@ -1,7 +1,7 @@
 import { instagram as caps } from '../../../shared/channels/instagram'
 import { env } from '../env'
 import { ChannelError, type AdapterCtx, type ChannelAdapter, type ConnectedAccount, type ResolvedTarget } from './adapter'
-import { classifyGraphError, graphRequest } from './graph-client'
+import { classifyGraphError, graphRequest, optionalMetrics, postStatesPerPost } from './graph-client'
 
 const SCOPES = ['instagram_business_basic', 'instagram_business_content_publish', 'instagram_business_manage_comments', 'instagram_business_manage_messages']
 const graph = () => `https://graph.instagram.com/${env().META_GRAPH_VERSION}`
@@ -125,15 +125,20 @@ export const instagramAdapter: ChannelAdapter = {
     return result.data.filter(m => new Date(m.timestamp) >= since).map(m => ({ externalId: m.id, caption: m.caption ?? '', ts: new Date(m.timestamp), permalink: m.permalink }))
   },
 
-  async fetchInsights(c, externalIds) {
-    const rows = []
-    for (const id of externalIds) {
-      const result = await graphRequest<{ data: { name: string, values?: { value: number }[], total_value?: { value: number } }[] }>({
-        fetch: c.fetch, url: `${graph()}/${id}/insights`, params: { metric: 'views,reach,likes,comments,shares,saved' }, accessToken: c.account.accessToken
+  async fetchPostStates(c, externalIds) {
+    return postStatesPerPost(externalIds, async (id) => {
+      // A missing `caption` field means the post has no caption (Graph omits empty fields).
+      const node = await graphRequest<{ caption?: string, permalink?: string }>({
+        fetch: c.fetch, url: `${graph()}/${id}`, params: { fields: 'caption,permalink' }, accessToken: c.account.accessToken
       })
-      rows.push({ externalId: id, metrics: Object.fromEntries(result.data.map(m => [m.name, m.total_value?.value ?? m.values?.[0]?.value ?? 0])) })
-    }
-    return rows
+      const metrics = await optionalMetrics(async () => {
+        const result = await graphRequest<{ data: { name: string, values?: { value: number }[], total_value?: { value: number } }[] }>({
+          fetch: c.fetch, url: `${graph()}/${id}/insights`, params: { metric: 'views,reach,likes,comments,shares,saved' }, accessToken: c.account.accessToken
+        })
+        return Object.fromEntries(result.data.map(m => [m.name, m.total_value?.value ?? m.values?.[0]?.value ?? 0]))
+      })
+      return { caption: node.caption ?? '', permalink: node.permalink ?? null, metrics }
+    })
   },
 
   /** Comment-to-DM: one private reply per comment, within 7 days (PLATFORM-CONSTRAINTS). */

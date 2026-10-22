@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { PLATFORM_META } from '#shared/channels/registry'
 import type { Platform, PostFormat } from '#shared/channels/types'
-import { POST_STATUS_META, POST_TARGET_STATUS_META, PUBLISH_ERROR_LABELS } from '#shared/utils/status'
+import { POST_CHANGE_LABELS, POST_STATUS_META, POST_TARGET_STATUS_META, PUBLISH_ERROR_LABELS } from '#shared/utils/status'
 
 interface Detail {
   id: string
@@ -9,7 +9,7 @@ interface Detail {
   status: string
   scheduledAt: string | null
   media: { id: string, kind: 'image' | 'video', url: string | null }[]
-  targets: { id: string, platform: Platform, format: PostFormat, username: string | null, avatarUrl: string | null, accountStatus: string, status: string, scheduledAt: string | null, publishedAt: string | null, permalink: string | null, errorCode: string | null, insights: { metrics: Record<string, number>, capturedAt: string } | null, clicks: number, autoReplies: number }[]
+  targets: { id: string, platform: Platform, format: PostFormat, username: string | null, avatarUrl: string | null, accountStatus: string, caption: string, status: string, scheduledAt: string | null, publishedAt: string | null, syncedAt: string | null, removedAt: string | null, permalink: string | null, errorCode: string | null, insights: { metrics: Record<string, number>, capturedAt: string } | null, clicks: number, autoReplies: number, changes: { kind: string, before: string | null, after: string | null, detectedAt: string }[] }[]
 }
 
 definePageMeta({ layout: 'creator' })
@@ -53,6 +53,28 @@ onBeforeUnmount(() => clearInterval(timer))
 const tz = computed(() => auth.profile.value?.displayTimezone)
 const canWrite = computed(() => auth.hasAbility('posts.write'))
 const editable = computed(() => post.value && ['draft', 'scheduled'].includes(post.value.status))
+
+// "Sinkronkan": re-read the platform now (numbers, caption edits, deletion); the nightly run is at 02:00 WIB.
+const canSync = computed(() => post.value?.targets.some(t => t.status === 'published'))
+const syncing = ref(false)
+async function sync() {
+  syncing.value = true
+  try {
+    const result = await apiFetch<{ edited: number, removed: number, failed: number }>(`/api/app/posts/${id}/sync`, { method: 'POST' })
+    const message = result.failed ? 'posts.syncPartial' : result.removed ? 'posts.syncedRemoved' : result.edited ? 'posts.syncedEdited' : 'posts.synced'
+    toast.add({ title: t(message), color: result.failed ? 'warning' : 'success' })
+    await load()
+  } catch (caught) {
+    toast.add({ title: extractErrorMessage(caught, t('authError.generic')), color: 'error' })
+  } finally {
+    syncing.value = false
+  }
+}
+
+const platformName = (target: Target) => PLATFORM_META[target.platform].name
+const when = (iso: string) => formatDateTime(iso, { locale: locale.value, timeZone: tz.value })
+/** The account's caption, shown only when the platform made it differ from the post's. */
+const ownCaption = (target: Target) => target.status === 'published' && post.value && target.caption !== post.value.caption
 
 async function retry(targetId: string) {
   try {
@@ -156,9 +178,27 @@ async function remove() {
 
       <UCard :ui="{ body: 'p-0 sm:p-0' }">
         <template #header>
-          <h2 class="font-semibold">
-            {{ t('posts.perPlatform') }}
-          </h2>
+          <div class="flex items-center justify-between gap-3">
+            <h2 class="font-semibold">
+              {{ t('posts.perPlatform') }}
+            </h2>
+            <UButton
+              v-if="canSync"
+              icon="i-lucide-refresh-cw"
+              size="sm"
+              color="neutral"
+              variant="outline"
+              :loading="syncing"
+              :label="t('posts.sync')"
+              @click="sync"
+            />
+          </div>
+          <p
+            v-if="canSync"
+            class="text-xs text-muted mt-1"
+          >
+            {{ t('posts.syncHint') }}
+          </p>
         </template>
         <ul class="divide-y divide-default">
           <li
@@ -179,14 +219,44 @@ async function remove() {
                 <p class="text-xs text-muted">
                   {{ PLATFORM_META[target.platform].name }} · {{ t(`format.${target.format}`) }}
                   <template v-if="target.publishedAt">
-                    · {{ t('posts.publishedAt', { date: formatDateTime(target.publishedAt, { locale, timeZone: tz }) }) }}
+                    · {{ t('posts.publishedAt', { date: when(target.publishedAt) }) }}
                   </template>
                 </p>
+                <p
+                  v-if="target.syncedAt"
+                  class="text-xs text-muted"
+                >
+                  {{ t('posts.syncedAt', { date: when(target.syncedAt) }) }}
+                </p>
               </div>
+              <UBadge
+                v-if="target.removedAt"
+                color="neutral"
+                variant="subtle"
+                :label="t('posts.removedOn', { platform: platformName(target) })"
+              />
               <StatusBadge
+                v-else
                 :value="target.status"
                 :meta="POST_TARGET_STATUS_META"
               />
+            </div>
+            <p
+              v-if="target.removedAt"
+              class="text-xs text-muted"
+            >
+              {{ t('posts.removedNote', { platform: platformName(target), date: when(target.removedAt) }) }}
+            </p>
+            <div
+              v-if="ownCaption(target)"
+              class="rounded-md bg-elevated/60 px-3 py-2"
+            >
+              <p class="text-[11px] text-muted">
+                {{ t('posts.captionOn', { platform: platformName(target) }) }}
+              </p>
+              <p class="text-sm whitespace-pre-line break-words">
+                {{ target.caption || t('posts.noCaption') }}
+              </p>
             </div>
             <dl
               v-if="target.status === 'published'"
@@ -206,11 +276,61 @@ async function remove() {
               </div>
             </dl>
             <p
-              v-if="target.status === 'published' && !target.insights"
+              v-if="target.status === 'published' && !target.insights && !target.removedAt"
               class="text-xs text-muted"
             >
               {{ t('posts.metrics.pending') }}
             </p>
+            <div
+              v-if="target.changes.length"
+              class="space-y-1"
+            >
+              <p class="text-xs font-medium text-highlighted">
+                {{ t('posts.changeHistory') }}
+              </p>
+              <ul class="space-y-1">
+                <li
+                  v-for="change in target.changes"
+                  :key="change.detectedAt + change.kind"
+                  class="text-xs"
+                >
+                  <details v-if="change.kind === 'caption_changed'">
+                    <summary class="cursor-pointer text-default">
+                      {{ t(POST_CHANGE_LABELS[change.kind] ?? '', { platform: platformName(target) }) }}
+                      <span class="text-muted">· {{ when(change.detectedAt) }}</span>
+                    </summary>
+                    <dl class="mt-1 grid gap-1 sm:grid-cols-2">
+                      <div class="rounded-md bg-elevated/60 px-2 py-1.5">
+                        <dt class="text-muted">
+                          {{ t('posts.before') }}
+                        </dt>
+                        <dd class="whitespace-pre-line break-words">
+                          {{ change.before || t('posts.noCaption') }}
+                        </dd>
+                      </div>
+                      <div class="rounded-md bg-elevated/60 px-2 py-1.5">
+                        <dt class="text-muted">
+                          {{ t('posts.after') }}
+                        </dt>
+                        <dd class="whitespace-pre-line break-words">
+                          {{ change.after || t('posts.noCaption') }}
+                        </dd>
+                      </div>
+                    </dl>
+                  </details>
+                  <p
+                    v-else
+                    class="text-default"
+                  >
+                    {{ t(POST_CHANGE_LABELS[change.kind] ?? '', { platform: platformName(target) }) }}
+                    <span class="text-muted">· {{ when(change.detectedAt) }}</span>
+                  </p>
+                </li>
+              </ul>
+              <p class="text-[11px] text-muted">
+                {{ t('posts.changeHint') }}
+              </p>
+            </div>
             <UAlert
               v-if="target.errorCode && ['failed', 'needs_reauth', 'quota_deferred'].includes(target.status)"
               :color="target.status === 'failed' ? 'error' : 'warning'"

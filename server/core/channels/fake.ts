@@ -13,6 +13,9 @@ const published = new Map<string, { externalId: string, caption: string, ts: Dat
 const containers = new Map<string, number>() // container id → status polls remaining
 /** Messages the fake adapter "sent" (private replies and public comment replies), for tests and local QA. */
 export const fakeOutbox: { kind: 'dm' | 'reply', accountId: string, commentId: string, text: string }[] = []
+/** Post ids the fake platform reports as deleted, and captions edited there (a creator changed them in the app), for tests. */
+export const fakeRemovedPosts = new Set<string>()
+export const fakeEditedCaptions = new Map<string, string>()
 
 const FAKE_ACCOUNTS: Record<Platform, () => ConnectedAccount[]> = {
   instagram: () => [account('17841400000000001', 'kreator.demo')],
@@ -88,8 +91,11 @@ export function fakeAdapter(platform: Platform): ChannelAdapter {
     async findRecent(c, since) {
       return (published.get(c.account.externalId) ?? []).filter(p => p.ts >= since)
     },
-    async fetchInsights(_c, ids) {
-      return ids.map(id => ({ externalId: id, metrics: { views: 120, likes: 12, comments: 3 } }))
+    async fetchPostStates(c, ids) {
+      const live = published.get(c.account.externalId) ?? []
+      return ids.map(id => fakeRemovedPosts.has(id)
+        ? { externalId: id, removed: true as const }
+        : { externalId: id, caption: fakeEditedCaptions.get(id) ?? live.find(p => p.externalId === id)?.caption ?? null, permalink: null, metrics: { views: 120, likes: 12, comments: 3 } })
     },
     async sendPrivateReply(c, commentId, text) {
       const failure = /fail-(auth|rate_limit|permanent|transient)/.exec(commentId)?.[1] as AdapterError['kind'] | undefined
@@ -108,6 +114,8 @@ export function resetFakeChannels() {
   published.clear()
   containers.clear()
   fakeOutbox.length = 0
+  fakeRemovedPosts.clear()
+  fakeEditedCaptions.clear()
 }
 
 export const isFakeMode = () => env().ADAPTER_MODE === 'fake'

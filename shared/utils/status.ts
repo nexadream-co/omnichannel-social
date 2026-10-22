@@ -63,6 +63,13 @@ export const POST_TARGET_STATUS_META: Record<string, StatusMeta> = {
   cancelled: { labelKey: 'status.target.cancelled', color: 'neutral' }
 }
 
+/** What a sync noticed on the platform after publishing (post_target_change_kind). Labels take `{platform}`. */
+export const POST_CHANGE_LABELS: Record<string, string> = {
+  caption_changed: 'posts.change.caption_changed',
+  removed: 'posts.change.removed',
+  restored: 'posts.change.restored'
+}
+
 /**
  * Why a target failed, in plain words with the fix (ARCHITECTURE §1.1 rule 6). Keys are stable codes stored
  * in post_targets.last_error_code; Meta's raw text never reaches a creator.

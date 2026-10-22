@@ -62,6 +62,8 @@ describe('publishing pipeline', () => {
     const targets = await targetRows()
     expect(targets.map(t => t.status)).toEqual(['published', 'published'])
     expect(targets.every(t => t.externalId && t.permalink)).toBe(true)
+    // The caption as sent is what later edits on the platform are compared against.
+    expect(targets.map(t => t.platformCaption)).toEqual(['Promo hari ini!', 'Promo hari ini!'])
     expect(await getDb().select().from(platformPublishLedger)).toHaveLength(2)
     expect((await getDb().select().from(posts).where(eq(posts.id, postId)))[0]!.status).toBe('published')
     expect(await publishedOnFake('ig-1')).toHaveLength(1)
@@ -90,6 +92,7 @@ describe('publishing pipeline', () => {
     await run(1)
     const [target] = await targetRows()
     expect(target!.status).toBe('published')
+    expect(target!.platformCaption).toBe('Flash sale [fail:unknown]')
     expect(await publishedOnFake('ig-1')).toHaveLength(1) // exactly one post went out
   })
 

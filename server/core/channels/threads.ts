@@ -1,7 +1,7 @@
 import { threads as caps } from '../../../shared/channels/threads'
 import { env } from '../env'
 import { ChannelError, type ChannelAdapter, type ResolvedTarget } from './adapter'
-import { classifyGraphError, graphRequest } from './graph-client'
+import { classifyGraphError, graphRequest, optionalMetrics, postStatesPerPost } from './graph-client'
 
 const SCOPES = ['threads_basic', 'threads_content_publish', 'threads_manage_replies', 'threads_read_replies', 'threads_manage_insights']
 const VERSION = 'v1.0'
@@ -117,15 +117,20 @@ export const threadsAdapter: ChannelAdapter = {
     return result.data.filter(m => new Date(m.timestamp) >= since).map(m => ({ externalId: m.id, caption: m.text ?? '', ts: new Date(m.timestamp), permalink: m.permalink }))
   },
 
-  async fetchInsights(c, externalIds) {
-    const rows = []
-    for (const id of externalIds) {
-      const result = await graphRequest<{ data: { name: string, values?: { value: number }[], total_value?: { value: number } }[] }>({
-        fetch: c.fetch, url: `${graph}/${id}/insights`, params: { metric: 'views,likes,replies,reposts,quotes,shares' }, accessToken: c.account.accessToken
+  async fetchPostStates(c, externalIds) {
+    return postStatesPerPost(externalIds, async (id) => {
+      // A missing `text` field means the post has no caption (Graph omits empty fields).
+      const node = await graphRequest<{ text?: string, permalink?: string }>({
+        fetch: c.fetch, url: `${graph}/${id}`, params: { fields: 'text,permalink' }, accessToken: c.account.accessToken
       })
-      rows.push({ externalId: id, metrics: Object.fromEntries(result.data.map(m => [m.name, m.total_value?.value ?? m.values?.[0]?.value ?? 0])) })
-    }
-    return rows
+      const metrics = await optionalMetrics(async () => {
+        const result = await graphRequest<{ data: { name: string, values?: { value: number }[], total_value?: { value: number } }[] }>({
+          fetch: c.fetch, url: `${graph}/${id}/insights`, params: { metric: 'views,likes,replies,reposts,quotes,shares' }, accessToken: c.account.accessToken
+        })
+        return Object.fromEntries(result.data.map(m => [m.name, m.total_value?.value ?? m.values?.[0]?.value ?? 0]))
+      })
+      return { caption: node.text ?? '', permalink: node.permalink ?? null, metrics }
+    })
   },
 
   normalizeError(e) {

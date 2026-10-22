@@ -7,7 +7,7 @@ import { hasBlockingIssues, validateTarget } from '../../../shared/channels/vali
 import { recordAudit } from '../audit'
 import { assertAbility, type WorkspaceContext } from '../context'
 import type { Database, Executor } from '../db/client'
-import { dmEvents, jobs, linkClicks, mediaAssets, postMedia, posts, postTargets, publishAttempts, shortLinks, socialAccounts } from '../db/schema'
+import { dmEvents, jobs, linkClicks, mediaAssets, postMedia, posts, postTargetChanges, postTargets, publishAttempts, shortLinks, socialAccounts } from '../db/schema'
 import { latestInsights } from '../engagement-jobs'
 import { countScheduledThisMonth, getEntitlements } from '../entitlements'
 import { appError } from '../errors'
@@ -237,7 +237,7 @@ export async function getPost(ctx: WorkspaceContext, postId: string) {
   ])
   // Numbers per target (SCREENS #16): latest platform insights, clicks on its attribution links, auto-replies sent.
   const targetIds = targets.map(row => row.target.id)
-  const [insights, clicks, dms] = await Promise.all([
+  const [insights, clicks, dms, changes] = await Promise.all([
     latestInsights(ctx.db as Database, targetIds),
     targetIds.length
       ? ctx.db.select({ targetId: shortLinks.postTargetId, n: sql<number>`count(${linkClicks.id})::int` }).from(shortLinks)
@@ -247,6 +247,12 @@ export async function getPost(ctx: WorkspaceContext, postId: string) {
     targets.some(row => row.target.externalId)
       ? ctx.db.select({ mediaId: dmEvents.mediaId, n: sql<number>`count(*)::int` }).from(dmEvents)
           .where(and(eq(dmEvents.workspaceId, ctx.workspaceId), eq(dmEvents.status, 'dm_sent'), inArray(dmEvents.mediaId, targets.map(row => row.target.externalId).filter((v): v is string => Boolean(v))))).groupBy(dmEvents.mediaId)
+      : [],
+    // What syncs noticed on the platform since publishing, newest first.
+    targetIds.length
+      ? ctx.db.select({ postTargetId: postTargetChanges.postTargetId, kind: postTargetChanges.kind, before: postTargetChanges.before, after: postTargetChanges.after, detectedAt: postTargetChanges.detectedAt })
+          .from(postTargetChanges).where(and(eq(postTargetChanges.workspaceId, ctx.workspaceId), inArray(postTargetChanges.postTargetId, targetIds)))
+          .orderBy(desc(postTargetChanges.detectedAt)).limit(100)
       : []
   ])
   return {
@@ -255,11 +261,15 @@ export async function getPost(ctx: WorkspaceContext, postId: string) {
     targets: targets.map(({ target: t, username, avatarUrl, accountStatus }) => ({
       id: t.id, socialAccountId: t.socialAccountId, platform: t.platform, format: t.format, username, avatarUrl, accountStatus,
       captionOverride: t.captionOverride, options: t.options as { firstComment?: string, altText?: string },
-      status: t.status, scheduledAt: t.scheduledAt, publishedAt: t.publishedAt, permalink: t.permalink,
+      caption: t.captionOverride?.trim() ? t.captionOverride : post.baseCaption,
+      status: t.status, scheduledAt: t.scheduledAt, publishedAt: t.publishedAt, syncedAt: t.syncedAt, removedAt: t.removedAt,
+      // A post deleted on the platform keeps its record and numbers, but its link no longer opens anything.
+      permalink: t.removedAt ? null : t.permalink,
       errorCode: t.lastErrorCode, attemptCount: t.attemptCount,
       insights: insights.get(t.id) ?? null,
       clicks: clicks.find(c => c.targetId === t.id)?.n ?? 0,
-      autoReplies: t.externalId ? dms.find(d => d.mediaId === t.externalId)?.n ?? 0 : 0
+      autoReplies: t.externalId ? dms.find(d => d.mediaId === t.externalId)?.n ?? 0 : 0,
+      changes: changes.filter(c => c.postTargetId === t.id).slice(0, 10).map(({ postTargetId: _, ...change }) => change)
     }))
   }
 }
@@ -292,18 +302,23 @@ export async function listPosts(ctx: WorkspaceContext, query: { page: number, li
   const ids = rows.map(r => r.id)
   const [targets, thumbs] = ids.length
     ? await Promise.all([
-        ctx.db.select({ id: postTargets.id, postId: postTargets.postId, platform: postTargets.platform, status: postTargets.status, username: socialAccounts.username, errorCode: postTargets.lastErrorCode })
+        ctx.db.select({ id: postTargets.id, postId: postTargets.postId, platform: postTargets.platform, status: postTargets.status, removedAt: postTargets.removedAt, username: socialAccounts.username, errorCode: postTargets.lastErrorCode })
           .from(postTargets).innerJoin(socialAccounts, eq(socialAccounts.id, postTargets.socialAccountId)).where(inArray(postTargets.postId, ids)),
         ctx.db.select({ postId: postMedia.postId, url: mediaAssets.publicUrl, kind: mediaAssets.kind }).from(postMedia)
           .innerJoin(mediaAssets, eq(mediaAssets.id, postMedia.mediaId)).where(and(inArray(postMedia.postId, ids), eq(postMedia.position, 0)))
       ])
     : [[], []]
+  const edits = targets.length
+    ? await ctx.db.select({ postTargetId: postTargetChanges.postTargetId, at: sql<Date>`max(${postTargetChanges.detectedAt})` }).from(postTargetChanges)
+        .where(and(eq(postTargetChanges.workspaceId, ctx.workspaceId), eq(postTargetChanges.kind, 'caption_changed'), inArray(postTargetChanges.postTargetId, targets.map(t => t.id))))
+        .groupBy(postTargetChanges.postTargetId)
+    : []
   const n = total?.n ?? 0
   return {
     items: rows.map(p => ({
       id: p.id, caption: p.baseCaption, status: p.status, scheduledAt: p.scheduledAt, createdAt: p.createdAt,
       thumbnail: thumbs.find(t => t.postId === p.id) ?? null,
-      targets: targets.filter(t => t.postId === p.id)
+      targets: targets.filter(t => t.postId === p.id).map(t => ({ ...t, editedAt: edits.find(e => e.postTargetId === t.id)?.at ?? null }))
     })),
     meta: { page: query.page, limit: query.limit, total: n, pageCount: Math.max(1, Math.ceil(n / query.limit)) }
   }
@@ -313,7 +328,7 @@ export async function listPosts(ctx: WorkspaceContext, query: { page: number, li
 export async function calendarWindow(ctx: WorkspaceContext, from: Date, to: Date) {
   assertAbility(ctx, 'posts.read')
   if (to.getTime() - from.getTime() > 62 * 86_400_000) throw appError(400, 'Rentang kalender maksimal 62 hari.', 'VALIDATION_FAILED')
-  const rows = await ctx.db.select({ id: postTargets.id, postId: postTargets.postId, platform: postTargets.platform, status: postTargets.status, scheduledAt: postTargets.scheduledAt, publishedAt: postTargets.publishedAt, caption: posts.baseCaption })
+  const rows = await ctx.db.select({ id: postTargets.id, postId: postTargets.postId, platform: postTargets.platform, status: postTargets.status, scheduledAt: postTargets.scheduledAt, publishedAt: postTargets.publishedAt, removedAt: postTargets.removedAt, caption: posts.baseCaption })
     .from(postTargets).innerJoin(posts, eq(posts.id, postTargets.postId))
     .where(and(eq(postTargets.workspaceId, ctx.workspaceId), gte(postTargets.scheduledAt, from), lt(postTargets.scheduledAt, to), sql`${postTargets.status} <> 'cancelled'`))
     .orderBy(asc(postTargets.scheduledAt))

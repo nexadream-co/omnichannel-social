@@ -156,7 +156,8 @@ async function publishStep(ctx: CoreContext, job: ClaimedJob, target: Target, ac
   try {
     const result = await adapter.publish(adapterCtx(ctx, account), resolved, containerIds)
     await db.transaction(async (tx) => {
-      await tx.update(postTargets).set({ status: 'published', step: 'done', externalId: result.externalId, permalink: result.permalink ?? null, publishedAt: new Date(), lastErrorCode: null, lastErrorMsg: null, updatedAt: new Date() }).where(eq(postTargets.id, target.id))
+      // platformCaption = the caption as sent (short links swapped in): later edits on the platform are compared to it.
+      await tx.update(postTargets).set({ status: 'published', step: 'done', externalId: result.externalId, permalink: result.permalink ?? null, platformCaption: resolved.caption, publishedAt: new Date(), lastErrorCode: null, lastErrorMsg: null, updatedAt: new Date() }).where(eq(postTargets.id, target.id))
       await tx.insert(platformPublishLedger).values({ workspaceId: target.workspaceId, socialAccountId: account.id })
     })
     await recordAttempt(db, target, 'publish', 'published', started)
@@ -316,7 +317,7 @@ export const publishReconcileJob: JobHandler = async (job, ctx) => {
     : recent.find(r => r.ts.getTime() >= target.updatedAt.getTime() - 5 * 60_000)
   if (match) {
     await db.transaction(async (tx) => {
-      await tx.update(postTargets).set({ status: 'published', step: 'done', externalId: match.externalId, permalink: match.permalink ?? null, publishedAt: match.ts, lastErrorCode: null, updatedAt: new Date() }).where(eq(postTargets.id, target.id))
+      await tx.update(postTargets).set({ status: 'published', step: 'done', externalId: match.externalId, permalink: match.permalink ?? null, platformCaption: match.caption, publishedAt: match.ts, lastErrorCode: null, updatedAt: new Date() }).where(eq(postTargets.id, target.id))
       await tx.insert(platformPublishLedger).values({ workspaceId: target.workspaceId, socialAccountId: account.id, publishedAt: match.ts })
     })
     await recordAttempt(db, target, 'reconcile', 'found', started)

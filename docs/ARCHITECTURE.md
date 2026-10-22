@@ -435,6 +435,16 @@ The composer shows "Sedang menyiapkan video…" while processing; the creator ne
 
 ---
 
+### 8.6 After publishing: the platform is the source of truth
+
+Once a target is `published`, what the platform has wins. A sync reads every published post back through the adapter's `fetchPostStates` (caption, permalink, numbers) and applies it:
+
+- **Caption edited there.** `post_targets.platform_caption` holds the caption as the platform has it: set to the caption actually sent at publish (short links already swapped in), refreshed by every sync. A sync that reads a different caption (ignoring surrounding whitespace and line endings) adopts it: a post sent to one account gets it as `posts.base_caption`; a post sent to several gets it as that target's `caption_override`. Posts published before this column existed only record a baseline on their first sync.
+- **Deleted there** (Graph code 100, subcode 33). `post_targets.removed_at` is set; status stays `published`, so the record, its short links and its last numbers are kept, and the permalink is hidden. A later sync that finds it again clears the mark.
+- **Every change is logged** in `post_target_changes` (`caption_changed` with before/after, `removed`, `restored`) with the time the sync found it; platforms do not report when an edit happened. `post_targets.synced_at` is the last successful read.
+
+When: `insights.daily` at 02:00 WIB for posts from the last 30 days that are not marked deleted; "Sinkronkan" on a post (any age, deleted ones included) runs inline; "Sinkronkan" on the post list enqueues `insights.sync` for the workspace (once per 5 minutes). A per-post refusal (validation) skips that post; account-wide errors stop that account only. Facebook Pages have no `fetchPostStates` yet.
+
 ## 9. Webhooks
 
 ### 9.1 Meta

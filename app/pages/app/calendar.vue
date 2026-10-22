@@ -2,8 +2,9 @@
 import { PLATFORM_META } from '#shared/channels/registry'
 import type { Platform } from '#shared/channels/types'
 
-interface Entry { id: string, postId: string, platform: Platform, status: string, scheduledAt: string, caption: string }
-interface DayPost { postId: string, time: string, caption: string, platforms: Platform[], status: string }
+interface Entry { id: string, postId: string, platform: Platform, status: string, scheduledAt: string, removedAt: string | null, caption: string }
+/** `removed`: platforms where the published post was later deleted (found by a sync). */
+interface DayPost { postId: string, time: string, caption: string, platforms: Platform[], removed: Platform[], status: string }
 
 definePageMeta({ layout: 'creator' })
 const { t, locale } = useI18n()
@@ -42,11 +43,13 @@ const byDay = computed(() => {
     const { date, time } = zonedParts(new Date(entry.scheduledAt), tz.value)
     const list = map.get(date) ?? []
     const existing = list.find(p => p.postId === entry.postId)
+    const removed = entry.removedAt ? [entry.platform] : []
     if (existing) {
       existing.platforms.push(entry.platform)
+      existing.removed.push(...removed)
       if (entry.status === 'failed') existing.status = 'failed'
     } else {
-      list.push({ postId: entry.postId, time, caption: entry.caption, platforms: [entry.platform], status: entry.status })
+      list.push({ postId: entry.postId, time, caption: entry.caption, platforms: [entry.platform], removed, status: entry.status })
     }
     map.set(date, list)
   }
@@ -72,6 +75,8 @@ const cells = computed(() => {
 const listDays = computed(() => [...byDay.value.entries()].sort(([a], [b]) => a.localeCompare(b)))
 const STATUS_DOT: Record<string, string> = { published: 'bg-success', failed: 'bg-error', scheduled: 'bg-info', draft: 'bg-muted' }
 const dot = (status: string) => STATUS_DOT[status] ?? 'bg-warning'
+const allRemoved = (post: DayPost) => post.removed.length > 0 && new Set(post.removed).size === new Set(post.platforms).size
+const removedLabel = (p: Platform) => t('posts.removedOn', { platform: PLATFORM_META[p].name })
 
 // Drag to reschedule (desktop): keep the time of day, move the date.
 const dragging = ref<DayPost | null>(null)
@@ -182,8 +187,13 @@ function dayLabel(key: string) {
               :key="p"
               :name="PLATFORM_META[p].icon"
               class="size-3 shrink-0"
+              :class="post.removed.includes(p) ? 'opacity-40' : ''"
+              :title="post.removed.includes(p) ? removedLabel(p) : undefined"
             />
-            <span class="truncate">{{ post.caption || t('posts.noCaption') }}</span>
+            <span
+              class="truncate"
+              :class="allRemoved(post) ? 'line-through text-muted' : ''"
+            >{{ post.caption || t('posts.noCaption') }}</span>
           </NuxtLink>
           <span
             v-if="(byDay.get(cell.key)?.length ?? 0) > 3"
@@ -237,9 +247,22 @@ function dayLabel(key: string) {
                   :key="p"
                   :name="PLATFORM_META[p].icon"
                   class="size-4"
+                  :class="post.removed.includes(p) ? 'opacity-40' : ''"
                 />
               </span>
-              <span class="text-sm truncate">{{ post.caption || t('posts.noCaption') }}</span>
+              <span
+                class="text-sm truncate flex-1"
+                :class="allRemoved(post) ? 'line-through text-muted' : ''"
+              >{{ post.caption || t('posts.noCaption') }}</span>
+              <UBadge
+                v-for="p in [...new Set(post.removed)]"
+                :key="p"
+                color="neutral"
+                variant="subtle"
+                size="sm"
+                :label="removedLabel(p)"
+                class="shrink-0"
+              />
             </NuxtLink>
           </li>
         </ul>

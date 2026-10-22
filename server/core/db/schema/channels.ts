@@ -9,6 +9,7 @@ export const socialAccountStatus = pgEnum('social_account_status', ['active', 'n
 export const mediaKind = pgEnum('media_kind', ['image', 'video'])
 export const mediaStatus = pgEnum('media_status', ['uploading', 'processing', 'ready', 'failed'])
 export const postStatus = pgEnum('post_status', ['draft', 'scheduled', 'publishing', 'published', 'partial', 'failed', 'cancelled'])
+export const postTargetChangeKind = pgEnum('post_target_change_kind', ['caption_changed', 'removed', 'restored'])
 export const postFormat = pgEnum('post_format', ['feed', 'carousel', 'reel', 'story', 'text'])
 export const postTargetStatus = pgEnum('post_target_status', [
   'draft', 'scheduled', 'preparing', 'processing', 'publishing', 'published', 'publish_unknown',
@@ -100,6 +101,14 @@ export const postTargets = pgTable('post_targets', {
   lastErrorMsg: text(),
   jobId: text(),
   publishedAt: tstz(),
+  /**
+   * The platform is the source of truth once a post is live. `platformCaption` is the caption as the platform has it
+   * (set at publish, refreshed by each sync) and is what an edit there is compared against. `removedAt`: a sync
+   * found the post deleted there; status stays `published` so the record and its numbers are kept.
+   */
+  platformCaption: text(),
+  syncedAt: tstz(),
+  removedAt: tstz(),
   createdAt: createdAt(), updatedAt: updatedAt()
 }, t => [
   unique().on(t.workspaceId, t.id),
@@ -108,6 +117,20 @@ export const postTargets = pgTable('post_targets', {
   index().on(t.status, t.scheduledAt),
   index().on(t.socialAccountId, t.publishedAt),
   index().on(t.postId)
+])
+
+/** What a sync noticed on the platform after publishing (docs/ARCHITECTURE.md §8.6). Never deleted with the change. */
+export const postTargetChanges = pgTable('post_target_changes', {
+  id: id(),
+  workspaceId: text().notNull(),
+  postTargetId: text().notNull(),
+  kind: postTargetChangeKind().notNull(),
+  before: text(),
+  after: text(),
+  detectedAt: tstz().notNull().defaultNow()
+}, t => [
+  foreignKey({ columns: [t.workspaceId, t.postTargetId], foreignColumns: [postTargets.workspaceId, postTargets.id] }).onDelete('cascade'),
+  index().on(t.postTargetId, t.detectedAt)
 ])
 
 export const publishAttempts = pgTable('publish_attempts', {

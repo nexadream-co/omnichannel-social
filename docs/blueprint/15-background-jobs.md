@@ -139,6 +139,7 @@ Full behaviour in `../ARCHITECTURE.md` §8–§10. Summary:
 | `dm.send` | kick after rule match | 5 | Per-account hourly cap (Postgres counter); over cap → `deferUntil`; respects the `channels.autoReply.enabled` kill switch |
 | `token.refresh` | schedule hourly | 1 | Enqueue `token.refresh.one` (singleton per account) for tokens expiring within 10 days |
 | `insights.fetch` | `runAt` after publish (+24 h in v1) | 5 | Post metrics; account totals daily |
+| `insights.sync` | "Sinkronkan" on the post list (one per workspace per 5 min) | 1 | Same as `insights.daily` for one workspace, without the once-a-day skip; re-checks posts marked deleted |
 | `links.unfurl` | kick after a product URL is pasted | 3 | `safe-fetch` the marketplace page, store title, price and image |
 | `email.send` | on demand (seam, `11` §5) | 5 | Resend; failures logged, never thrown into the caller |
 
@@ -209,7 +210,7 @@ billing.renewal-reminders   0 7 * * *     Asia/Jakarta
 engagement.inactivity       0 7 * * *     Asia/Jakarta
 maintenance.purge           0 3 * * *     Asia/Jakarta
 token.refresh               0 * * * *     Asia/Jakarta
-insights.daily              30 2 * * *    Asia/Jakarta   (account totals)
+insights.daily              0 2 * * *     Asia/Jakarta   (post numbers; marks posts deleted on the platform)
 ```
 
 ## 4. Internal endpoints

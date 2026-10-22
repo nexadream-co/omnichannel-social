@@ -50,10 +50,11 @@ export interface AdapterError {
   fbtraceId?: string
 }
 
-export interface InsightRow {
-  externalId: string
-  metrics: Record<string, number>
-}
+/**
+ * A published post as the platform has it now (the source of truth after publishing): `removed` when the platform
+ * says it no longer exists. `caption: null` = the platform did not say (leave ours alone); `metrics: null` = no numbers.
+ */
+export type PlatformPostState = { externalId: string, removed: true } | { externalId: string, caption: string | null, permalink: string | null, metrics: Record<string, number> | null }
 
 /**
  * The main extension point (ARCHITECTURE §6.2). Adding TikTok/YouTube/X = one capabilities file + one adapter.
@@ -73,7 +74,8 @@ export interface ChannelAdapter {
   checkStatus(c: AdapterCtx, containerIds: string[]): Promise<'pending' | 'ready' | AdapterError>
   publish(c: AdapterCtx, t: ResolvedTarget, containerIds: string[]): Promise<{ externalId: string, permalink?: string }>
   findRecent(c: AdapterCtx, since: Date): Promise<{ externalId: string, caption: string, ts: Date, permalink?: string }[]>
-  fetchInsights?(c: AdapterCtx, externalIds: string[]): Promise<InsightRow[]>
+  /** One row per post the platform answered for; posts it refuses to report on are left out. */
+  fetchPostStates?(c: AdapterCtx, externalIds: string[]): Promise<PlatformPostState[]>
   sendPrivateReply?(c: AdapterCtx, commentId: string, text: string): Promise<void>
   replyToComment?(c: AdapterCtx, commentId: string, text: string): Promise<void>
   normalizeError(e: unknown): AdapterError

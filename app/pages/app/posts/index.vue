@@ -10,7 +10,7 @@ interface PostRow {
   scheduledAt: string | null
   createdAt: string
   thumbnail: { url: string | null, kind: 'image' | 'video' } | null
-  targets: { id: string, platform: Platform, status: string, username: string | null, errorCode: string | null }[]
+  targets: { id: string, platform: Platform, status: string, removedAt: string | null, editedAt: string | null, username: string | null, errorCode: string | null }[]
 }
 
 definePageMeta({ layout: 'creator' })
@@ -54,6 +54,28 @@ async function retry(targetId: string) {
   await act(() => apiFetch(`/api/app/post-targets/${targetId}/retry`, { method: 'POST' }), t('posts.retried'))
 }
 
+// "Sinkronkan" on Terbit / Semua: one background run for the workspace (numbers, caption edits, deletion; nightly at 02:00 WIB).
+const showSync = computed(() => tab.value === 'published' || tab.value === 'all')
+const syncing = ref(false)
+async function sync() {
+  syncing.value = true
+  try {
+    await apiFetch('/api/app/posts/sync', { method: 'POST' })
+    toast.add({ title: t('posts.syncStarted'), color: 'success' })
+    setTimeout(list.refresh, 10_000)
+  } catch (caught) {
+    toast.add({ title: extractErrorMessage(caught, t('authError.generic')), color: 'error' })
+  } finally {
+    syncing.value = false
+  }
+}
+
+/** The latest caption edit found on a platform, shown under the caption. */
+function lastEdit(post: PostRow) {
+  const edited = post.targets.filter(t => t.editedAt).sort((a, b) => b.editedAt!.localeCompare(a.editedAt!))[0]
+  return edited ? t('posts.editedOn', { platform: PLATFORM_META[edited.platform].name, date: formatDateTime(edited.editedAt!, { locale: locale.value, timeZone: tz.value }) }) : null
+}
+
 function menu(post: PostRow) {
   const items = [[{ label: t('posts.detail'), icon: 'i-lucide-eye', to: localePath(`/app/posts/${post.id}`) }]]
   if (canWrite.value) {
@@ -88,6 +110,24 @@ function menu(post: PostRow) {
         :items="tabs"
         :content="false"
         size="sm"
+      />
+    </div>
+    <div
+      v-if="showSync"
+      class="flex items-start justify-between gap-3 mb-4"
+    >
+      <p class="text-xs text-muted">
+        {{ t('posts.syncHint') }}
+      </p>
+      <UButton
+        icon="i-lucide-refresh-cw"
+        size="sm"
+        color="neutral"
+        variant="outline"
+        :loading="syncing"
+        :label="t('posts.sync')"
+        class="shrink-0"
+        @click="sync"
       />
     </div>
 
@@ -166,6 +206,16 @@ function menu(post: PostRow) {
                   />
                 </UDropdownMenu>
               </div>
+              <p
+                v-if="lastEdit(post)"
+                class="text-xs text-muted"
+              >
+                <UIcon
+                  name="i-lucide-pencil-line"
+                  class="size-3 align-[-2px]"
+                />
+                {{ lastEdit(post) }}
+              </p>
               <p class="text-xs text-muted">
                 <StatusBadge
                   :value="post.status"
@@ -186,7 +236,9 @@ function menu(post: PostRow) {
                     :name="PLATFORM_META[target.platform].icon"
                     class="size-3.5"
                   />
+                  <span v-if="target.removedAt">{{ t('posts.removedOn', { platform: PLATFORM_META[target.platform].name }) }}</span>
                   <StatusBadge
+                    v-else
                     :value="target.status"
                     :meta="POST_TARGET_STATUS_META"
                   />

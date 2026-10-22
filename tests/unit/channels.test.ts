@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { CHANNELS } from '../../shared/channels/registry'
 import { countChars, hasBlockingIssues, validateTarget } from '../../shared/channels/validate'
-import { classifyGraphError, GraphError } from '../../server/core/channels/graph-client'
+import { classifyGraphError, GraphError, optionalMetrics, postStatesPerPost } from '../../server/core/channels/graph-client'
 import { parseProbe } from '../../server/core/media/ffmpeg-args'
 import { imageDimensions } from '../../server/core/media/image-header'
 
@@ -42,6 +42,32 @@ describe('Graph error classification', () => {
     expect(classifyGraphError(graph(368)).kind).toBe('permanent')
     expect(classifyGraphError(graph(200)).kind).toBe('auth')
     expect(classifyGraphError(graph(190)).fbtraceId).toBe('trace')
+  })
+})
+
+describe('postStatesPerPost', () => {
+  const graphError = (code: number, subcode: number | null = null) => new GraphError(400, code, subcode, 'x', null, false)
+  const state = { caption: 'hai', permalink: null, metrics: { views: 5 } }
+  it('marks a deleted post, skips a refused one and keeps going', async () => {
+    const rows = await postStatesPerPost(['ok', 'gone', 'refused'], async (id) => {
+      if (id === 'gone') throw graphError(100, 33)
+      if (id === 'refused') throw graphError(100, 2108006)
+      return state
+    })
+    expect(rows).toEqual([{ externalId: 'ok', ...state }, { externalId: 'gone', removed: true }])
+  })
+  it('stops on account-wide errors', async () => {
+    await expect(postStatesPerPost(['a'], async () => {
+      throw graphError(190)
+    })).rejects.toBeInstanceOf(GraphError)
+  })
+  it('keeps the caption when the platform refuses only the numbers', async () => {
+    expect(await optionalMetrics(async () => {
+      throw graphError(100, 2108006)
+    })).toBeNull()
+    await expect(optionalMetrics(async () => {
+      throw graphError(4)
+    })).rejects.toBeInstanceOf(GraphError)
   })
 })
 

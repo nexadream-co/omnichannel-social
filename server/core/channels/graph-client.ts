@@ -1,5 +1,5 @@
 import { createHmac } from 'node:crypto'
-import type { AdapterError } from './adapter'
+import type { AdapterError, PlatformPostState } from './adapter'
 
 /** A failed Graph call, with Meta's error fields parsed (code, error_subcode, fbtrace_id). */
 export class GraphError extends Error {
@@ -67,6 +67,36 @@ export async function graphRequest<T>(request: GraphRequest): Promise<T> {
     throw new GraphError(response.status, error?.code ?? null, error?.error_subcode ?? null, error?.message ?? `HTTP ${response.status}`, error?.fbtrace_id ?? null, Boolean(error?.is_transient) || response.status >= 500)
   }
   return json as T
+}
+
+type PostState = Omit<Extract<PlatformPostState, { caption: unknown }>, 'externalId'>
+
+/**
+ * Post states fetched one by one. A post Graph no longer has (code 100, subcode 33: deleted on the platform) comes
+ * back as `removed`; a post the platform refuses to report on (other validation errors) is skipped. Anything else
+ * (auth, rate limit, outage) stops the batch, since it concerns the whole account.
+ */
+export async function postStatesPerPost(externalIds: string[], fetchOne: (id: string) => Promise<PostState>): Promise<PlatformPostState[]> {
+  const rows: PlatformPostState[] = []
+  for (const externalId of externalIds) {
+    try {
+      rows.push({ externalId, ...await fetchOne(externalId) })
+    } catch (error) {
+      if (error instanceof GraphError && error.code === 100 && error.subcode === 33) rows.push({ externalId, removed: true })
+      else if (classifyGraphError(error).kind !== 'validation') throw error
+    }
+  }
+  return rows
+}
+
+/** Numbers are optional: a post the platform won't give insights for (too old, a format without them) still syncs. */
+export async function optionalMetrics(fetchMetrics: () => Promise<Record<string, number>>): Promise<Record<string, number> | null> {
+  try {
+    return await fetchMetrics()
+  } catch (error) {
+    if (classifyGraphError(error).kind === 'validation') return null
+    throw error
+  }
 }
 
 const RATE_LIMIT_CODES = new Set([4, 17, 32, 613, 80001, 80002, 80004, 80005, 80006, 80008, 80014])

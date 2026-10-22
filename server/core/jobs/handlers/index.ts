@@ -2,7 +2,7 @@ import type { JobHandler } from '../types'
 import { mediaWatchdogJob, processMediaJob } from '../../media/service'
 import { dmSendJob } from '../../autoreply/send'
 import { billingDailyJob, renewalRemindersJob } from '../../billing-jobs'
-import { inactivityJob, insightsDailyJob } from '../../engagement-jobs'
+import { inactivityJob, insightsDailyJob, insightsSyncJob } from '../../engagement-jobs'
 import { webhookMetaJob } from '../../autoreply/webhook'
 import { unfurlLinkJob } from '../../links/unfurl-job'
 import { dataDeletionJob } from '../../meta-callbacks'
@@ -29,5 +29,6 @@ export const handlers: Record<string, JobHandler> = {
   'billing.daily': billingDailyJob,
   'billing.renewal-reminders': renewalRemindersJob,
   'insights.daily': insightsDailyJob,
+  'insights.sync': insightsSyncJob,
   'engagement.inactivity': inactivityJob
 }
