@@ -24,6 +24,7 @@
 - Back-office plan editor: prices, trial days, every limit (with "Tanpa batas") and every feature; plans in use or the default plan can't be deleted.
 - Buat Postingan: write once for every connected account (all selected by default), upload photos and videos that are fixed automatically, see per-platform character counts and friendly hints (for example, Instagram links aren't clickable), pick a suggested time, then Jadwalkan, Posting sekarang or save a draft. Per-platform caption, format, first comment and alt text sit under "Opsi lanjutan".
 - Postingan list with Terjadwal / Draf / Terbit / Gagal tabs, per-account status in plain words, "Coba lagi" on failures; post detail with reasons and fix buttons; duplicate, edit, cancel and delete.
+- Back-office fix: the FAQ "Tampilkan" switch no longer resets the question's category and order, and updates to pages, roles and menus keep every field they don't send (a role rename can't wipe its permissions, an edit can't republish a page).
 - Kalender: month view with drag-to-reschedule on desktop and a day list on phones; tap a day to create a post for it.
 - Posts publish automatically and reliably: a lost platform response is reconciled instead of posting twice, daily platform limits reschedule instead of failing, expired accounts pause their posts and ask for a reconnect, and the monthly plan allowance is shown before scheduling.
 - Beranda shows upcoming posts and a fix-it alert for failed posts.

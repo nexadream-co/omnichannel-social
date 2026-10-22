@@ -40,15 +40,18 @@ export async function getPageForEdit(ctx: StaffContext, id: string) {
   return { ...page, locked: ALWAYS_PUBLISHED.has(page.slug) }
 }
 
-export const pageSchema = z.object({
+const pageBase = z.object({
   slug: z.string().trim().regex(/^[a-z0-9-]{2,60}$/, 'Slug: huruf kecil, angka dan tanda hubung.'),
   title: z.string().trim().min(2).max(150),
   content: z.string().max(200_000),
   excerpt: z.string().trim().max(300).nullable().optional(),
   metaTitle: z.string().trim().max(70).nullable().optional(),
   metaDescription: z.string().trim().max(170).nullable().optional(),
-  isPublished: z.boolean().default(true)
+  isPublished: z.boolean()
 })
+export const pageSchema = pageBase.extend({ isPublished: z.boolean().default(true) })
+/** No defaults on PATCH: an omitted field must never be reset (e.g. silently republishing a page). */
+export const pagePatchSchema = pageBase.partial()
 
 export async function createPage(ctx: StaffContext, input: z.infer<typeof pageSchema>) {
   assertPermission(ctx, 'pages.write')
@@ -59,7 +62,7 @@ export async function createPage(ctx: StaffContext, input: z.infer<typeof pageSc
   return row!
 }
 
-export async function updatePage(ctx: StaffContext, id: string, input: Partial<z.infer<typeof pageSchema>>) {
+export async function updatePage(ctx: StaffContext, id: string, input: z.infer<typeof pagePatchSchema>) {
   assertPermission(ctx, 'pages.write')
   const page = await getPageForEdit(ctx, id)
   if (page.locked && (input.isPublished === false || (input.slug && input.slug !== page.slug))) {
@@ -88,13 +91,16 @@ export async function listFaqs(ctx: StaffContext) {
   return { items: await ctx.db.select().from(faqs).orderBy(asc(faqs.order), asc(faqs.createdAt)) }
 }
 
-export const faqSchema = z.object({
+const faqBase = z.object({
   question: z.string().trim().min(5).max(200),
   answer: z.string().trim().min(5).max(2000),
-  category: z.string().trim().min(2).max(40).default('umum'),
-  order: z.number().int().min(0).max(999).default(0),
-  isActive: z.boolean().default(true)
+  category: z.string().trim().min(2).max(40),
+  order: z.number().int().min(0).max(999),
+  isActive: z.boolean()
 })
+export const faqSchema = faqBase.extend({ category: faqBase.shape.category.default('umum'), order: faqBase.shape.order.default(0), isActive: z.boolean().default(true) })
+/** No defaults on PATCH: the "Tampilkan" switch sends only isActive and must keep the category and order. */
+export const faqPatchSchema = faqBase.partial()
 
 export async function createFaq(ctx: StaffContext, input: z.infer<typeof faqSchema>) {
   assertPermission(ctx, 'faq.write')
@@ -102,7 +108,7 @@ export async function createFaq(ctx: StaffContext, input: z.infer<typeof faqSche
   await audit(ctx, 'faq.update', 'faq', row!.id, { created: true })
 }
 
-export async function updateFaq(ctx: StaffContext, id: string, input: Partial<z.infer<typeof faqSchema>>) {
+export async function updateFaq(ctx: StaffContext, id: string, input: z.infer<typeof faqPatchSchema>) {
   assertPermission(ctx, 'faq.write')
   const rows = await ctx.db.update(faqs).set({ ...input, updatedAt: new Date() }).where(eq(faqs.id, id)).returning({ id: faqs.id })
   if (!rows.length) throw appError(404, 'FAQ tidak ditemukan.', 'NOT_FOUND')

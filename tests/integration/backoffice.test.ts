@@ -1,13 +1,13 @@
 import { eq } from 'drizzle-orm'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
-import { createPage, getPageForEdit, listAuditLogs, listFaqs, listMessages, listPages, sanitizePageHtml, updateMessageStatus, updatePage } from '../../server/core/admin/content'
+import { createFaq, createPage, faqPatchSchema, faqSchema, getPageForEdit, listAuditLogs, listFaqs, listMessages, listPages, pagePatchSchema, sanitizePageHtml, updateFaq, updateMessageStatus, updatePage } from '../../server/core/admin/content'
 import { adminDashboard, adminReports, jobsOverview } from '../../server/core/admin/overview'
 import { listBioPagesAdmin, listMetaWebhooks, listPublishFailures, listShortLinksAdmin, listSocialAccountsAdmin, setLinkActive } from '../../server/core/admin/operations'
-import { acceptStaffInvitation, createMenu, createRole, deleteMenu, deleteRole, inviteStaff, listCreatorUsers, listMenus, listPermissionCatalog, listRoles, listStaff, updateRole, updateStaff } from '../../server/core/admin/people'
+import { acceptStaffInvitation, createMenu, createRole, deleteMenu, deleteRole, inviteStaff, listCreatorUsers, listMenus, listPermissionCatalog, listRoles, listStaff, menuPatchSchema, rolePatchSchema, updateRole, updateStaff } from '../../server/core/admin/people'
 import { getWorkspaceDetail, impersonateCreator, listWorkspaces, overridePlan, reinstateWorkspace, suspendWorkspace } from '../../server/core/admin/workspaces'
 import type { StaffContext, WorkspaceContext } from '../../server/core/context'
 import { closeDb, getDb } from '../../server/core/db/client'
-import { contactMessages, menus, pages, permissions, plans, postTargets, posts, roles, sessions, shortLinks, socialAccounts, staffAccounts, staffInvitations, staffUsers, subscriptionEvents, subscriptions, users, workspaces } from '../../server/core/db/schema'
+import { contactMessages, faqs, menus, pages, permissions, plans, postTargets, posts, roles, sessions, shortLinks, socialAccounts, staffAccounts, staffInvitations, staffUsers, subscriptionEvents, subscriptions, users, workspaces } from '../../server/core/db/schema'
 import { resetEnvCache } from '../../server/core/env'
 import { createLink } from '../../server/core/links/service'
 import { provisionWorkspace } from '../../server/core/registration'
@@ -138,6 +138,20 @@ describe('content and moderation', () => {
     await updatePage(staff, id, { content: '<h2>Data</h2><img src="x" onerror="y">' })
     expect((await getPageForEdit(staff, id)).content).toBe('<h2>Data</h2><img src="x" />')
     expect(await getDb().select().from(pages)).toHaveLength(1)
+  })
+
+  it('a partial update never resets fields it leaves out', async () => {
+    expect(faqPatchSchema.parse({ isActive: false })).toEqual({ isActive: false })
+    expect(pagePatchSchema.parse({ title: 'Baru' })).toEqual({ title: 'Baru' })
+    expect(rolePatchSchema.parse({ name: 'Editor konten' })).toEqual({ name: 'Editor konten' })
+    expect(menuPatchSchema.parse({ label: 'Menu' })).toEqual({ label: 'Menu' })
+    // The FAQ "Tampilkan" switch sends only isActive.
+    await getDb().delete(faqs)
+    await createFaq(staff, faqSchema.parse({ question: 'Apa itu Etalase?', answer: 'Halaman link di bio.', category: 'etalase', order: 4 }))
+    const [faq] = await getDb().select().from(faqs)
+    await updateFaq(staff, faq!.id, faqPatchSchema.parse({ isActive: false }))
+    expect((await getDb().select().from(faqs))[0]).toMatchObject({ category: 'etalase', order: 4, isActive: false })
+    await getDb().delete(faqs)
   })
 
   it('message handledAt is set on the first non-new status and cleared back on new', async () => {

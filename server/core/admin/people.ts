@@ -173,12 +173,15 @@ export async function listRoles(ctx: StaffContext) {
   }
 }
 
-export const roleSchema = z.object({
+const roleBase = z.object({
   slug: z.string().trim().regex(/^[a-z0-9-]{2,40}$/, 'Slug: huruf kecil, angka dan tanda hubung.'),
   name: z.string().trim().min(2).max(60),
   description: z.string().trim().max(200).nullable().optional(),
-  permissions: z.array(z.string()).max(200).default([])
+  permissions: z.array(z.string()).max(200)
 })
+export const roleSchema = roleBase.extend({ permissions: roleBase.shape.permissions.default([]) })
+/** No defaults on PATCH: renaming a role must not wipe its permissions. */
+export const rolePatchSchema = roleBase.partial()
 
 async function writeRolePermissions(ctx: StaffContext, tx: StaffContext['db'], roleId: string, keys: string[]) {
   const valid = keys.filter((k): k is PermissionKey => (PERMISSION_KEYS as string[]).includes(k)) // unknown keys are ignored
@@ -200,7 +203,7 @@ export async function createRole(ctx: StaffContext, input: z.infer<typeof roleSc
   await audit(ctx, 'permission.update', { targetType: 'role', targetId: id, metadata: { created: true, permissions: input.permissions.length } })
 }
 
-export async function updateRole(ctx: StaffContext, id: string, input: Partial<z.infer<typeof roleSchema>>) {
+export async function updateRole(ctx: StaffContext, id: string, input: z.infer<typeof rolePatchSchema>) {
   assertPermission(ctx, 'roles.write')
   const [role] = await ctx.db.select().from(roles).where(eq(roles.id, id)).limit(1)
   if (!role) throw appError(404, 'Peran tidak ditemukan.', 'NOT_FOUND')
@@ -244,16 +247,19 @@ export async function listMenus(ctx: StaffContext) {
   return { items: await ctx.db.select().from(menus).orderBy(asc(menus.order)), permissionKeys: PERMISSION_KEYS }
 }
 
-export const menuSchema = z.object({
+const menuBase = z.object({
   slug: z.string().trim().regex(/^[a-z0-9-]{2,40}$/, 'Slug: huruf kecil, angka dan tanda hubung.'),
   label: z.string().trim().min(1).max(60),
   path: z.string().trim().regex(/^\/admin(\/[\w-]+)*$/, 'Alamat harus diawali /admin.').nullable().optional(),
   icon: z.string().trim().max(60).nullable().optional(),
   permissionKey: z.string().nullable().optional(),
   parentId: z.string().nullable().optional(),
-  order: z.number().int().min(0).max(999).default(0),
-  isActive: z.boolean().default(true)
+  order: z.number().int().min(0).max(999),
+  isActive: z.boolean()
 })
+export const menuSchema = menuBase.extend({ order: menuBase.shape.order.default(0), isActive: z.boolean().default(true) })
+/** No defaults on PATCH: an omitted field must never be reset (e.g. re-showing a hidden menu). */
+export const menuPatchSchema = menuBase.partial()
 
 async function depthOf(ctx: StaffContext, parentId: string | null | undefined): Promise<number> {
   let depth = 1
@@ -267,7 +273,7 @@ async function depthOf(ctx: StaffContext, parentId: string | null | undefined): 
   return depth
 }
 
-function checkMenu(input: Partial<z.infer<typeof menuSchema>>) {
+function checkMenu(input: z.infer<typeof menuPatchSchema>) {
   if (input.permissionKey && !(PERMISSION_KEYS as string[]).includes(input.permissionKey)) throw appError(400, 'Hak akses tidak dikenal.', 'VALIDATION_FAILED', { field: 'permissionKey' })
 }
 
@@ -282,7 +288,7 @@ export async function createMenu(ctx: StaffContext, input: z.infer<typeof menuSc
   await audit(ctx, 'menu.update', { targetType: 'menu', targetId: id, metadata: { created: true } })
 }
 
-export async function updateMenu(ctx: StaffContext, id: string, input: Partial<z.infer<typeof menuSchema>>) {
+export async function updateMenu(ctx: StaffContext, id: string, input: z.infer<typeof menuPatchSchema>) {
   assertPermission(ctx, 'menus.write')
   checkMenu(input)
   if (input.parentId !== undefined) {
