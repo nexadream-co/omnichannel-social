@@ -495,7 +495,7 @@
   },
   "channel": {
     "captionTooLong": "Caption terlalu panjang ({count}/{max} karakter).",
-    "tooManyHashtags": "Terlalu banyak hashtag (maks {max}).",
+    "tooManyHashtags": "Terlalu banyak tagar ({count}, maks {max}). Hapus beberapa supaya bisa diposting.",
     "tooManyMentions": "Terlalu banyak mention (maks {max}).",
     "tooManyLinks": "Terlalu banyak link (maks {max}).",
     "mediaRequired": "Tambahkan minimal {min} foto atau video.",
@@ -933,14 +933,16 @@
       "scheduledPostsPerMonth": "{n} postingan per bulan",
       "autoReplyDmsPerMonth": "{n} DM otomatis per bulan",
       "bioPages": "{n} halaman Etalase",
-      "clickRetentionDays": "{n} hari riwayat statistik"
+      "clickRetentionDays": "{n} hari riwayat statistik",
+      "tagResearchPerMonth": "{n} riset tagar per bulan"
     },
     "unlimited": {
       "socialAccounts": "Akun media sosial tanpa batas",
       "scheduledPostsPerMonth": "Postingan tanpa batas",
       "autoReplyDmsPerMonth": "DM otomatis tanpa batas",
       "bioPages": "Halaman Etalase tanpa batas",
-      "clickRetentionDays": "Riwayat statistik tanpa batas"
+      "clickRetentionDays": "Riwayat statistik tanpa batas",
+      "tagResearchPerMonth": "Riset tagar tanpa batas"
     },
     "feature": {
       "removeBranding": "Tanpa tulisan \"dibuat dengan Socialz.id\"",
@@ -961,5 +963,96 @@
     "contactBody": "Tim kami biasanya membalas dalam 1 hari kerja.",
     "email": "Kirim email",
     "whatsapp": "Chat WhatsApp"
+  },
+  "hashtags": {
+    "button": "Saran tagar",
+    "title": "Tagar",
+    "description": "Pilih tagar yang cocok dengan isi caption, supaya orang yang tertarik topik ini lebih mudah menemukan postinganmu.",
+    "honest": "Tagar membantu postingan ditemukan, tapi tidak menjamin jumlah tayangan.",
+    "tabs": {
+      "suggest": "Saran",
+      "research": "Riset",
+      "sets": "Set tersimpan"
+    },
+    "count": "{count}/{max} tagar",
+    "countFor": "untuk {platform}",
+    "addOwn": "Tambah tagar sendiri",
+    "addOwnPlaceholder": "contoh: sunscreenlokal",
+    "add": "Tambah",
+    "added": "#{tag} ditambahkan.",
+    "inCaption": "Sudah di caption",
+    "emptyCaption": "Tulis caption dulu. Saran tagar muncul dari isi caption kamu.",
+    "noSuggestions": "Belum ada saran yang cocok. Coba sebutkan nama atau jenis produknya di caption.",
+    "suggestionsHint": "Ketuk untuk menambah ke caption. Pilih yang spesifik, bukan yang paling umum.",
+    "remove": "Hapus dari caption",
+    "level": {
+      "good": "Bagus",
+      "warning": "Perlu dicek",
+      "error": "Bermasalah"
+    },
+    "code": {
+      "invalidChars": "Hanya \"#{linked}\" yang jadi tagar. Tagar tidak boleh ada spasi atau tanda baca.",
+      "invalidCharsNone": "Tagar ini tidak akan jadi link. Pakai huruf, angka atau garis bawah saja.",
+      "numbersOnly": "Tagar yang isinya angka saja tidak jadi link. Tambahkan huruf.",
+      "tooLong": "Tagar sepanjang ini jarang dicari. Coba yang lebih pendek.",
+      "duplicate": "Tagar ini sudah ada. Cukup sekali.",
+      "overLimit": "Melebihi batas jumlah tagar. Hapus satu tagar.",
+      "generic": "Terlalu umum dan tidak menjelaskan isi postingan. Ganti dengan yang lebih spesifik.",
+      "blocked": "Tagar ini sering dianggap spam dan bisa menurunkan jangkauan. Sebaiknya dihapus.",
+      "unrelated": "Sepertinya tidak berhubungan dengan isi caption. Orang yang mencari tagar ini mungkin tidak tertarik.",
+      "ok": "Cocok dengan isi caption."
+    },
+    "setCode": {
+      "overLimit": "Terlalu banyak tagar: {count}, maksimal {max}.",
+      "allBroad": "Semua tagar sangat umum. Tambahkan 1–2 tagar spesifik tentang produknya supaya lebih mudah ditemukan.",
+      "threadsOneTag": "Threads hanya memakai 1 tagar per postingan.",
+      "facebookMany": "Di Facebook, lebih dari {max} tagar terlihat seperti spam."
+    },
+    "threadsVersion": "Buat versi Threads dengan 1 tagar",
+    "threadsVersionDone": "Caption khusus Threads dibuat dengan 1 tagar. Lihat di Opsi lanjutan.",
+    "research": {
+      "intro": "Riset menggabungkan saran dari daftar kami, hasil postinganmu sendiri, dan keramaian tagar di Threads.",
+      "run": "Riset tagar untuk caption ini",
+      "again": "Riset ulang",
+      "remaining": "Sisa {count} riset bulan ini.",
+      "unlimited": "Riset tanpa batas di paketmu.",
+      "locked": "Riset tagar ada di paket berbayar. Cek kualitas tagar, saran dari daftar dan set tersimpan tetap gratis.",
+      "needCaption": "Tulis caption dulu supaya riset tahu topiknya.",
+      "pending": "Mengambil data keramaian di Threads…",
+      "empty": "Belum ada tagar yang cocok. Coba tulis jenis produknya di caption.",
+      "noHistory": "Hasil postinganmu ikut dipakai setelah ada beberapa postingan yang terbit dengan tagar."
+    },
+    "source": {
+      "list": "Saran",
+      "history": "Pernah kamu pakai",
+      "mine": "Punyamu"
+    },
+    "performance": {
+      "better": "Lebih banyak dilihat di postinganmu",
+      "average": "Seperti biasanya di postinganmu",
+      "worse": "Lebih sedikit dilihat di postinganmu",
+      "notEnoughData": "Baru dipakai {posts}x, belum cukup data"
+    },
+    "activity": {
+      "busy": "Ramai di Threads",
+      "active": "Aktif di Threads",
+      "quiet": "Sepi di Threads",
+      "unused": "Belum dipakai di Threads"
+    },
+    "threads": {
+      "noAccount": "Hubungkan akun Threads untuk melihat keramaian tagar di Threads.",
+      "needsReconnect": "Hubungkan ulang akun Threads untuk melihat keramaian tagar di Threads."
+    },
+    "sets": {
+      "empty": "Belum ada set. Simpan tagar yang sering kamu pakai supaya tinggal ketuk.",
+      "use": "Pakai",
+      "saveCurrent": "Simpan tagar di caption sebagai set",
+      "name": "Nama set",
+      "namePlaceholder": "contoh: Skincare",
+      "saved": "Set disimpan.",
+      "deleted": "Set dihapus.",
+      "delete": "Hapus set",
+      "tags": "{count} tagar"
+    }
   }
 }

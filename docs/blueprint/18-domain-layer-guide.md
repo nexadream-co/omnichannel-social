@@ -12,6 +12,7 @@ The platform layer (files 01–17) is the foundation. This file explains how Soc
 | Links | `server/core/links/` | `links`, `short_links`, `link_clicks` | `links.manage`, `analytics.read` | `clickRetentionDays`, feature `customSlug`, `analyticsExport` |
 | Etalase | `server/core/bio/` | `bio_pages`, `bio_categories`, `bio_items` | `bio.manage` | `bioPages`, feature `removeBranding` |
 | Auto-reply | `server/core/autoreply/` | `dm_rules`, `dm_events`, `webhook_events` | `autoreply.manage` | `autoReplyRules`, `autoReplyDmsPerMonth` |
+| Hashtags | `server/core/hashtags/`, `shared/hashtags/` | `hashtag_library` (global), `hashtag_sets`, `hashtag_research_runs`, `hashtag_signals` (global cache) | `posts.read`, `posts.write`; staff `hashtags.read` / `hashtags.write` | `tagResearchPerMonth` |
 
 ## 2. Recipe for a domain feature
 

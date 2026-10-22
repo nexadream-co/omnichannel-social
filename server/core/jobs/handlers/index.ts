@@ -5,6 +5,7 @@ import { billingDailyJob, renewalRemindersJob } from '../../billing-jobs'
 import { inactivityJob, insightsDailyJob, insightsSyncJob } from '../../engagement-jobs'
 import { webhookMetaJob } from '../../autoreply/webhook'
 import { unfurlLinkJob } from '../../links/unfurl-job'
+import { hashtagSignalsJob } from '../../hashtags/research'
 import { dataDeletionJob } from '../../meta-callbacks'
 import { publishPollJob, publishReconcileJob, publishTargetJob } from '../../publishing/pipeline'
 import { purge } from './maintenance'
@@ -30,5 +31,6 @@ export const handlers: Record<string, JobHandler> = {
   'billing.renewal-reminders': renewalRemindersJob,
   'insights.daily': insightsDailyJob,
   'insights.sync': insightsSyncJob,
-  'engagement.inactivity': inactivityJob
+  'engagement.inactivity': inactivityJob,
+  'hashtags.signals': hashtagSignalsJob
 }

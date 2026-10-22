@@ -495,7 +495,7 @@
   },
   "channel": {
     "captionTooLong": "Caption is too long ({count}/{max} characters).",
-    "tooManyHashtags": "Too many hashtags (max {max}).",
+    "tooManyHashtags": "Too many hashtags ({count}, max {max}). Remove some so it can be posted.",
     "tooManyMentions": "Too many mentions (max {max}).",
     "tooManyLinks": "Too many links (max {max}).",
     "mediaRequired": "Add at least {min} photo or video.",
@@ -933,14 +933,16 @@
       "scheduledPostsPerMonth": "{n} post per month | {n} posts per month",
       "autoReplyDmsPerMonth": "{n} auto DM per month | {n} auto DMs per month",
       "bioPages": "{n} Storefront page | {n} Storefront pages",
-      "clickRetentionDays": "{n} day of statistics | {n} days of statistics"
+      "clickRetentionDays": "{n} day of statistics | {n} days of statistics",
+      "tagResearchPerMonth": "{n} hashtag research per month | {n} hashtag research uses per month"
     },
     "unlimited": {
       "socialAccounts": "Unlimited social accounts",
       "scheduledPostsPerMonth": "Unlimited posts",
       "autoReplyDmsPerMonth": "Unlimited auto DMs",
       "bioPages": "Unlimited Storefront pages",
-      "clickRetentionDays": "Unlimited statistics history"
+      "clickRetentionDays": "Unlimited statistics history",
+      "tagResearchPerMonth": "Unlimited hashtag research"
     },
     "feature": {
       "removeBranding": "No \"made with Socialz.id\" footer",
@@ -961,5 +963,96 @@
     "contactBody": "Our team usually replies within one business day.",
     "email": "Send an email",
     "whatsapp": "Chat on WhatsApp"
+  },
+  "hashtags": {
+    "button": "Hashtag ideas",
+    "title": "Hashtags",
+    "description": "Pick hashtags that match your caption, so people interested in the topic find your post more easily.",
+    "honest": "Hashtags help people find a post, but they don't guarantee views.",
+    "tabs": {
+      "suggest": "Ideas",
+      "research": "Research",
+      "sets": "Saved sets"
+    },
+    "count": "{count}/{max} hashtags",
+    "countFor": "for {platform}",
+    "addOwn": "Add your own hashtag",
+    "addOwnPlaceholder": "e.g. localsunscreen",
+    "add": "Add",
+    "added": "#{tag} added.",
+    "inCaption": "Already in the caption",
+    "emptyCaption": "Write a caption first. Ideas come from what your caption says.",
+    "noSuggestions": "No matching ideas yet. Try naming the product or its type in the caption.",
+    "suggestionsHint": "Tap to add to the caption. Prefer specific hashtags over the most popular ones.",
+    "remove": "Remove from caption",
+    "level": {
+      "good": "Good",
+      "warning": "Check this",
+      "error": "Problem"
+    },
+    "code": {
+      "invalidChars": "Only \"#{linked}\" becomes a hashtag. Hashtags can't contain spaces or punctuation.",
+      "invalidCharsNone": "This won't become a link. Use only letters, numbers or underscores.",
+      "numbersOnly": "Hashtags made only of numbers don't become links. Add letters.",
+      "tooLong": "Hashtags this long are rarely searched. Try a shorter one.",
+      "duplicate": "This hashtag is already there. Once is enough.",
+      "overLimit": "Over the hashtag limit. Remove one hashtag.",
+      "generic": "Too general: it says nothing about the post. Use a more specific one.",
+      "blocked": "Often treated as spam and can lower your reach. Better remove it.",
+      "unrelated": "Doesn't seem related to the caption. People searching it may not be interested.",
+      "ok": "Matches the caption."
+    },
+    "setCode": {
+      "overLimit": "Too many hashtags: {count}, max {max}.",
+      "allBroad": "All hashtags are very general. Add 1–2 specific ones about the product so it's easier to find.",
+      "threadsOneTag": "Threads uses only 1 hashtag per post.",
+      "facebookMany": "On Facebook, more than {max} hashtags look like spam."
+    },
+    "threadsVersion": "Make a Threads version with 1 hashtag",
+    "threadsVersionDone": "Threads caption created with 1 hashtag. See Advanced options.",
+    "research": {
+      "intro": "Research combines ideas from our list, your own post results and how busy a hashtag is on Threads.",
+      "run": "Research hashtags for this caption",
+      "again": "Research again",
+      "remaining": "{count} research uses left this month.",
+      "unlimited": "Unlimited research on your plan.",
+      "locked": "Hashtag research is on paid plans. Quality checks, list ideas and saved sets stay free.",
+      "needCaption": "Write a caption first so research knows the topic.",
+      "pending": "Fetching Threads activity…",
+      "empty": "No matching hashtags yet. Try naming the product type in the caption.",
+      "noHistory": "Your own results join in once a few posts with hashtags are published."
+    },
+    "source": {
+      "list": "Idea",
+      "history": "Used before",
+      "mine": "Yours"
+    },
+    "performance": {
+      "better": "Seen more on your posts",
+      "average": "Usual for your posts",
+      "worse": "Seen less on your posts",
+      "notEnoughData": "Used {posts}x, not enough data yet"
+    },
+    "activity": {
+      "busy": "Busy on Threads",
+      "active": "Active on Threads",
+      "quiet": "Quiet on Threads",
+      "unused": "Not used on Threads"
+    },
+    "threads": {
+      "noAccount": "Connect a Threads account to see how busy hashtags are on Threads.",
+      "needsReconnect": "Reconnect your Threads account to see how busy hashtags are on Threads."
+    },
+    "sets": {
+      "empty": "No sets yet. Save hashtags you use often so they're one tap away.",
+      "use": "Use",
+      "saveCurrent": "Save the caption's hashtags as a set",
+      "name": "Set name",
+      "namePlaceholder": "e.g. Skincare",
+      "saved": "Set saved.",
+      "deleted": "Set deleted.",
+      "delete": "Delete set",
+      "tags": "{count} hashtags"
+    }
   }
 }

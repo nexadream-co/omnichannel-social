@@ -1,4 +1,5 @@
 import type { ChannelCapabilities, MediaKind, Platform, PostFormat } from '../../../shared/channels/types'
+import type { TagActivity } from '../../../shared/hashtags/types'
 import type { Logger } from '../log'
 
 export interface DecryptedSocialAccount {
@@ -26,6 +27,11 @@ export interface ConnectedAccount {
   tokenExpiresAt: Date | null
   scopes: string[]
   meta: Record<string, unknown>
+}
+
+/** Optional extras an admin has switched on; each adapter maps them to its own permissions. */
+export interface OAuthOptions {
+  tagSearch?: boolean
 }
 
 export interface TokenBundle {
@@ -65,8 +71,8 @@ export interface ChannelAdapter {
   apiVersion: string
   isConfigured(): boolean
   oauth: {
-    authorizeUrl(state: string, redirectUri: string): string
-    exchange(code: string, redirectUri: string, fetchImpl: typeof fetch): Promise<ConnectedAccount[]>
+    authorizeUrl(state: string, redirectUri: string, options?: OAuthOptions): string
+    exchange(code: string, redirectUri: string, fetchImpl: typeof fetch, options?: OAuthOptions): Promise<ConnectedAccount[]>
     refresh?(token: TokenBundle, fetchImpl: typeof fetch): Promise<TokenBundle>
   }
   getQuota?(c: AdapterCtx): Promise<{ used: number, limit: number }>
@@ -78,6 +84,11 @@ export interface ChannelAdapter {
   fetchPostStates?(c: AdapterCtx, externalIds: string[]): Promise<PlatformPostState[]>
   sendPrivateReply?(c: AdapterCtx, commentId: string, text: string): Promise<void>
   replyToComment?(c: AdapterCtx, commentId: string, text: string): Promise<void>
+  /** Public tag activity for tag research. Optional, and only for accounts that granted the extra permission. */
+  tagSearch?: {
+    allowed(scopes: string[]): boolean
+    activity(c: AdapterCtx, tag: string): Promise<TagActivity>
+  }
   normalizeError(e: unknown): AdapterError
 }
 

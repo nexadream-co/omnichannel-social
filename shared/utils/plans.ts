@@ -7,7 +7,8 @@ export const LIMIT_KEYS = [
   'clickRetentionDays',
   'teamMembers',
   'mediaStorageMb',
-  'activityLogRetentionDays'
+  'activityLogRetentionDays',
+  'tagResearchPerMonth'
 ] as const
 export type LimitKey = (typeof LIMIT_KEYS)[number]
 
@@ -36,7 +37,8 @@ export const LIMIT_META: Record<LimitKey, { label: string, sentence: string, hin
   clickRetentionDays: { label: 'Riwayat statistik', sentence: 'hari riwayat statistik', hint: 'Seberapa jauh ke belakang statistik klik bisa dilihat.', unit: 'hari' },
   teamMembers: { label: 'Anggota tim', sentence: 'anggota tim', hint: 'Termasuk pemilik.', unit: 'orang' },
   mediaStorageMb: { label: 'Penyimpanan media', sentence: 'MB penyimpanan media', hint: '', unit: 'MB' },
-  activityLogRetentionDays: { label: 'Riwayat log aktivitas', sentence: 'hari riwayat log aktivitas', hint: '', unit: 'hari' }
+  activityLogRetentionDays: { label: 'Riwayat log aktivitas', sentence: 'hari riwayat log aktivitas', hint: '', unit: 'hari' },
+  tagResearchPerMonth: { label: 'Riset tagar per bulan', sentence: 'riset tagar per bulan', hint: 'Tiap kali tombol "Riset" dipakai untuk satu keterangan. Cek kualitas tagar selalu gratis.', unit: 'riset' }
 }
 
 export const FEATURE_META: Record<FeatureKey, { label: string, hint: string }> = {
@@ -59,7 +61,8 @@ export const DEFAULT_LIMITS: PlanLimits = {
   clickRetentionDays: 30,
   teamMembers: 1,
   mediaStorageMb: 500,
-  activityLogRetentionDays: 0
+  activityLogRetentionDays: 0,
+  tagResearchPerMonth: 0
 }
 
 export const DEFAULT_FEATURES: PlanFeatures = Object.fromEntries(FEATURE_KEYS.map(key => [key, false])) as PlanFeatures
@@ -117,13 +120,13 @@ export const SEED_PLANS: SeedPlan[] = [
   {
     slug: 'kreator', name: 'Kreator', description: 'Untuk kreator yang rutin posting dan jualan.',
     priceMonthly: 49_000, priceYearly: 490_000, trialDays: 14, isActive: true, isPublic: true, order: 1,
-    limits: { socialAccounts: 5, scheduledPostsPerMonth: 300, bioPages: 1, autoReplyRules: 10, autoReplyDmsPerMonth: 1_000, clickRetentionDays: 180, teamMembers: 1, mediaStorageMb: 5_000, activityLogRetentionDays: 30 },
+    limits: { socialAccounts: 5, scheduledPostsPerMonth: 300, bioPages: 1, autoReplyRules: 10, autoReplyDmsPerMonth: 1_000, clickRetentionDays: 180, teamMembers: 1, mediaStorageMb: 5_000, activityLogRetentionDays: 30, tagResearchPerMonth: 100 },
     features: { removeBranding: true, customSlug: true, anyDestination: true, analyticsExport: true, teamAccess: false, activityLog: true, prioritySupport: false }
   },
   {
     slug: 'pro', name: 'Pro', description: 'Untuk kreator dengan banyak akun dan tim kecil.',
     priceMonthly: 99_000, priceYearly: 990_000, trialDays: 14, isActive: false, isPublic: false, order: 2,
-    limits: { socialAccounts: 12, scheduledPostsPerMonth: 1_500, bioPages: 3, autoReplyRules: UNLIMITED, autoReplyDmsPerMonth: 5_000, clickRetentionDays: 365, teamMembers: 3, mediaStorageMb: 20_000, activityLogRetentionDays: 90 },
+    limits: { socialAccounts: 12, scheduledPostsPerMonth: 1_500, bioPages: 3, autoReplyRules: UNLIMITED, autoReplyDmsPerMonth: 5_000, clickRetentionDays: 365, teamMembers: 3, mediaStorageMb: 20_000, activityLogRetentionDays: 90, tagResearchPerMonth: UNLIMITED },
     features: { removeBranding: true, customSlug: true, anyDestination: true, analyticsExport: true, teamAccess: true, activityLog: true, prioritySupport: true }
   }
 ]

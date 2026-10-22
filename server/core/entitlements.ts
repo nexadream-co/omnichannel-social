@@ -3,7 +3,7 @@ import { LIMIT_META, normalizeFeatures, normalizeLimits, type FeatureKey, type L
 import type { WorkspaceContext } from './context'
 import type { Executor } from './db/client'
 import { getDb } from './db/client'
-import { bioPages, dmEvents, dmRules, mediaAssets, plans, postTargets, socialAccounts, subscriptions, workspaceInvitations, workspaceMembers, workspaces } from './db/schema'
+import { bioPages, dmEvents, dmRules, hashtagResearchRuns, mediaAssets, plans, postTargets, socialAccounts, subscriptions, workspaceInvitations, workspaceMembers, workspaces } from './db/schema'
 import { appError } from './errors'
 import { getSetting } from './settings'
 
@@ -154,8 +154,16 @@ export async function countDmsThisMonth(db: Executor, workspaceId: string, tz: s
   return row?.n ?? 0
 }
 
+/** Each research run row is one use; a repeated request for the same caption reuses its row (server/core/hashtags/research.ts). */
+export async function countTagResearchThisMonth(db: Executor, workspaceId: string, tz: string): Promise<number> {
+  const { start, end } = monthBounds(tz)
+  const [row] = await db.select({ n: count() }).from(hashtagResearchRuns)
+    .where(and(eq(hashtagResearchRuns.workspaceId, workspaceId), sql`${hashtagResearchRuns.createdAt} >= ${start} and ${hashtagResearchRuns.createdAt} < ${end}`))
+  return row?.n ?? 0
+}
+
 export async function entitlementUsage(db: Executor, workspaceId: string, tz: string): Promise<Record<Exclude<LimitKey, 'clickRetentionDays' | 'activityLogRetentionDays'>, number>> {
-  const [[accounts], scheduled, [bios], [rules], [dms], [members], [invites], [storage]] = await Promise.all([
+  const [[accounts], scheduled, [bios], [rules], [dms], [members], [invites], [storage], research] = await Promise.all([
     db.select({ n: count() }).from(socialAccounts).where(and(eq(socialAccounts.workspaceId, workspaceId), eq(socialAccounts.status, 'active'))),
     countScheduledThisMonth(db, workspaceId, tz),
     db.select({ n: count() }).from(bioPages).where(and(eq(bioPages.workspaceId, workspaceId), eq(bioPages.published, true))),
@@ -163,7 +171,8 @@ export async function entitlementUsage(db: Executor, workspaceId: string, tz: st
     countDmsThisMonth(db, workspaceId, tz).then(n => [{ n }]),
     db.select({ n: count() }).from(workspaceMembers).where(and(eq(workspaceMembers.workspaceId, workspaceId), eq(workspaceMembers.isActive, true))),
     db.select({ n: count() }).from(workspaceInvitations).where(and(eq(workspaceInvitations.workspaceId, workspaceId), isNull(workspaceInvitations.acceptedAt), isNull(workspaceInvitations.revokedAt), gt(workspaceInvitations.expiresAt, new Date()))),
-    db.select({ bytes: sql<string>`coalesce(sum(${mediaAssets.bytes}), 0)` }).from(mediaAssets).where(and(eq(mediaAssets.workspaceId, workspaceId), ne(mediaAssets.status, 'failed')))
+    db.select({ bytes: sql<string>`coalesce(sum(${mediaAssets.bytes}), 0)` }).from(mediaAssets).where(and(eq(mediaAssets.workspaceId, workspaceId), ne(mediaAssets.status, 'failed'))),
+    countTagResearchThisMonth(db, workspaceId, tz)
   ])
   return {
     socialAccounts: accounts?.n ?? 0,
@@ -172,6 +181,7 @@ export async function entitlementUsage(db: Executor, workspaceId: string, tz: st
     autoReplyRules: rules?.n ?? 0,
     autoReplyDmsPerMonth: dms?.n ?? 0,
     teamMembers: (members?.n ?? 0) + (invites?.n ?? 0),
-    mediaStorageMb: Math.round(Number(storage?.bytes ?? 0) / (1024 * 1024))
+    mediaStorageMb: Math.round(Number(storage?.bytes ?? 0) / (1024 * 1024)),
+    tagResearchPerMonth: research
   }
 }

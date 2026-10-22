@@ -77,6 +77,7 @@ export const SETTINGS_CATALOG: SettingDef[] = [
   { key: 'channels.autoReply.enabled', group: 'channels', type: 'boolean', label: 'Balas Otomatis aktif', hint: 'Matikan untuk menghentikan semua DM otomatis.', default: 'true' },
   { key: 'channels.autoReply.maxDmsPerAccountPerHour', group: 'channels', type: 'number', label: 'Maks DM per akun per jam', default: '60' },
   { key: 'channels.links.affiliateAllowlist', group: 'channels', type: 'json', label: 'Domain afiliasi yang diizinkan', default: JSON.stringify(AFFILIATE_ALLOWLIST) },
+  { key: 'channels.hashtags.threadsSearchEnabled', group: 'channels', type: 'boolean', label: 'Riset tagar memakai pencarian Threads', hint: 'Nyalakan setelah Meta menyetujui izin threads_keyword_search.', default: 'false' },
   { key: 'channels.links.freePlanAllowlistOnly', group: 'channels', type: 'boolean', label: 'Paket tanpa "link ke situs mana saja" hanya boleh domain afiliasi', default: 'true' }
 ]
 

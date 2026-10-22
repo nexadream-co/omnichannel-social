@@ -1,9 +1,15 @@
 import { threads as caps } from '../../../shared/channels/threads'
 import { env } from '../env'
-import { ChannelError, type ChannelAdapter, type ResolvedTarget } from './adapter'
+import { ChannelError, type ChannelAdapter, type OAuthOptions, type ResolvedTarget } from './adapter'
 import { classifyGraphError, graphRequest, optionalMetrics, postStatesPerPost } from './graph-client'
 
 const SCOPES = ['threads_basic', 'threads_content_publish', 'threads_manage_replies', 'threads_read_replies', 'threads_manage_insights']
+// Tag research. Requested only once the admin switch is on (after Meta approves it): an unapproved scope would break
+// connecting for everyone, and without it the search silently covers only the creator's own posts.
+const TAG_SEARCH_SCOPE = 'threads_keyword_search'
+const scopesFor = (options?: OAuthOptions) => (options?.tagSearch ? [...SCOPES, TAG_SEARCH_SCOPE] : SCOPES)
+/** One page of a week's tag posts; more than this is "busy" anyway. */
+const TAG_SEARCH_LIMIT = 100
 const VERSION = 'v1.0'
 const graph = `https://graph.threads.net/${VERSION}`
 
@@ -15,11 +21,11 @@ export const threadsAdapter: ChannelAdapter = {
   isConfigured: () => Boolean(env().THREADS_APP_ID && env().THREADS_APP_SECRET),
 
   oauth: {
-    authorizeUrl(state, redirectUri) {
-      const params = new URLSearchParams({ client_id: env().THREADS_APP_ID, redirect_uri: redirectUri, scope: SCOPES.join(','), response_type: 'code', state })
+    authorizeUrl(state, redirectUri, options) {
+      const params = new URLSearchParams({ client_id: env().THREADS_APP_ID, redirect_uri: redirectUri, scope: scopesFor(options).join(','), response_type: 'code', state })
       return `https://threads.net/oauth/authorize?${params}`
     },
-    async exchange(code, redirectUri, fetchImpl) {
+    async exchange(code, redirectUri, fetchImpl, options) {
       const config = env()
       const short = await graphRequest<{ access_token: string, user_id: string | number }>({
         fetch: fetchImpl, url: 'https://graph.threads.net/oauth/access_token', method: 'POST',
@@ -39,7 +45,7 @@ export const threadsAdapter: ChannelAdapter = {
         accessToken: long.access_token,
         refreshToken: null,
         tokenExpiresAt: new Date(Date.now() + long.expires_in * 1000),
-        scopes: SCOPES,
+        scopes: scopesFor(options),
         meta: { userId: String(short.user_id) }
       }]
     },
@@ -131,6 +137,20 @@ export const threadsAdapter: ChannelAdapter = {
       })
       return { caption: node.text ?? '', permalink: node.permalink ?? null, metrics }
     })
+  },
+
+  tagSearch: {
+    allowed: scopes => scopes.includes(TAG_SEARCH_SCOPE),
+    async activity(c, tag) {
+      const result = await graphRequest<{ data: { id: string, timestamp?: string }[] }>({
+        fetch: c.fetch,
+        url: `${graph}/keyword_search`,
+        params: { q: tag, search_mode: 'TAG', search_type: 'RECENT', fields: 'id,timestamp', since: Math.floor((Date.now() - 7 * 86_400_000) / 1000), limit: TAG_SEARCH_LIMIT },
+        accessToken: c.account.accessToken
+      })
+      const times = result.data.map(item => item.timestamp).filter((ts): ts is string => Boolean(ts)).sort()
+      return { recentPosts: result.data.length, capped: result.data.length >= TAG_SEARCH_LIMIT, lastPostAt: times.length ? new Date(times.at(-1)!).toISOString() : null }
+    }
   },
 
   normalizeError(e) {

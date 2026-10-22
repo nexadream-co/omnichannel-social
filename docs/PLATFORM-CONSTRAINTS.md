@@ -7,7 +7,8 @@ Facts from official docs that shape the design. Re-verify before each milestone,
 - **Formats:** feed image (**JPEG only**), video, carousel (≤10 items, counts as 1 post), Reels, Stories. Shopping tags, filters and Story stickers are not supported. (H)
 - **Publish limit:** 50–100 API posts per rolling 24h; plan for 50. Check with `GET /<IG_ID>/content_publishing_limit`. (M)
 - **Reels:** 3s–15min, ≤300 MB, MP4/MOV, H.264 or HEVC, 23–60 fps, 9:16 recommended. **Stories video:** 3–60s, ≤100 MB. (H)
-- **Caption:** 2,200 chars, 30 hashtags, 20 mentions. **Links are not clickable.** (H / M)
+- **Caption:** 2,200 chars, **5 hashtags** per feed post or Reel (since 18 Dec 2025, was 30; hashtags in comments count toward the same 5; Stories keep their own allowance), 20 mentions. **Links are not clickable.** Some Meta developer pages still say 30; the Help Center says 5. (H, checked 2026-10-22)
+- **Hashtag search** (`ig_hashtag_search`, `top_media` / `recent_media`) exists **only for Instagram API with Facebook Login** and needs the "Instagram Public Content Access" feature (App Review). At most 30 unique hashtags per Instagram account per rolling 7 days; no post counts, only media. We use Instagram Login, so tag research doesn't use it (phase 2: an optional "connect via Facebook" step). (H, checked 2026-10-22)
 - **Flow:** create a container from a public media URL → poll `status_code` until `FINISHED` → `media_publish`. (H)
 - **Private replies (comment-to-DM):** within **7 days** of the comment, **one message per commenter**, follow-ups only within 24h after the user replies. Needs `instagram_business_manage_comments`, `instagram_business_manage_messages` and the `comments` webhook. (H)
 - **Webhook signatures** for Instagram Login use the **Instagram app secret**. (H)
@@ -15,6 +16,7 @@ Facts from official docs that shape the design. Re-verify before each milestone,
 
 ## Threads (v1)
 - **Formats:** text, image (JPEG/PNG ≤8 MB), video (≤5 min, ≤1 GB), carousel (2–20). 500 chars, 1 topic tag. (H)
+- **Keyword / tag search:** `GET /keyword_search?q=…&search_mode=TAG&search_type=TOP|RECENT` (optional `since`, `until`, `limit`, author filter since Jan 2026). Needs `threads_keyword_search` (App Review); **without it the search silently covers only the user's own posts**. 2,200 queries per user per rolling 24h; empty results don't count. Returns posts, not view counts. (H, checked 2026-10-22)
 - **Links:** `link_attachment` only on text posts. **Max 5 unique links per post** (since Dec 2025, error `THREADS_API__LINK_LIMIT_EXCEEDED`). (H)
 - **Limits per 24h:** 250 posts, 1,000 replies, 100 deletes. (H)
 - **Scopes:** `threads_basic`, `threads_content_publish`, `threads_manage_replies`, `threads_read_replies`, `threads_manage_insights`. Each needs App Review. Long-lived tokens last 60 days and can be refreshed. (H)

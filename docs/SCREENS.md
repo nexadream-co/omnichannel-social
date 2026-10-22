@@ -73,6 +73,7 @@ Needs: a selectable list, friendly errors with a how-to-fix guide (e.g., "Akun p
   - One caption box with a character counter.
   - Media upload (drag or tap) with automatic fixing.
   - "Tambah link produk" (choose from Link Produk or paste a new one).
+  - Hashtags: the caption's hashtags as chips colored by quality (tap for the reason and "Hapus"); set-level hints, including "Buat versi Threads dengan 1 tagar". "Saran tagar" opens a panel with Saran (ideas from the tag list, free), Riset (own results and Threads activity, paid) and Set tersimpan (free), plus "Tambah tagar sendiri" with a live check. Never required.
   - Template picker.
   - Live preview per platform.
   - Actions: "Jadwalkan" (suggested time pre-filled) and "Posting sekarang". Saving as draft is secondary.

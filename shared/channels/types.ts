@@ -15,6 +15,7 @@ export interface ChannelCapabilities {
   formats: PostFormat[]
   maxChars: number
   maxHashtags?: number
+  hashtagsIncludeFirstComment?: boolean // Instagram counts tags in comments toward the same limit
   maxMentions?: number
   maxLinks?: number
   linkMode: 'clickable' | 'plain' | 'attachment'
@@ -37,6 +38,7 @@ export interface Issue {
 export interface TargetDraft {
   format: PostFormat
   caption: string
+  firstComment?: string
 }
 
 export interface MediaMeta {

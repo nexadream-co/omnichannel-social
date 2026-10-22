@@ -54,7 +54,7 @@ async function resolveDraft(ctx: WorkspaceContext, input: PostInput) {
     return { input: t, account, format, caption: caption(input.caption, t.captionOverride) }
   })
   if (input.mode !== 'draft') {
-    const issues = resolved.flatMap(r => validateTarget(CHANNELS[r.account.platform], { format: r.format, caption: r.caption }, metas)
+    const issues = resolved.flatMap(r => validateTarget(CHANNELS[r.account.platform], { format: r.format, caption: r.caption, firstComment: r.input.firstComment }, metas)
       .map(issue => ({ ...issue, socialAccountId: r.account.id, platform: r.account.platform })))
     if (hasBlockingIssues(issues)) {
       throw appError(422, 'Ada yang perlu diperbaiki sebelum dijadwalkan.', 'CHANNEL_VALIDATION_FAILED', { issues: issues.filter(i => i.level === 'error') })

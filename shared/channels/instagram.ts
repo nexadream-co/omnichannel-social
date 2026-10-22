@@ -2,12 +2,13 @@ import type { ChannelCapabilities } from './types'
 
 const MB = 1024 * 1024
 
-/** Instagram API with Instagram Login (docs/PLATFORM-CONSTRAINTS.md, verified 2026-10-12). */
+/** Instagram API with Instagram Login (docs/PLATFORM-CONSTRAINTS.md, verified 2026-10-22). */
 export const instagram: ChannelCapabilities = {
   platform: 'instagram',
   formats: ['feed', 'carousel', 'reel', 'story'],
   maxChars: 2200,
-  maxHashtags: 30,
+  maxHashtags: 5,
+  hashtagsIncludeFirstComment: true,
   maxMentions: 20,
   linkMode: 'plain',
   media: {

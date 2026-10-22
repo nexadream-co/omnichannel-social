@@ -445,6 +445,18 @@ Once a target is `published`, what the platform has wins. A sync reads every pub
 
 When: `insights.daily` at 02:00 WIB for posts from the last 30 days that are not marked deleted; "Sinkronkan" on a post (any age, deleted ones included) runs inline; "Sinkronkan" on the post list enqueues `insights.sync` for the workspace (once per 5 minutes). A per-post refusal (validation) skips that post; account-wide errors stop that account only. Facebook Pages have no `fetchPostStates` yet.
 
+### 8.7 Hashtags (tagar): suggestions, quality check and research
+
+Hashtags help a post get found; the UI never promises views. Matching is **rule-based (no AI)**, shared by the composer and the server (`shared/hashtags/`):
+
+- **Tag list** (`hashtag_library`, global reference data, edited at `/admin/hashtags`, shipped by migration 0008 and the seed): tag, niche, keywords (caption words that make it fit), breadth (`broad` / `niche` / `specific`) and status (`recommended`, `generic` = says nothing about the post, `blocked` = spam bait). Rows are never deleted.
+- **Fit** (`relevance.ts`): caption words (stopwords, links, mentions and the caption's own tags removed; `-nya/-lah/-kah/-kan` trimmed) against the tag's words (joined tags are split with the list's vocabulary: `racunskincare` → `racun` + `skincare`) and keywords. A tag from another niche needs a word only that niche uses, so "murah" in a gadget caption never pulls in `#skincaremurah`. General affiliate tags are only suggested when the caption names them.
+- **Quality** (`quality.ts`, free, live in the composer): broken characters (shows the part that becomes a link), numbers only, too long, duplicate, over the platform limit, generic, blocked, unrelated; for the set: over the limit, all broad, Threads takes 1 (one tap makes a Threads-only caption), Facebook > 3.
+- **Research** (`server/core/hashtags/research.ts`, paid, `tagResearchPerMonth`): list ideas + tags from the creator's own history that fit + their own input, each with fit, quality, **own results** (`performance.ts`: median `views` of the last 90 days' posts with the tag ÷ that account's median; ≥ 3 posts before it says better/worse) and **Threads activity** (posts in the last 7 days via the adapter's optional `tagSearch`). Each run is a `hashtag_research_runs` row: the ledger for the monthly limit and the result the composer polls. The same caption within 30 minutes reuses its run.
+- **Threads activity** runs in the `hashtags.signals` job (one attempt; a failed tag just has no numbers) and is cached for 24 h in `hashtag_signals`, shared by all workspaces (public numbers only). It is off until `channels.hashtags.threadsSearchEnabled` is on; only then does connecting Threads request `threads_keyword_search`, so the consent screen never asks for an unapproved permission, and accounts connected before have no activity until they reconnect.
+- **Saved sets** (`hashtag_sets`, free, 50 per workspace).
+- Instagram hashtag search needs Facebook Login (PLATFORM-CONSTRAINTS), so it is left for a later phase.
+
 ## 9. Webhooks
 
 ### 9.1 Meta

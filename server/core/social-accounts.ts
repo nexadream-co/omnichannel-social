@@ -3,7 +3,7 @@ import { uuidv7 } from 'uuidv7'
 import { PLATFORM_META } from '../../shared/channels/registry'
 import type { Platform } from '../../shared/channels/types'
 import { recordAudit } from './audit'
-import type { ConnectedAccount, DecryptedSocialAccount } from './channels/adapter'
+import type { ConnectedAccount, DecryptedSocialAccount, OAuthOptions } from './channels/adapter'
 import { ChannelError } from './channels/adapter'
 import { getAdapter } from './channels/registry'
 import { assertAbility, type WorkspaceContext } from './context'
@@ -14,6 +14,7 @@ import { assertWithinLimit, invalidateEntitlements } from './entitlements'
 import { env } from './env'
 import { appError } from './errors'
 import { consumeRateLimit } from './rate-limit'
+import { getSettingBool } from './settings'
 
 export const OAUTH_STATE_COOKIE = 'socialz_oauth'
 const SESSION_TTL_MS = 15 * 60_000
@@ -22,6 +23,11 @@ const aad = (accountId: string, platform: Platform) => `${accountId}|${platform}
 
 export function redirectUri(platform: Platform): string {
   return `${env().siteUrl}/api/app/channels/${platform}/callback`
+}
+
+/** Admin switches that add optional permissions to the consent screen (read at start and at callback). */
+async function oauthOptions(db: Executor): Promise<OAuthOptions> {
+  return { tagSearch: await getSettingBool('channels.hashtags.threadsSearchEnabled', db) }
 }
 
 function adapterFor(platform: Platform) {
@@ -39,7 +45,7 @@ export async function startConnect(ctx: WorkspaceContext & { emailVerified: bool
   const limited = await consumeRateLimit(`oauth:channel:${ctx.userId}`, 20, 15 * 60_000, ctx.db)
   if (!limited.allowed) throw appError(429, 'Terlalu banyak percobaan. Coba lagi beberapa menit lagi.', 'RATE_LIMITED', { retryAfterSeconds: limited.retryAfterSeconds })
   const state = randomToken(24)
-  return { url: adapter.oauth.authorizeUrl(state, redirectUri(platform)), cookie: `${platform}.${state}` }
+  return { url: adapter.oauth.authorizeUrl(state, redirectUri(platform), await oauthOptions(ctx.db)), cookie: `${platform}.${state}` }
 }
 
 export function toView(row: typeof socialAccounts.$inferSelect) {
@@ -116,7 +122,7 @@ export async function handleConnectCallback(ctx: WorkspaceContext, platform: Pla
   const adapter = adapterFor(platform)
   let accounts: ConnectedAccount[]
   try {
-    accounts = await adapter.oauth.exchange(input.code, redirectUri(platform), fetchImpl)
+    accounts = await adapter.oauth.exchange(input.code, redirectUri(platform), fetchImpl, await oauthOptions(ctx.db))
   } catch (error) {
     const detail = adapter.normalizeError(error)
     ctx.log.warn('channels.exchange_failed', { platform, kind: detail.kind, code: detail.code })

@@ -1,7 +1,7 @@
+import { countTags } from '../hashtags/parse'
 import type { ChannelCapabilities, Issue, MediaMeta, TargetDraft } from './types'
 
 const URL_PATTERN = /https?:\/\/\S+/gi
-const HASHTAG_PATTERN = /(^|\s)#[\p{L}\p{N}_]+/gu
 const MENTION_PATTERN = /(^|\s)@[\w.]+/g
 
 /** Counts characters the way the platforms do: user-perceived characters (emoji count as one). */
@@ -24,7 +24,7 @@ export function validateTarget(caps: ChannelCapabilities, draft: TargetDraft, me
 
   const chars = countChars(draft.caption)
   if (chars > caps.maxChars) issues.push({ level: 'error', code: 'channel.captionTooLong', field: 'caption', params: { max: caps.maxChars, count: chars } })
-  const hashtags = draft.caption.match(HASHTAG_PATTERN)?.length ?? 0
+  const hashtags = countTags(draft.caption) + (caps.hashtagsIncludeFirstComment && draft.firstComment ? countTags(draft.firstComment) : 0)
   if (caps.maxHashtags !== undefined && hashtags > caps.maxHashtags) issues.push({ level: 'error', code: 'channel.tooManyHashtags', field: 'caption', params: { max: caps.maxHashtags, count: hashtags } })
   const mentions = draft.caption.match(MENTION_PATTERN)?.length ?? 0
   if (caps.maxMentions !== undefined && mentions > caps.maxMentions) issues.push({ level: 'error', code: 'channel.tooManyMentions', field: 'caption', params: { max: caps.maxMentions, count: mentions } })

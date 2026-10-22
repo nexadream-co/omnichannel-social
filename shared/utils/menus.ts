@@ -32,7 +32,8 @@ export const MENU_TREE: MenuNode[] = [
     { slug: 'faq', label: 'FAQ', path: '/admin/faq', icon: 'i-lucide-circle-help', permissionKey: 'faq.read' },
     { slug: 'messages', label: 'Pesan masuk', path: '/admin/messages', icon: 'i-lucide-inbox', permissionKey: 'messages.read' },
     { slug: 'email-templates', label: 'Templat email', path: '/admin/email-templates', icon: 'i-lucide-mail', permissionKey: 'email-templates.read' },
-    { slug: 'notification-templates', label: 'Templat notifikasi', path: '/admin/notification-templates', icon: 'i-lucide-bell', permissionKey: 'notification-templates.read' }
+    { slug: 'notification-templates', label: 'Templat notifikasi', path: '/admin/notification-templates', icon: 'i-lucide-bell', permissionKey: 'notification-templates.read' },
+    { slug: 'hashtags', label: 'Daftar tagar', path: '/admin/hashtags', icon: 'i-lucide-hash', permissionKey: 'hashtags.read' }
   ] },
   { slug: 'access', label: 'Akses', children: [
     { slug: 'users-group', label: 'Pengguna', icon: 'i-lucide-users', children: [

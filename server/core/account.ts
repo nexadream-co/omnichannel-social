@@ -5,7 +5,7 @@ import { INDONESIAN_TIMEZONES } from '../../shared/utils/auth'
 import { recordAudit } from './audit'
 import { assertAbility, type StaffContext, type WorkspaceContext } from './context'
 import {
-  bioItems, bioPages, dmEvents, dmRules, links, mediaAssets, notifications, payments, posts, postTargets,
+  bioItems, bioPages, dmEvents, dmRules, hashtagSets, links, mediaAssets, notifications, payments, posts, postTargets,
   shortLinks, socialAccounts, staffUsers, subscriptions, users, workspaceMembers, workspaces
 } from './db/schema'
 import { appError } from './errors'
@@ -100,6 +100,7 @@ export async function exportWorkspaceData(ctx: WorkspaceContext) {
     media: await ctx.db.select({ id: mediaAssets.id, kind: mediaAssets.kind, mime: mediaAssets.mime, bytes: mediaAssets.bytes, publicUrl: mediaAssets.publicUrl, createdAt: mediaAssets.createdAt })
       .from(mediaAssets).where(eq(mediaAssets.workspaceId, w)),
     links: await ctx.db.select().from(links).where(eq(links.workspaceId, w)),
+    hashtagSets: await ctx.db.select({ name: hashtagSets.name, tags: hashtagSets.tags, createdAt: hashtagSets.createdAt }).from(hashtagSets).where(eq(hashtagSets.workspaceId, w)),
     shortLinks: await ctx.db.select({ slug: shortLinks.slug, domain: shortLinks.domain, linkId: shortLinks.linkId, source: shortLinks.source, active: shortLinks.active, createdAt: shortLinks.createdAt })
       .from(shortLinks).where(eq(shortLinks.workspaceId, w)),
     etalase: {

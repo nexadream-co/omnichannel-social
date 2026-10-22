@@ -40,6 +40,12 @@ function insertLink(link: { shortUrl: string | null }) {
   caption.value = caption.value.trimEnd() ? `${caption.value.trimEnd()}\n\n${link.shortUrl}` : link.shortUrl
 }
 
+// Threads takes one tag: the tag panel hands over a one-tag copy of the caption for every selected Threads account.
+const selectedPlatforms = computed(() => [...new Set(selectedAccounts.value.map(a => a.platform))])
+function applyThreadsVersion(text: string) {
+  for (const account of selectedAccounts.value.filter(a => a.platform === 'threads')) ensureOptions(account.id).captionOverride = text
+}
+
 function ensureOptions(id: string) {
   options[id] ??= { captionOverride: '', format: null, firstComment: '', altText: '' }
   return options[id]!
@@ -75,7 +81,7 @@ function captionFor(account: Account) {
 }
 
 /** The same rules the server applies (shared/channels/validate.ts), shown as friendly hints before submit. */
-const issues = computed(() => selectedAccounts.value.flatMap(account => validateTarget(CHANNELS[account.platform], { format: formatFor(account), caption: captionFor(account) }, mediaMetas.value)
+const issues = computed(() => selectedAccounts.value.flatMap(account => validateTarget(CHANNELS[account.platform], { format: formatFor(account), caption: captionFor(account), firstComment: ensureOptions(account.id).firstComment }, mediaMetas.value)
   .map(issue => ({ ...issue, account }))))
 const blocking = computed(() => issues.value.some(i => i.level === 'error'))
 // Friendly hints (warnings) show while typing; errors only after the first attempt, so a newcomer
@@ -228,6 +234,12 @@ async function submit(mode: 'schedule' | 'now' | 'draft') {
                   {{ c.count }}/{{ c.max }}
                 </span>
               </div>
+              <HashtagPanel
+                v-model="caption"
+                :platforms="selectedPlatforms"
+                class="mt-3"
+                @threads-version="applyThreadsVersion"
+              />
             </UFormField>
 
             <div>

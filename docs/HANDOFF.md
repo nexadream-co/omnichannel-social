@@ -69,6 +69,7 @@ The original generic blueprint the platform docs were adapted from is at `~/Down
 | UI language | Bahasa Indonesia default + English | `@nuxtjs/i18n` `prefix_except_default` |
 | Plans | Gratis; Kreator Rp49.000/mo, 14-day trial; Pro Rp99.000/mo seeded inactive | Values in `docs/blueprint/06` §2 (draft prices incl. PPN) |
 | Company / domains | The user has a PT/CV (Meta Business Verification can start) and owns an app domain + short domain | Short domain name not shared yet |
+| Hashtags (2026-10-22) | Rule-based tag ideas, quality check and saved sets (free); research from own post results + Threads tag activity (paid, `tagResearchPerMonth`: Gratis 0, Kreator 100, Pro unlimited). Instagram's 5-tag limit enforced | No AI. Instagram hashtag search needs Facebook Login + Public Content Access, so it is phase 2. Threads search is off until Meta approves `threads_keyword_search` (`ARCHITECTURE` §8.7) |
 
 ## 4. How this user works
 
@@ -90,7 +91,7 @@ The original generic blueprint the platform docs were adapted from is at `~/Down
 1. User provides §5 items → create Neon branches, R2, Resend, Cloudflare zones (transform rule from `deploy/README.md`).
 2. Deploy staging with the chosen `deploy/<target>/`; run `npm run db:migrate` (direct URL) and `npm run db:seed` once; set the per-minute tick + a backup pinger; check `/healthz`.
 3. Configure `/admin`: settings, payment gateway, legal pages, staff. Run the hub end-to-end test from `blueprint/17` Phase 11 against the real hub with a low-price plan.
-4. Meta App Review submissions with the staging build (screencasts of connect → publish → comment-to-DM).
+4. Meta App Review submissions with the staging build (screencasts of connect → publish → comment-to-DM). Include `threads_keyword_search` (tag research); after approval turn on `channels.hashtags.threadsSearchEnabled` in `/admin/settings` and ask Threads users to reconnect.
 5. Usability test with 5 first-time creators (target: first scheduled post in < 5 minutes), closed beta, then production.
 
 ## 7. In parallel (user, non-code, M0)

@@ -18,7 +18,8 @@ export const LIMIT_KEYS = [
   'clickRetentionDays',        // how far back link statistics can look
   'teamMembers',               // active members + outstanding invitations, incl. the owner
   'mediaStorageMb',            // total size of the media library
-  'activityLogRetentionDays'   // how far back the workspace activity log can look
+  'activityLogRetentionDays',  // how far back the workspace activity log can look
+  'tagResearchPerMonth'        // hashtag research runs this calendar month (0 = not on this plan)
 ] as const
 export type LimitKey = (typeof LIMIT_KEYS)[number]
 
@@ -48,7 +49,8 @@ export const LIMIT_META: Record<LimitKey, { label: string, sentence: string, hin
   clickRetentionDays:       { label: 'Riwayat statistik', sentence: 'hari riwayat statistik', hint: 'Seberapa jauh ke belakang statistik klik bisa dilihat.', unit: 'hari' },
   teamMembers:              { label: 'Anggota tim', sentence: 'anggota tim', hint: 'Termasuk pemilik.', unit: 'orang' },
   mediaStorageMb:           { label: 'Penyimpanan media', sentence: 'MB penyimpanan media', hint: '', unit: 'MB' },
-  activityLogRetentionDays: { label: 'Riwayat log aktivitas', sentence: 'hari riwayat log aktivitas', hint: '', unit: 'hari' }
+  activityLogRetentionDays: { label: 'Riwayat log aktivitas', sentence: 'hari riwayat log aktivitas', hint: '', unit: 'hari' },
+  tagResearchPerMonth:      { label: 'Riset tagar per bulan', sentence: 'riset tagar per bulan', hint: 'Tiap kali tombol "Riset" dipakai untuk satu keterangan. Cek kualitas tagar selalu gratis.', unit: 'riset' }
 }
 export const FEATURE_META: Record<FeatureKey, { label: string, hint: string }>
 
@@ -81,6 +83,7 @@ Always read plan JSON through `normalizeLimits` / `normalizeFeatures`. A new key
 | teamMembers | 1 | 1 | 3 |
 | mediaStorageMb | 500 | 5.000 | 20.000 |
 | activityLogRetentionDays | 0 | 30 | 90 |
+| tagResearchPerMonth | 0 | 100 | -1 |
 | removeBranding | – | ✓ | ✓ |
 | anyDestination | – | ✓ | ✓ |
 | customSlug | – | ✓ | ✓ |
@@ -174,6 +177,7 @@ Monthly limits count real rows; nothing keeps a separate counter that could drif
 | `autoReplyDmsPerMonth` | `dm_events` with `status = 'dm_sent'` this calendar month |
 | `teamMembers` | active `workspace_members` + pending unexpired `workspace_invitations` |
 | `mediaStorageMb` | `sum(media_assets.bytes)` where status ≠ `failed` |
+| `tagResearchPerMonth` | `hashtag_research_runs` created this calendar month (a repeat for the same caption within 30 minutes reuses its row) |
 
 Month boundaries are cut on the workspace clock in SQL with the `(col AT TIME ZONE 'UTC') AT TIME ZONE tz` rule (`16` §9).
 
@@ -203,6 +207,7 @@ Three behaviours exist; one is picked per rule:
 | `scheduledPostsPerMonth` | schedule or publish now (counted per target) | 402 `LIMIT_REACHED`; the composer shows the remaining count before submit |
 | `autoReplyDmsPerMonth` | DM sender (`dm.send` job) | **skip**: `dm_events.status = 'rate_limited'`, reason `plan_quota`; the owner gets `autoreply_paused` **once per month**, not per comment |
 | `mediaStorageMb` | presign an upload | 402 `LIMIT_REACHED` |
+| `tagResearchPerMonth` | "Riset" in the composer's hashtag panel | 402 `PLAN_REQUIRED` when 0, `LIMIT_REACHED` when used up; the quality check and list ideas stay free |
 | `clickRetentionDays` | statistics window resolver | window clamped, flagged |
 | `activityLogRetentionDays` | activity log query (also capped by `privacy.auditRetentionDays`) | window clamped |
 | `removeBranding` | Etalase render | footer shown, setting kept |
@@ -225,7 +230,7 @@ Deliberately **ungated on every tier** (record next to the table so nobody "fixe
 `GET /api/app/entitlements` returns entitlements **plus current usage**, so the UI can disable a button before the API answers 402:
 
 ```json
-{ "...Entitlements": "…", "usage": { "socialAccounts": 2, "scheduledPostsPerMonth": 14, "bioPages": 1, "autoReplyRules": 1, "autoReplyDmsPerMonth": 37, "teamMembers": 1, "mediaStorageMb": 212 } }
+{ "...Entitlements": "…", "usage": { "socialAccounts": 2, "scheduledPostsPerMonth": 14, "bioPages": 1, "autoReplyRules": 1, "autoReplyDmsPerMonth": 37, "teamMembers": 1, "mediaStorageMb": 212, "tagResearchPerMonth": 4 } }
 ```
 
 Client composable `useEntitlements()` (`useState`-backed, one fetch per page load, refreshed after mutations that change usage):

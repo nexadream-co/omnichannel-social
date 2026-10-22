@@ -196,7 +196,7 @@ export const inactivityJob: JobHandler = async (_job, base) => {
 }
 
 /** Latest snapshot per target (post detail numbers). */
-export async function latestInsights(db: Database, targetIds: string[]): Promise<Map<string, { metrics: Record<string, number>, capturedAt: Date }>> {
+export async function latestInsights(db: Executor, targetIds: string[]): Promise<Map<string, { metrics: Record<string, number>, capturedAt: Date }>> {
   if (!targetIds.length) return new Map()
   const rows = await db.selectDistinctOn([insightSnapshots.postTargetId], { postTargetId: insightSnapshots.postTargetId, metrics: insightSnapshots.metrics, capturedAt: insightSnapshots.capturedAt })
     .from(insightSnapshots).where(inArray(insightSnapshots.postTargetId, targetIds)).orderBy(insightSnapshots.postTargetId, desc(insightSnapshots.capturedAt))

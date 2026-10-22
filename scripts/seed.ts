@@ -17,6 +17,7 @@ const { SETTINGS_CATALOG } = await import('../shared/utils/settings')
 const { EMAIL_TEMPLATES, NOTIFICATION_TEMPLATES } = await import('../shared/utils/templates')
 const { SEED_PLANS } = await import('../shared/utils/plans')
 const { SCHEDULES } = await import('../server/core/jobs/schedules')
+const { SEED_HASHTAGS } = await import('../shared/hashtags/library-seed')
 const { baseContext } = await import('../server/core/context')
 const { provisionWorkspace } = await import('../server/core/registration')
 const { encrypt } = await import('../server/core/crypto')
@@ -95,6 +96,9 @@ if (!isProduction) {
   const active = await db.select({ id: schema.paymentGateways.id }).from(schema.paymentGateways).where(eq(schema.paymentGateways.isActive, true))
   if (!active.length) await db.update(schema.paymentGateways).set({ isActive: true }).where(eq(schema.paymentGateways.id, 'gateway-simulator'))
 }
+
+step('hashtag list (new tags only, admin edits kept)')
+await db.insert(schema.hashtagLibrary).values(SEED_HASHTAGS).onConflictDoNothing({ target: schema.hashtagLibrary.tag })
 
 step('job schedules')
 for (const schedule of SCHEDULES) {

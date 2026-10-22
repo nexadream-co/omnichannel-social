@@ -105,6 +105,14 @@ export function fakeAdapter(platform: Platform): ChannelAdapter {
     async replyToComment(c, commentId, text) {
       fakeOutbox.push({ kind: 'reply', accountId: c.account.id, commentId, text })
     },
+    // Deterministic activity per tag, so research results are stable in tests and local QA.
+    tagSearch: {
+      allowed: () => true,
+      async activity(_c, tag) {
+        const recentPosts = [...tag].reduce((sum, ch) => sum + ch.charCodeAt(0), 0) % 150
+        return { recentPosts: Math.min(recentPosts, 100), capped: recentPosts >= 100, lastPostAt: recentPosts ? new Date(Date.now() - 3_600_000).toISOString() : null }
+      }
+    },
     normalizeError: e => (e instanceof ChannelError ? e.detail : { kind: 'transient', message: String(e) })
   }
 }
