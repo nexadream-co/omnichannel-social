@@ -215,8 +215,8 @@
     }
   },
   "landing": {
-    "heroTitle": "Semua alat jualan afiliasi, jadi satu",
-    "heroBody": "Jadwalkan postingan, kumpulkan link produk, dan balas komentar otomatis untuk Instagram, Threads dan Facebook.",
+    "heroTitle": "Jualan afiliasi lewat konten, tanpa ribet",
+    "heroBody": "Buat postingan sekali dan pilih jamnya. Postingan terbit sendiri di Instagram, Threads dan Facebook, link produkmu rapi di satu tempat, dan komentar \"mau\" dibalas otomatis.",
     "ctaRegister": "Coba gratis",
     "ctaLogin": "Masuk",
     "ctaClosed": "Pendaftaran sedang ditutup",
@@ -228,14 +228,14 @@
       "faq": "FAQ",
       "contact": "Kontak"
     },
-    "featuresTitle": "Semua yang kamu butuhkan untuk jualan lewat konten",
+    "featuresTitle": "Semua beres di satu tempat",
     "howTitle": "Mulai dalam 3 langkah",
     "step1Title": "Hubungkan akun",
-    "step1Body": "Instagram Bisnis/Kreator, Threads, Halaman Facebook",
-    "step2Title": "Tempel link produk",
-    "step2Body": "Shopee, Tokopedia, TikTok Shop, Lazada",
-    "step3Title": "Jadwalkan",
-    "step3Body": "Pilih jam, terbit otomatis",
+    "step1Body": "Instagram (akun Bisnis atau Kreator), Threads atau Halaman Facebook. Cukup login.",
+    "step2Title": "Tulis postingan",
+    "step2Body": "Pilih foto, tulis caption, tempel link produk dari Shopee, Tokopedia, TikTok Shop atau Lazada.",
+    "step3Title": "Pilih jam",
+    "step3Body": "Postingan terbit sendiri, kamu tinggal santai.",
     "pricingTitle": "Harga sederhana",
     "pricingBody": "Mulai gratis. Upgrade kapan saja saat jualanmu tumbuh.",
     "monthly": "Bulanan",
@@ -274,28 +274,6 @@
       "paid": "{plan} {price}/bulan"
     },
     "soon": "Segera hadir",
-    "flow": {
-      "alt": "Dulu: posting di tiap aplikasi, alarm jam posting, aplikasi link di bio, pemendek link, balas DM satu-satu dan cari tagar sendiri. Sekarang semuanya ada di Socialz.id: jadwal, link dan klik, Etalase, dan Balas Otomatis, lalu terbit otomatis ke Instagram, Threads dan Facebook.",
-      "caption": {
-        "before": "Dulu: banyak aplikasi",
-        "hub": "Sekarang: satu tempat",
-        "after": "Terbit otomatis"
-      },
-      "tools": {
-        "post": "Posting di tiap aplikasi",
-        "alarm": "Alarm jam posting",
-        "bio": "Aplikasi link di bio",
-        "shortener": "Pemendek link",
-        "dm": "Balas DM satu-satu",
-        "hashtag": "Cari tagar sendiri"
-      },
-      "hub": {
-        "schedule": "Jadwal",
-        "links": "Link & klik",
-        "etalase": "Etalase",
-        "reply": "Balas Otomatis"
-      }
-    },
     "cards": {
       "schedule": {
         "title": "Jadwalkan sekali",
@@ -312,6 +290,14 @@
       "reply": {
         "title": "Balas Otomatis",
         "body": "Ada yang komen \"mau\", link langsung ke DM."
+      },
+      "editor": {
+        "title": "Edit foto & video",
+        "body": "Potong ke ukuran Feed dan Reels, tambah filter, teks dan label harga."
+      },
+      "hashtags": {
+        "title": "Saran tagar",
+        "body": "Tagar yang cocok dengan caption, yang bermasalah ditandai."
       }
     },
     "pay": {
@@ -320,6 +306,133 @@
       "ewallet": "E-wallet",
       "va": "Transfer bank",
       "card": "Kartu"
+    },
+    "worksWith": "Untuk",
+    "featuresBody": "Pekerjaan yang biasanya butuh banyak aplikasi, sekarang cukup di Socialz.id.",
+    "pain": {
+      "title": "Kenal rasanya?",
+      "body": "Baru mulai jualan lewat konten, biasanya begini.",
+      "items": {
+        "schedule": {
+          "title": "Begadang demi jam ramai",
+          "body": "Pasang alarm malam-malam, lalu salin postingan yang sama ke Instagram, Threads dan Facebook satu per satu.",
+          "fix": "Beres dengan jadwal otomatis"
+        },
+        "editor": {
+          "title": "Foto produk kepotong",
+          "body": "Ukuran Feed dan Reels beda-beda. Produknya malah terpotong, jadi harus buka aplikasi edit lagi.",
+          "fix": "Beres dengan edit foto & video"
+        },
+        "hashtags": {
+          "title": "Sudah pakai #fyp, tetap sepi",
+          "body": "Tagar asal comot tidak membantu orang menemukan postinganmu, dan kamu tidak tahu mana yang bermasalah.",
+          "fix": "Beres dengan saran tagar"
+        },
+        "links": {
+          "title": "Tidak tahu link mana yang diklik",
+          "body": "Link afiliasi panjang dan berantakan. Setelah dibagikan, kamu tidak tahu produk mana yang dilirik orang.",
+          "fix": "Beres dengan link pendek"
+        },
+        "etalase": {
+          "title": "Banyak produk, cuma satu link di bio",
+          "body": "Tiap ganti produk, link di bio harus diganti. Produk yang lama jadi tenggelam.",
+          "fix": "Beres dengan Etalase"
+        },
+        "reply": {
+          "title": "Komentar \"mau kak\" menumpuk",
+          "body": "Membalas satu per satu itu melelahkan. Telat sedikit, calon pembeli keburu lupa.",
+          "fix": "Beres dengan Balas Otomatis"
+        }
+      }
+    },
+    "newbie": {
+      "title": "Baru mulai? Justru cocok.",
+      "body": "Socialz.id dibuat untuk kamu yang baru pertama kali mengurus media sosial untuk jualan.",
+      "points": {
+        "free": {
+          "title": "Gratis untuk mulai",
+          "body": "Tanpa kartu kredit. Upgrade nanti, kalau jualanmu sudah jalan."
+        },
+        "phone": {
+          "title": "Cukup dari HP",
+          "body": "Semua bisa dikerjakan dari HP, tidak perlu laptop."
+        },
+        "plain": {
+          "title": "Bahasa sehari-hari",
+          "body": "Tanpa istilah teknis. Kalau ada yang salah, kami kasih tahu cara membetulkannya."
+        },
+        "guided": {
+          "title": "Dipandu sampai bisa",
+          "body": "Panduan di Beranda menemanimu sampai postingan pertama terjadwal."
+        }
+      }
+    },
+    "art": {
+      "night": {
+        "time": "23.45",
+        "alarm": "Waktunya posting!"
+      },
+      "crop": {
+        "cut": "Kepotong"
+      },
+      "tags": {
+        "views": "8",
+        "ask": "Kok sepi?",
+        "general": "terlalu umum"
+      },
+      "link": {
+        "ask": "Siapa yang klik?"
+      },
+      "bio": {
+        "only": "Cuma 1 link",
+        "more": "+12 produk"
+      },
+      "comments": {
+        "c1": "Mau kak!",
+        "c2": "Link-nya mana kak?",
+        "c3": "Masih ada?",
+        "c4": "Mau dong",
+        "unread": "24 belum dibalas",
+        "ago": "3 jam lalu"
+      },
+      "days": "Sen Sel Rab Kam Jum Sab Min",
+      "scheduled": "Jumat 19.00, terjadwal",
+      "price": "Rp89rb",
+      "ratio": {
+        "feed": "Feed 4:5",
+        "square": "Kotak 1:1",
+        "reels": "Reels 9:16"
+      },
+      "clicks": "klik minggu ini",
+      "buy": "Beli",
+      "oneLink": "1 link untuk semua",
+      "dm": "Ini link-nya kak:",
+      "sent": "Terkirim otomatis ke DM",
+      "connected": "Terhubung",
+      "productLink": "Link produk",
+      "time": "19.00",
+      "auto": "Terbit otomatis",
+      "guide": {
+        "title": "Panduan mulai",
+        "progress": "2 dari 4",
+        "connect": "Hubungkan akun",
+        "etalase": "Buat Etalase",
+        "product": "Tambah produk pertama",
+        "post": "Jadwalkan postingan pertama"
+      },
+      "help": {
+        "question": "Kak, cara hubungkan Instagram gimana?",
+        "answer": "Bisa kak, kami pandu ya"
+      },
+      "relax": "Postingan terbit sendiri",
+      "hero": {
+        "scheduled": "Terjadwal",
+        "today": "Hari ini, 19.00",
+        "comment": "Mau kak!",
+        "sent": "Link terkirim ke DM",
+        "etalase": "Etalase",
+        "clicks": "Klik produk hari ini"
+      }
     }
   },
   "error": {

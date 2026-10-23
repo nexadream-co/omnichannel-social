@@ -49,22 +49,28 @@ const planChips = computed(() => {
   ].filter(Boolean) as string[]
 })
 
+const live = [
+  { name: 'Instagram', icon: 'i-simple-icons-instagram' },
+  { name: 'Threads', icon: 'i-simple-icons-threads' },
+  { name: 'Facebook', icon: 'i-simple-icons-facebook' }
+]
 const soon = [
   { name: 'TikTok', icon: 'i-simple-icons-tiktok' },
   { name: 'YouTube', icon: 'i-simple-icons-youtube' },
   { name: 'X', icon: 'i-simple-icons-x' }
 ]
-// Each feature as a tiny flow of icons: what goes in, what happens, what comes out.
-const cards = [
-  { key: 'schedule', flow: [['i-lucide-pen-line'], ['i-lucide-clock'], ['i-simple-icons-instagram', 'i-simple-icons-threads', 'i-simple-icons-facebook']] },
-  { key: 'links', flow: [['i-lucide-link'], ['i-lucide-mouse-pointer-click'], ['i-lucide-chart-column']] },
-  { key: 'etalase', flow: [['i-simple-icons-instagram'], ['i-lucide-link-2'], ['i-lucide-store']] },
-  { key: 'reply', flow: [['i-lucide-message-circle'], ['i-lucide-message-circle-reply'], ['i-lucide-send']] }
-]
+// One pain per feature, in the same order: the "Kenal rasanya?" cards point to the feature that fixes them.
+const features = ['schedule', 'editor', 'hashtags', 'links', 'etalase', 'reply'] as const
 const steps = [
-  { icon: 'i-lucide-plug', title: 'landing.step1Title', body: 'landing.step1Body' },
-  { icon: 'i-lucide-link', title: 'landing.step2Title', body: 'landing.step2Body' },
-  { icon: 'i-lucide-calendar-check', title: 'landing.step3Title', body: 'landing.step3Body' }
+  { art: 'connect', title: 'landing.step1Title', body: 'landing.step1Body' },
+  { art: 'compose', title: 'landing.step2Title', body: 'landing.step2Body' },
+  { art: 'time', title: 'landing.step3Title', body: 'landing.step3Body' }
+] as const
+const newbiePoints = [
+  { key: 'free', icon: 'i-lucide-gift' },
+  { key: 'phone', icon: 'i-lucide-smartphone' },
+  { key: 'plain', icon: 'i-lucide-message-circle-heart' },
+  { key: 'guided', icon: 'i-lucide-list-checks' }
 ]
 const payMethods = [
   { key: 'qris', icon: 'i-lucide-qr-code' },
@@ -78,20 +84,20 @@ const whatsappUrl = computed(() => data.value?.company.whatsapp ? `https://wa.me
 
 <template>
   <div>
-    <!-- Hero: one sentence, the price, and the many-to-one picture -->
+    <!-- Hero: one friendly promise, the price, and a phone where the work happens by itself -->
     <section
       id="beranda"
-      class="scroll-mt-20 pt-12 pb-14 sm:pt-16 sm:pb-20"
+      class="scroll-mt-20 overflow-hidden pt-10 pb-14 sm:pt-16 sm:pb-20"
     >
-      <UContainer class="space-y-10 sm:space-y-12">
-        <div class="mx-auto max-w-2xl space-y-5 text-center">
+      <UContainer class="grid items-center gap-10 lg:grid-cols-[1.1fr_1fr] lg:gap-12">
+        <div class="mx-auto max-w-xl space-y-5 text-center lg:mx-0 lg:text-left">
           <h1 class="text-4xl sm:text-5xl font-bold tracking-tight text-highlighted text-balance">
             {{ t('landing.heroTitle') }}
           </h1>
           <p class="text-lg text-muted text-pretty">
             {{ t('landing.heroBody') }}
           </p>
-          <div class="flex flex-col sm:flex-row gap-3 justify-center">
+          <div class="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start">
             <UButton
               v-if="registrationOpen"
               :to="localePath('/app/auth/register')"
@@ -118,7 +124,7 @@ const whatsappUrl = computed(() => data.value?.company.whatsapp ? `https://wa.me
               :label="t('landing.ctaLogin')"
             />
           </div>
-          <div class="flex flex-wrap justify-center gap-2">
+          <div class="flex flex-wrap justify-center gap-2 lg:justify-start">
             <UBadge
               v-for="chip in planChips"
               :key="chip"
@@ -128,74 +134,73 @@ const whatsappUrl = computed(() => data.value?.company.whatsapp ? `https://wa.me
               :label="chip"
             />
           </div>
+          <p class="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-sm text-muted lg:justify-start">
+            <span class="inline-flex items-center gap-2 text-default">
+              {{ t('landing.worksWith') }}
+              <UIcon
+                v-for="p in live"
+                :key="p.name"
+                :name="p.icon"
+                class="size-4"
+                :aria-label="p.name"
+              />
+            </span>
+            <span aria-hidden="true">·</span>
+            <span class="inline-flex items-center gap-2">
+              {{ t('landing.soon') }}
+              <UIcon
+                v-for="p in soon"
+                :key="p.name"
+                :name="p.icon"
+                class="size-4"
+                :aria-label="p.name"
+              />
+            </span>
+          </p>
         </div>
 
-        <LandingUnifyFlow v-reveal />
-
-        <p class="flex items-center justify-center gap-2 text-sm text-muted">
-          {{ t('landing.soon') }}
-          <UIcon
-            v-for="p in soon"
-            :key="p.name"
-            :name="p.icon"
-            class="size-4"
-            :aria-label="p.name"
-          />
-        </p>
+        <LandingHeroArt v-reveal />
       </UContainer>
     </section>
 
-    <!-- Features: four cards, each a small icon flow and one line -->
+    <!-- Sound familiar? A newcomer's pains, each pointing to its fix -->
     <section
-      id="fitur"
-      class="scroll-mt-20 border-t border-default py-14 sm:py-20"
+      id="masalah"
+      class="scroll-mt-20 border-t border-default bg-muted/40 py-14 sm:py-20"
     >
       <UContainer class="space-y-10">
-        <h2
+        <div
           v-reveal
-          class="text-center text-2xl sm:text-3xl font-bold tracking-tight text-highlighted text-balance"
+          class="mx-auto max-w-2xl space-y-2 text-center"
         >
-          {{ t('landing.featuresTitle') }}
-        </h2>
-        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <h2 class="text-2xl sm:text-3xl font-bold tracking-tight text-highlighted text-balance">
+            {{ t('landing.pain.title') }}
+          </h2>
+          <p class="text-muted text-pretty">
+            {{ t('landing.pain.body') }}
+          </p>
+        </div>
+        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <div
-            v-for="card in cards"
-            :key="card.key"
+            v-for="key in features"
+            :key="key"
             v-reveal
-            class="rounded-xl border border-default p-5 space-y-4"
+            class="flex flex-col rounded-xl border border-default bg-default p-3"
           >
-            <div
-              class="flex items-center gap-1.5"
-              aria-hidden="true"
-            >
-              <template
-                v-for="(step, i) in card.flow"
-                :key="i"
-              >
-                <span
-                  class="h-10 min-w-10 px-2 rounded-lg flex items-center justify-center gap-1"
-                  :class="i === card.flow.length - 1 ? 'bg-primary text-inverted' : 'bg-elevated text-default'"
-                >
-                  <UIcon
-                    v-for="icon in step"
-                    :key="icon"
-                    :name="icon"
-                    class="size-4"
-                  />
-                </span>
-                <UIcon
-                  v-if="i < card.flow.length - 1"
-                  name="i-lucide-arrow-right"
-                  class="size-3.5 text-dimmed"
-                />
-              </template>
-            </div>
-            <div>
+            <LandingPainArt :kind="key" />
+            <div class="flex flex-1 flex-col px-2 pt-4 pb-1">
               <h3 class="font-semibold text-highlighted">
-                {{ t(`landing.cards.${card.key}.title`) }}
+                {{ t(`landing.pain.items.${key}.title`) }}
               </h3>
               <p class="mt-1 text-sm text-muted">
-                {{ t(`landing.cards.${card.key}.body`) }}
+                {{ t(`landing.pain.items.${key}.body`) }}
+              </p>
+              <p class="art-ink mt-auto flex items-center gap-1.5 pt-3 text-sm font-medium">
+                <UIcon
+                  name="i-lucide-circle-check"
+                  class="size-4 shrink-0"
+                />
+                {{ t(`landing.pain.items.${key}.fix`) }}
               </p>
             </div>
           </div>
@@ -203,10 +208,49 @@ const whatsappUrl = computed(() => data.value?.company.whatsapp ? `https://wa.me
       </UContainer>
     </section>
 
-    <!-- How it works: three steps joined by arrows -->
+    <!-- Features: the same six jobs, done by Socialz.id. Wide cards (picture beside the words) so this
+         reads as the answer to the grid above, not a second copy of it. -->
+    <section
+      id="fitur"
+      class="scroll-mt-20 border-t border-default py-14 sm:py-20"
+    >
+      <UContainer class="space-y-10">
+        <div
+          v-reveal
+          class="mx-auto max-w-2xl space-y-2 text-center"
+        >
+          <h2 class="text-2xl sm:text-3xl font-bold tracking-tight text-highlighted text-balance">
+            {{ t('landing.featuresTitle') }}
+          </h2>
+          <p class="text-muted text-pretty">
+            {{ t('landing.featuresBody') }}
+          </p>
+        </div>
+        <div class="grid gap-4 lg:grid-cols-2">
+          <div
+            v-for="key in features"
+            :key="key"
+            v-reveal
+            class="grid items-center gap-4 rounded-xl border border-default p-3 sm:grid-cols-[1.1fr_1fr]"
+          >
+            <LandingFeatureArt :kind="key" />
+            <div class="px-2 pb-1 sm:py-2 sm:pr-3 sm:pl-0">
+              <h3 class="text-lg font-semibold text-highlighted">
+                {{ t(`landing.cards.${key}.title`) }}
+              </h3>
+              <p class="mt-1 text-sm text-muted text-pretty">
+                {{ t(`landing.cards.${key}.body`) }}
+              </p>
+            </div>
+          </div>
+        </div>
+      </UContainer>
+    </section>
+
+    <!-- How it works: three illustrated steps -->
     <section
       id="cara-kerja"
-      class="scroll-mt-20 border-t border-default py-14 sm:py-20"
+      class="scroll-mt-20 border-t border-default bg-muted/40 py-14 sm:py-20"
     >
       <UContainer class="space-y-10">
         <h2
@@ -215,34 +259,78 @@ const whatsappUrl = computed(() => data.value?.company.whatsapp ? `https://wa.me
         >
           {{ t('landing.howTitle') }}
         </h2>
-        <ol class="grid gap-8 md:grid-cols-3 md:gap-4">
+        <ol class="grid gap-4 md:grid-cols-3">
           <li
             v-for="(step, index) in steps"
             :key="step.title"
             v-reveal
-            class="relative flex flex-col items-center text-center gap-3"
+            class="relative flex flex-col rounded-xl border border-default bg-default p-3 text-center"
           >
-            <span class="relative size-14 rounded-2xl border border-default flex items-center justify-center">
-              <UIcon
-                :name="step.icon"
-                class="size-6 text-primary"
-              />
-              <span class="absolute -top-2 -right-2 size-6 rounded-full bg-primary text-inverted text-xs font-semibold flex items-center justify-center">{{ index + 1 }}</span>
-            </span>
+            <LandingSceneArt
+              :kind="step.art"
+              class="rounded-lg bg-elevated/60"
+            />
+            <span class="mx-auto -mt-3.5 flex size-7 items-center justify-center rounded-full art-chip text-sm font-semibold ring-4 ring-(--ui-bg)">{{ index + 1 }}</span>
+            <h3 class="mt-2 font-semibold text-highlighted">
+              {{ t(step.title) }}
+            </h3>
+            <p class="mx-auto mt-1 max-w-64 pb-2 text-sm text-muted">
+              {{ t(step.body) }}
+            </p>
             <UIcon
               v-if="index < steps.length - 1"
               name="i-lucide-arrow-right"
-              class="hidden md:block absolute top-5 -right-3 size-5 text-dimmed"
+              class="absolute top-16 -right-3.5 z-10 hidden size-5 text-dimmed md:block"
               aria-hidden="true"
             />
-            <h3 class="font-semibold text-highlighted">
-              {{ t(step.title) }}
-            </h3>
-            <p class="text-sm text-muted max-w-56">
-              {{ t(step.body) }}
-            </p>
           </li>
         </ol>
+      </UContainer>
+    </section>
+
+    <!-- Just starting out: what makes it safe to try -->
+    <section class="border-t border-default py-14 sm:py-20">
+      <UContainer class="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
+        <LandingSceneArt
+          v-reveal
+          kind="guide"
+          class="order-last lg:order-first"
+        />
+        <div
+          v-reveal
+          class="space-y-6"
+        >
+          <div class="space-y-2 text-center lg:text-left">
+            <h2 class="text-2xl sm:text-3xl font-bold tracking-tight text-highlighted text-balance">
+              {{ t('landing.newbie.title') }}
+            </h2>
+            <p class="text-muted text-pretty">
+              {{ t('landing.newbie.body') }}
+            </p>
+          </div>
+          <ul class="grid gap-5 sm:grid-cols-2">
+            <li
+              v-for="point in newbiePoints"
+              :key="point.key"
+              class="flex gap-3"
+            >
+              <span class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <UIcon
+                  :name="point.icon"
+                  class="size-5"
+                />
+              </span>
+              <div>
+                <h3 class="font-semibold text-highlighted">
+                  {{ t(`landing.newbie.points.${point.key}.title`) }}
+                </h3>
+                <p class="mt-0.5 text-sm text-muted">
+                  {{ t(`landing.newbie.points.${point.key}.body`) }}
+                </p>
+              </div>
+            </li>
+          </ul>
+        </div>
       </UContainer>
     </section>
 
@@ -342,6 +430,10 @@ const whatsappUrl = computed(() => data.value?.company.whatsapp ? `https://wa.me
               :label="t('landing.whatsapp')"
             />
           </div>
+          <LandingSceneArt
+            kind="help"
+            class="hidden pt-4 lg:block"
+          />
         </div>
         <UCard>
           <LandingContactForm />
@@ -352,12 +444,19 @@ const whatsappUrl = computed(() => data.value?.company.whatsapp ? `https://wa.me
     <!-- Final CTA -->
     <section
       v-if="registrationOpen"
-      class="border-t border-default py-14 sm:py-20"
+      class="border-t border-default bg-muted/40 py-14 sm:py-20"
     >
       <UContainer class="text-center space-y-5">
+        <LandingSceneArt
+          v-reveal
+          kind="relax"
+        />
         <h2 class="text-2xl sm:text-3xl font-bold tracking-tight text-highlighted text-balance">
           {{ t('landing.finalTitle') }}
         </h2>
+        <p class="text-muted">
+          {{ t('landing.noCard') }}
+        </p>
         <UButton
           :to="localePath('/app/auth/register')"
           size="xl"

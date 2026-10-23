@@ -51,21 +51,27 @@
   }
 }
 
-/* Landing "many to unified" diagram: dots flow along the lines into the hub and out to the platforms. */
+/*
+ * Landing illustrations (Landing*Art.vue) use 10-11px labels, so their colours are one shade darker than the
+ * Nuxt UI tokens (brand-500 on white is 3.7:1) to reach WCAG AA 4.5:1 in both themes.
+ */
+.art-ink { color: var(--color-brand-700); }
+.art-chip { background-color: var(--color-brand-600); color: #fff; }
+.art-ok { color: #15803d; }
+.art-warn { color: #b45309; }
+.dark .art-ink { color: var(--color-brand-400); }
+.dark .art-chip { background-color: var(--color-brand-400); color: #18181b; }
+.dark .art-ok { color: #4ade80; }
+.dark .art-warn { color: #fcd34d; }
+
+/* Landing hero illustration: the cards around the phone bob gently, as if the work happens by itself. */
 @media (prefers-reduced-motion: no-preference) {
-  .unify-flow {
-    animation: unify-flow 1s linear infinite;
-  }
-  .unify-pulse {
-    animation: unify-pulse 2.4s ease-out infinite;
+  .art-float {
+    animation: art-float 6s ease-in-out infinite;
   }
 }
 
-@keyframes unify-flow {
-  to { stroke-dashoffset: -20; }
-}
-
-@keyframes unify-pulse {
-  0% { opacity: 0.6; transform: scale(1); }
-  100% { opacity: 0; transform: scale(1.08); }
+@keyframes art-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
 }

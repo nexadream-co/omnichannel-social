@@ -215,8 +215,8 @@
     }
   },
   "landing": {
-    "heroTitle": "All your affiliate selling tools, in one place",
-    "heroBody": "Schedule posts, collect product links and reply to comments automatically for Instagram, Threads and Facebook.",
+    "heroTitle": "Sell affiliate products through your content, without the hassle",
+    "heroBody": "Write a post once and pick a time. It publishes itself on Instagram, Threads and Facebook, your product links stay in one place, and \"want\" comments get a reply automatically.",
     "ctaRegister": "Try free",
     "ctaLogin": "Sign in",
     "ctaClosed": "Registration is closed for now",
@@ -228,14 +228,14 @@
       "faq": "FAQ",
       "contact": "Contact"
     },
-    "featuresTitle": "Everything you need to sell through content",
+    "featuresTitle": "All sorted, in one place",
     "howTitle": "Start in 3 steps",
     "step1Title": "Connect accounts",
-    "step1Body": "Instagram Business/Creator, Threads, Facebook Page",
-    "step2Title": "Paste product links",
-    "step2Body": "Shopee, Tokopedia, TikTok Shop, Lazada",
-    "step3Title": "Schedule",
-    "step3Body": "Pick a time, it publishes itself",
+    "step1Body": "Instagram (Business or Creator account), Threads or a Facebook Page. Just sign in.",
+    "step2Title": "Write a post",
+    "step2Body": "Pick a photo, write a caption, paste a product link from Shopee, Tokopedia, TikTok Shop or Lazada.",
+    "step3Title": "Pick a time",
+    "step3Body": "The post publishes itself while you take it easy.",
     "pricingTitle": "Simple pricing",
     "pricingBody": "Start free. Upgrade any time as your sales grow.",
     "monthly": "Monthly",
@@ -274,28 +274,6 @@
       "paid": "{plan} {price}/month"
     },
     "soon": "Coming soon",
-    "flow": {
-      "alt": "Before: posting in each app, posting-time alarms, a link-in-bio app, a link shortener, answering DMs one by one and hunting for hashtags. Now it is all in Socialz.id: scheduling, links and clicks, Storefront and Auto Reply, publishing automatically to Instagram, Threads and Facebook.",
-      "caption": {
-        "before": "Before: many apps",
-        "hub": "Now: one place",
-        "after": "Published automatically"
-      },
-      "tools": {
-        "post": "Posting in each app",
-        "alarm": "Posting-time alarms",
-        "bio": "Link-in-bio app",
-        "shortener": "Link shortener",
-        "dm": "DMs one by one",
-        "hashtag": "Hunting for hashtags"
-      },
-      "hub": {
-        "schedule": "Schedule",
-        "links": "Links & clicks",
-        "etalase": "Storefront",
-        "reply": "Auto Reply"
-      }
-    },
     "cards": {
       "schedule": {
         "title": "Schedule once",
@@ -312,6 +290,14 @@
       "reply": {
         "title": "Auto Reply",
         "body": "Someone comments \"want\", the link goes to their DMs."
+      },
+      "editor": {
+        "title": "Edit photos & videos",
+        "body": "Crop to Feed and Reels sizes, add filters, text and price tags."
+      },
+      "hashtags": {
+        "title": "Hashtag ideas",
+        "body": "Hashtags that fit your caption, with problem ones flagged."
       }
     },
     "pay": {
@@ -320,6 +306,133 @@
       "ewallet": "E-wallet",
       "va": "Bank transfer",
       "card": "Card"
+    },
+    "worksWith": "For",
+    "featuresBody": "Jobs that usually take a handful of apps, now in Socialz.id.",
+    "pain": {
+      "title": "Sound familiar?",
+      "body": "Starting to sell through content usually looks like this.",
+      "items": {
+        "schedule": {
+          "title": "Staying up for the busy hour",
+          "body": "Setting a late-night alarm, then copying the same post to Instagram, Threads and Facebook one by one.",
+          "fix": "Sorted by automatic scheduling"
+        },
+        "editor": {
+          "title": "The product gets cropped out",
+          "body": "Feed and Reels sizes differ. The product ends up cut off, so it is back to another editing app.",
+          "fix": "Sorted by photo & video edits"
+        },
+        "hashtags": {
+          "title": "Used #fyp, still no views",
+          "body": "Random hashtags don't help people find your post, and you can't tell which ones cause trouble.",
+          "fix": "Sorted by hashtag ideas"
+        },
+        "links": {
+          "title": "No idea which link got clicks",
+          "body": "Affiliate links are long and messy. Once shared, you can't tell which products people looked at.",
+          "fix": "Sorted by short links"
+        },
+        "etalase": {
+          "title": "Many products, one bio link",
+          "body": "Every new product means changing the bio link, and older products get buried.",
+          "fix": "Sorted by Storefront"
+        },
+        "reply": {
+          "title": "\"Want!\" comments pile up",
+          "body": "Replying one by one is tiring. Reply late and the buyer has already moved on.",
+          "fix": "Sorted by Auto Reply"
+        }
+      }
+    },
+    "newbie": {
+      "title": "Just starting out? Even better.",
+      "body": "Socialz.id is made for people running social media for their sales for the first time.",
+      "points": {
+        "free": {
+          "title": "Free to start",
+          "body": "No credit card. Upgrade later, once your sales get going."
+        },
+        "phone": {
+          "title": "Your phone is enough",
+          "body": "Everything works from a phone, no laptop needed."
+        },
+        "plain": {
+          "title": "Everyday words",
+          "body": "No technical terms. When something goes wrong, we tell you how to fix it."
+        },
+        "guided": {
+          "title": "Guided all the way",
+          "body": "The guide on Home stays with you until your first post is scheduled."
+        }
+      }
+    },
+    "art": {
+      "night": {
+        "time": "11:45 PM",
+        "alarm": "Time to post!"
+      },
+      "crop": {
+        "cut": "Cut off"
+      },
+      "tags": {
+        "views": "8",
+        "ask": "Why so quiet?",
+        "general": "too general"
+      },
+      "link": {
+        "ask": "Who clicked?"
+      },
+      "bio": {
+        "only": "Only 1 link",
+        "more": "+12 products"
+      },
+      "comments": {
+        "c1": "Want!",
+        "c2": "Where's the link?",
+        "c3": "Still available?",
+        "c4": "I want one",
+        "unread": "24 unanswered",
+        "ago": "3 hours ago"
+      },
+      "days": "Mon Tue Wed Thu Fri Sat Sun",
+      "scheduled": "Fri 7:00 PM, scheduled",
+      "price": "Rp89k",
+      "ratio": {
+        "feed": "Feed 4:5",
+        "square": "Square 1:1",
+        "reels": "Reels 9:16"
+      },
+      "clicks": "clicks this week",
+      "buy": "Buy",
+      "oneLink": "1 link for all",
+      "dm": "Here's the link:",
+      "sent": "Sent to DMs automatically",
+      "connected": "Connected",
+      "productLink": "Product link",
+      "time": "7:00 PM",
+      "auto": "Publish automatically",
+      "guide": {
+        "title": "Getting started",
+        "progress": "2 of 4",
+        "connect": "Connect an account",
+        "etalase": "Create a Storefront",
+        "product": "Add your first product",
+        "post": "Schedule your first post"
+      },
+      "help": {
+        "question": "How do I connect Instagram?",
+        "answer": "Sure, we'll walk you through it"
+      },
+      "relax": "Posts publish themselves",
+      "hero": {
+        "scheduled": "Scheduled",
+        "today": "Today, 7:00 PM",
+        "comment": "Want!",
+        "sent": "Link sent to DMs",
+        "etalase": "Storefront",
+        "clicks": "Product clicks today"
+      }
     }
   },
   "error": {
