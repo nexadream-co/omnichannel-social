@@ -78,6 +78,13 @@
       "when": 1792765616406,
       "tag": "0010_planner",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1792775666395,
+      "tag": "0011_planner_reminders",
+      "breakpoints": true
     }
   ]
 }

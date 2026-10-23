@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { MediaView } from '#shared/media/types'
+import { IDEA_MAX_MEDIA } from '#shared/utils/planner'
 
 /** Galeri Media (docs/SCREENS.md #19): every photo and video, storage used, edit a copy, reuse in a post, delete. */
 definePageMeta({ layout: 'creator' })
@@ -69,6 +70,49 @@ async function remove(media: MediaView) {
   }
 }
 
+// "Jadikan ide": batch-shot photos and videos become content ideas (Rencana konten), spread over empty days.
+const canPlan = computed(() => auth.hasAbility('posts.write'))
+const selecting = ref(false)
+const picked = ref<string[]>([])
+const ideaDialog = ref(false)
+const ideaMode = ref<'each' | 'one'>('each')
+const makingIdeas = ref(false)
+function toggleSelecting() {
+  selecting.value = !selecting.value
+  picked.value = []
+}
+function togglePick(media: MediaView) {
+  if (media.status !== 'ready') return
+  if (picked.value.includes(media.id)) picked.value = picked.value.filter(id => id !== media.id)
+  else if (picked.value.length < IDEA_MAX_MEDIA) picked.value = [...picked.value, media.id]
+  else toast.add({ title: t('mediaLibrary.toIdeas.max', { n: IDEA_MAX_MEDIA }), color: 'warning' })
+}
+const modeItems = computed(() => [
+  { value: 'each', label: t('mediaLibrary.toIdeas.each'), description: t('mediaLibrary.toIdeas.eachHint') },
+  { value: 'one', label: t('mediaLibrary.toIdeas.one'), description: t('mediaLibrary.toIdeas.oneHint') }
+])
+async function makeIdeas() {
+  makingIdeas.value = true
+  try {
+    const { items } = await apiFetch<{ items: { id: string, plannedOn: string | null }[] }>('/api/app/planner/ideas/from-media', {
+      method: 'POST', body: { mediaIds: picked.value, mode: ideaMode.value, locale: locale.value === 'en' ? 'en' : 'id' }
+    })
+    const firstDay = items.find(item => item.plannedOn)?.plannedOn
+    toast.add({
+      title: firstDay ? t('mediaLibrary.toIdeas.doneDated', { n: items.length }) : t('mediaLibrary.toIdeas.doneBank', { n: items.length }),
+      color: 'success',
+      actions: [{ label: t('mediaLibrary.toIdeas.openCalendar'), to: localePath({ path: '/app/calendar', query: firstDay ? { day: firstDay } : {} }), color: 'neutral', variant: 'outline' }]
+    })
+    ideaDialog.value = false
+    selecting.value = false
+    picked.value = []
+  } catch (caught) {
+    toast.add({ title: extractErrorMessage(caught, t('authError.generic')), color: 'error' })
+  } finally {
+    makingIdeas.value = false
+  }
+}
+
 function actions(media: MediaView) {
   return [
     [
@@ -87,13 +131,27 @@ function actions(media: MediaView) {
       :description="t('mediaLibrary.subtitle')"
     >
       <UButton
-        v-if="canManage"
+        v-if="canPlan && list.items.value.length"
+        icon="i-lucide-lightbulb"
+        :color="selecting ? 'primary' : 'neutral'"
+        :variant="selecting ? 'soft' : 'outline'"
+        :label="selecting ? t('common.cancel') : t('mediaLibrary.toIdeas.select')"
+        @click="toggleSelecting"
+      />
+      <UButton
+        v-if="canManage && !selecting"
         icon="i-lucide-upload"
         :label="t('mediaLibrary.upload')"
         :loading="uploading > 0"
         @click="input?.click()"
       />
     </CommandBar>
+    <p
+      v-if="selecting"
+      class="text-sm text-muted mb-3"
+    >
+      {{ t('mediaLibrary.toIdeas.selectHint', { n: IDEA_MAX_MEDIA }) }}
+    </p>
 
     <div class="flex flex-wrap items-center gap-3 mb-4">
       <UTabs
@@ -158,9 +216,24 @@ function actions(media: MediaView) {
         v-for="media in list.items.value"
         :key="media.id"
         :media="media"
+        :selected="selecting && picked.includes(media.id)"
       >
+        <button
+          v-if="selecting"
+          type="button"
+          class="absolute inset-0 flex items-start justify-end p-1"
+          :class="media.status === 'ready' ? 'cursor-pointer' : 'cursor-not-allowed bg-default/40'"
+          :aria-pressed="picked.includes(media.id)"
+          :aria-label="t('mediaLibrary.toIdeas.pick')"
+          @click="togglePick(media)"
+        >
+          <span
+            v-if="!picked.includes(media.id)"
+            class="size-6 rounded-full border-2 border-default bg-default/80"
+          />
+        </button>
         <UDropdownMenu
-          v-if="canManage"
+          v-else-if="canManage"
           :items="actions(media)"
           :content="{ align: 'end' }"
         >
@@ -185,6 +258,44 @@ function actions(media: MediaView) {
         :items-per-page="list.limit.value"
       />
     </div>
+    <div
+      v-if="selecting && picked.length"
+      class="sticky bottom-20 lg:bottom-4 mt-4 flex items-center justify-between gap-3 rounded-md border border-default bg-elevated p-3 shadow-lg"
+    >
+      <span class="text-sm">{{ t('mediaLibrary.toIdeas.selected', { n: picked.length }) }}</span>
+      <UButton
+        icon="i-lucide-lightbulb"
+        :label="t('mediaLibrary.toIdeas.confirm', { n: picked.length })"
+        @click="ideaDialog = true"
+      />
+    </div>
+    <UModal
+      v-model:open="ideaDialog"
+      :title="t('mediaLibrary.toIdeas.dialogTitle')"
+    >
+      <template #body>
+        <URadioGroup
+          v-model="ideaMode"
+          :items="picked.length > 1 ? modeItems : modeItems.slice(0, 1)"
+          variant="card"
+        />
+      </template>
+      <template #footer>
+        <div class="flex justify-end gap-2 w-full">
+          <UButton
+            color="neutral"
+            variant="ghost"
+            :label="t('common.cancel')"
+            @click="ideaDialog = false"
+          />
+          <UButton
+            :loading="makingIdeas"
+            :label="t('mediaLibrary.toIdeas.confirm', { n: picked.length })"
+            @click="makeIdeas"
+          />
+        </div>
+      </template>
+    </UModal>
     <input
       ref="file"
       type="file"

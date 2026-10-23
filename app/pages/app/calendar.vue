@@ -32,7 +32,9 @@ watch(mode, (value) => {
   } catch { /* ignore */ }
 })
 
-const cursor = ref(today) // any day inside the visible week or month
+// Any day inside the visible week or month; `?day=` (reminders in the bell) opens on that day's week.
+const route = useRoute()
+const cursor = ref(typeof route.query.day === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(route.query.day) ? route.query.day : today)
 const month = computed(() => cursor.value.slice(0, 7))
 
 /** Visible days: the Monday-first week, or the month grid padded with neighbouring days (max 42 < 62). */

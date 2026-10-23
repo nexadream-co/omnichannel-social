@@ -55,6 +55,14 @@ onBeforeUnmount(() => clearInterval(timer))
 
 const tz = computed(() => auth.profile.value?.displayTimezone)
 const canWrite = computed(() => auth.hasAbility('posts.write'))
+// "Jadikan ide lagi": this post's words, media and products go back to Bank Ide for another round.
+const planner = usePlanner()
+const repeating = ref(false)
+async function repeat() {
+  repeating.value = true
+  await planner.repeatPost(id)
+  repeating.value = false
+}
 const editable = computed(() => post.value && ['draft', 'scheduled'].includes(post.value.status))
 
 // "Sinkronkan": re-read the platform now (numbers, caption edits, deletion); the nightly run is at 02:00 WIB.
@@ -125,6 +133,14 @@ async function remove() {
           color="neutral"
           variant="outline"
           :label="t('posts.duplicate')"
+        />
+        <UButton
+          icon="i-lucide-repeat"
+          color="neutral"
+          variant="outline"
+          :label="t('planner.idea.repeat')"
+          :loading="repeating"
+          @click="repeat"
         />
       </template>
     </CommandBar>

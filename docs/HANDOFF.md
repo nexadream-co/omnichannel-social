@@ -24,9 +24,10 @@ This file lets a new Claude session (or another account) continue exactly where 
 | Back-office: dashboard, reports, workspaces + impersonation, people & access, CMS, operations, audit, jobs | Phase 12 | |
 | Public site: landing, pricing, legal pages, contact, SEO, robots/sitemap, legal drafts | Phase 13 | legal drafts need counsel review |
 | Production readiness: `deploy/` (Docker/VPS, Cloud Run, AWS Lambda, Vercel), app + media images (built and smoke-tested), Playwright E2E (newcomer path < 5 min), CI e2e job | Phase 14 | |
-| Rencana konten (planner, phase 1): Bank Ide, ideas on the Kalender (week view), Momen belanja + "Siapkan konten", weekly target, Jenis konten, idea → composer, `/admin/moments` | 2026-10-23 | `ARCHITECTURE` §8.8; phase 2 nudges not built |
+| Rencana konten (planner, phase 1): Bank Ide, ideas on the Kalender (week view), Momen belanja + "Siapkan konten", weekly target, Jenis konten, idea → composer, `/admin/moments` | 2026-10-23 | `ARCHITECTURE` §8.8 |
+| Rencana konten phase 2: bell reminders (`planner.weekly`, `planner.reminders`), Galeri "Jadikan ide", "Jadikan ide lagi", Beranda "Minggu ini", "Pasang Balas Otomatis" after scheduling | 2026-10-24 | best time, product suggestions and content mix still open |
 
-**Checks:** `npm run lint`, `npm run typecheck`, `npm test` (≈214 unit + integration tests on real Postgres) and `npm run test:e2e` (5 specs, phone viewport) pass. `NITRO_PRESET=node-server` build smoke-tested; app and media Docker images built and smoke-tested.
+**Checks:** `npm run lint`, `npm run typecheck`, `npm test` (≈221 unit + integration tests on real Postgres) and `npm run test:e2e` (5 specs, phone viewport) pass. `NITRO_PRESET=node-server` build smoke-tested; app and media Docker images built and smoke-tested.
 
 **Run locally:** `npm run dev`, `npm run tick:dev` (jobs), `npm run media:dev` (ffmpeg processor). **Payments run in test mode** (`blueprint/08` §11): the seed activates the payment simulator outside production, checkout opens `/pay/simulator/:orderId` where you pick the outcome, and `/admin/workspaces/:id` has "Mode uji: simulasi waktu" to end trials, trigger reminders, end periods and grace without waiting. `npx tsx scripts/mock-payment-hub.ts` is only for testing the real hub driver's HTTP. Logins: `admin@socialz.local` / `admin12345` (`/admin`), `demo@socialz.local` / `demo12345` (`/app`).
 
@@ -71,7 +72,7 @@ The original generic blueprint the platform docs were adapted from is at `~/Down
 | UI language | Bahasa Indonesia default + English | `@nuxtjs/i18n` `prefix_except_default` |
 | Plans | Gratis; Kreator Rp49.000/mo, 14-day trial; Pro Rp99.000/mo seeded inactive | Values in `docs/blueprint/06` §2 (draft prices incl. PPN) |
 | Company / domains | The user has a PT/CV (Meta Business Verification can start) and owns an app domain + short domain | Short domain name not shared yet |
-| Content planner (2026-10-23) | Inside the Kalender (no new menu); ideas are their own table, never a post status; everything free on every plan (a retention feature, no plan keys); shopping moments are reference data staff edit at `/admin/moments`; rule-based, no AI | Phase 1 = Bank Ide, ideas on the calendar, moments, weekly target, pillar. Phase 2 = best time from own insights, forgotten/winning products, content mix, weekly email + H-1 reminder (`ARCHITECTURE` §8.8) |
+| Content planner (2026-10-23) | Inside the Kalender (no new menu); ideas are their own table, never a post status; everything free on every plan (a retention feature, no plan keys); shopping moments are reference data staff edit at `/admin/moments`; rule-based, no AI | Phase 1 = Bank Ide, ideas on the calendar, moments, weekly target, pillar. Phase 2 (2026-10-24) = bell-only reminders (no email, so no unsubscribe setting yet) and shortcuts from Galeri, posts, Statistik, Beranda and the composer; all free. Still open: best time from own insights, forgotten/winning products, content mix (`ARCHITECTURE` §8.8) |
 | Hashtags (2026-10-22) | Rule-based tag ideas, quality check and saved sets (free); research from own post results + Threads tag activity (paid, `tagResearchPerMonth`: Gratis 0, Kreator 100, Pro unlimited). Instagram's 5-tag limit enforced | No AI. Instagram hashtag search needs Facebook Login + Public Content Access, so it is phase 2. Threads search is off until Meta approves `threads_keyword_search` (`ARCHITECTURE` §8.7) |
 
 ## 4. How this user works
@@ -95,7 +96,7 @@ The original generic blueprint the platform docs were adapted from is at `~/Down
 2. Deploy staging with the chosen `deploy/<target>/` (the media processor **before** the app; give the R2 media domain a CORS rule allowing `GET` from the app origin, which the photo editor needs to draw on a canvas); run `npm run db:migrate` (direct URL) and `npm run db:seed` once; set the per-minute tick + a backup pinger; check `/healthz`.
 3. Configure `/admin`: settings, payment gateway, legal pages, staff. Run the hub end-to-end test from `blueprint/17` Phase 11 against the real hub with a low-price plan.
 4. Meta App Review submissions with the staging build (screencasts of connect → publish → comment-to-DM). Include `threads_keyword_search` (tag research); after approval turn on `channels.hashtags.threadsSearchEnabled` in `/admin/settings` and ask Threads users to reconnect.
-5. Content planner phase 2 (`ARCHITECTURE` §8.8): plan it with the user before building.
+5. Content planner, remaining ideas (`ARCHITECTURE` §8.8 "Later"): plan with the user before building.
 6. Usability test with 5 first-time creators (target: first scheduled post in < 5 minutes), closed beta, then production.
 
 ## 7. In parallel (user, non-code, M0)

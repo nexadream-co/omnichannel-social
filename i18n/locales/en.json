@@ -157,7 +157,12 @@
       "Schedule 3 posts at the start of the week, then just watch the statistics.",
       "On Threads and Facebook, links in captions are clickable. Use them!"
     ],
-    "subtitleDone": "Here's your week at a glance."
+    "subtitleDone": "Here's your week at a glance.",
+    "week": {
+      "title": "This week",
+      "open": "Open calendar",
+      "ideasWaiting": "{n} ideas waiting in the idea bank."
+    }
   },
   "role": {
     "owner": {
@@ -722,7 +727,9 @@
     "pastTime": "That time has passed. Pick a future time.",
     "saveIdea": "Save as idea",
     "savedIdea": "Saved to the idea bank.",
-    "fromIdea": "From idea: {title}"
+    "fromIdea": "From idea: {title}",
+    "autoReplyHint": "Send this product link by DM to people who comment?",
+    "autoReplyAction": "Set up Balas Otomatis"
   },
   "mediaEditor": {
     "open": "Edit",
@@ -855,6 +862,22 @@
       "all": "All",
       "image": "Photos",
       "video": "Videos"
+    },
+    "toIdeas": {
+      "select": "Make ideas",
+      "selectHint": "Pick the photos or videos to turn into content ideas (up to {n}).",
+      "pick": "Pick this media",
+      "selected": "{n} selected",
+      "confirm": "Make ideas ({n})",
+      "max": "Up to {n} at a time.",
+      "dialogTitle": "Turn into content ideas",
+      "each": "One photo = one idea",
+      "eachHint": "Placed on empty days from tomorrow, one a day.",
+      "one": "All in one idea (carousel)",
+      "oneHint": "Goes to the idea bank without a date.",
+      "doneDated": "{n} ideas are on your calendar.",
+      "doneBank": "{n} ideas added to the idea bank.",
+      "openCalendar": "View in calendar"
     }
   },
   "posts": {
@@ -998,7 +1021,9 @@
       "fromMoment": "From {name}",
       "productCount": "{n} products",
       "mediaCount": "{n} media",
-      "actions": "Idea options"
+      "actions": "Idea options",
+      "repeat": "Make it an idea again",
+      "repeated": "Added to the idea bank. Tweak it, then schedule it again."
     },
     "moments": {
       "title": "Shopping moments",

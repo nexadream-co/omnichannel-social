@@ -35,6 +35,9 @@ export const QUEUES = {
   'insights.sync': queue('insights.sync', { maxAttempts: 1, leaseSeconds: 300, expectedMs: 30_000, concurrency: 2 }),
   'engagement.inactivity': queue('engagement.inactivity', { maxAttempts: 2, leaseSeconds: 300, expectedMs: 30_000, concurrency: 1 }),
   'billing.renewal-reminders': queue('billing.renewal-reminders', { maxAttempts: 3, leaseSeconds: 300, expectedMs: 30_000, concurrency: 1 }),
+  // Planner reminders (bell only): pages of 200 workspaces, re-enqueued with a cursor.
+  'planner.weekly': queue('planner.weekly', { maxAttempts: 2, leaseSeconds: 300, expectedMs: 30_000, concurrency: 1 }),
+  'planner.reminders': queue('planner.reminders', { maxAttempts: 2, leaseSeconds: 300, expectedMs: 30_000, concurrency: 1 }),
   // Best effort: a failed lookup leaves the tag without numbers, so one attempt is enough.
   'hashtags.signals': queue('hashtags.signals', { maxAttempts: 1, expectedMs: 15_000, concurrency: 3 })
 } as const satisfies Record<string, QueueDef>

@@ -43,7 +43,7 @@ type IdeaRow = typeof contentIdeas.$inferSelect
 const audit = (ctx: WorkspaceContext, action: string, id: string, metadata?: Record<string, unknown>) =>
   recordAudit(ctx, { audience: 'creator', action, workspaceId: ctx.workspaceId, actorId: ctx.userId, impersonatorId: ctx.impersonatorId, targetType: 'content_idea', targetId: id, metadata })
 
-async function workspaceTimezone(db: Executor, workspaceId: string): Promise<string> {
+export async function workspaceTimezone(db: Executor, workspaceId: string): Promise<string> {
   const [row] = await db.select({ timezone: workspaces.timezone }).from(workspaces).where(eq(workspaces.id, workspaceId))
   return row?.timezone ?? 'Asia/Jakarta'
 }
@@ -76,7 +76,7 @@ function toView(row: IdeaRow, extra: Awaited<ReturnType<typeof attachments>>) {
 export type IdeaView = ReturnType<typeof toView>
 
 /** Products and media must belong to the workspace (404 otherwise, never a hint that they exist elsewhere). */
-async function assertOwned(ctx: WorkspaceContext, input: { linkIds?: string[], mediaIds?: string[] }) {
+export async function assertOwned(ctx: WorkspaceContext, input: { linkIds?: string[], mediaIds?: string[] }) {
   if (input.linkIds?.length) {
     const found = await ctx.db.select({ id: links.id }).from(links).where(and(eq(links.workspaceId, ctx.workspaceId), inArray(links.id, input.linkIds)))
     if (found.length !== input.linkIds.length) throw appError(404, 'Produk tidak ditemukan.', 'NOT_FOUND', { field: 'linkIds' })
@@ -87,7 +87,7 @@ async function assertOwned(ctx: WorkspaceContext, input: { linkIds?: string[], m
   }
 }
 
-async function assertRoomForIdeas(ctx: WorkspaceContext, adding: number) {
+export async function assertRoomForIdeas(ctx: WorkspaceContext, adding: number) {
   const [row] = await ctx.db.select({ n: count() }).from(contentIdeas).where(and(eq(contentIdeas.workspaceId, ctx.workspaceId), eq(contentIdeas.status, 'open')))
   if ((row?.n ?? 0) + adding > MAX_OPEN_IDEAS) {
     throw appError(400, `Bank Ide sudah berisi ${MAX_OPEN_IDEAS} ide. Arsipkan ide yang sudah tidak dipakai dulu.`, 'VALIDATION_FAILED')

@@ -18,6 +18,9 @@ interface Analytics {
 definePageMeta({ layout: 'creator' })
 const { t, locale } = useI18n()
 const localePath = useLocalePath()
+const auth = useCreatorAuth()
+const planner = usePlanner()
+const canPlan = computed(() => auth.hasAbility('posts.write'))
 useHead({ title: () => t('analytics.title') })
 
 const days = ref<7 | 30 | 90>(7)
@@ -178,6 +181,16 @@ const breakdowns = computed(() => data.value
                 {{ row.caption }}
               </p>
               <span class="text-sm font-semibold text-highlighted">{{ row.clicks }}</span>
+              <UButton
+                v-if="canPlan"
+                icon="i-lucide-repeat"
+                size="xs"
+                color="neutral"
+                variant="ghost"
+                :aria-label="t('planner.idea.repeat')"
+                :title="t('planner.idea.repeat')"
+                @click="planner.repeatPost(row.postId)"
+              />
             </li>
           </ol>
         </UCard>

@@ -157,7 +157,12 @@
       "Jadwalkan 3 postingan sekaligus di awal minggu, lalu tinggal pantau statistiknya.",
       "Di Threads dan Facebook, link di caption bisa langsung diklik. Manfaatkan!"
     ],
-    "subtitleDone": "Ini ringkasan akunmu minggu ini."
+    "subtitleDone": "Ini ringkasan akunmu minggu ini.",
+    "week": {
+      "title": "Minggu ini",
+      "open": "Buka Kalender",
+      "ideasWaiting": "{n} ide menunggu di Bank Ide."
+    }
   },
   "role": {
     "owner": {
@@ -722,7 +727,9 @@
     "pastTime": "Waktu sudah lewat. Pilih waktu yang akan datang.",
     "saveIdea": "Simpan sebagai ide",
     "savedIdea": "Disimpan ke Bank Ide.",
-    "fromIdea": "Dari ide: {title}"
+    "fromIdea": "Dari ide: {title}",
+    "autoReplyHint": "Mau kirim link produk ini lewat DM ke yang komen?",
+    "autoReplyAction": "Pasang Balas Otomatis"
   },
   "mediaEditor": {
     "open": "Edit",
@@ -855,6 +862,22 @@
       "all": "Semua",
       "image": "Foto",
       "video": "Video"
+    },
+    "toIdeas": {
+      "select": "Jadikan ide",
+      "selectHint": "Pilih foto atau video yang mau dijadikan ide konten (maksimal {n}).",
+      "pick": "Pilih media ini",
+      "selected": "{n} dipilih",
+      "confirm": "Jadikan ide ({n})",
+      "max": "Maksimal {n} sekali jalan.",
+      "dialogTitle": "Jadikan ide konten",
+      "each": "Satu foto = satu ide",
+      "eachHint": "Ditaruh di hari kosong mulai besok, satu per hari.",
+      "one": "Semua jadi satu ide (carousel)",
+      "oneHint": "Masuk Bank Ide tanpa tanggal.",
+      "doneDated": "{n} ide sudah ada di Kalender.",
+      "doneBank": "{n} ide masuk Bank Ide.",
+      "openCalendar": "Lihat di Kalender"
     }
   },
   "posts": {
@@ -998,7 +1021,9 @@
       "fromMoment": "Dari momen {name}",
       "productCount": "{n} produk",
       "mediaCount": "{n} media",
-      "actions": "Pilihan ide"
+      "actions": "Pilihan ide",
+      "repeat": "Jadikan ide lagi",
+      "repeated": "Masuk Bank Ide. Ubah sedikit, lalu jadwalkan lagi."
     },
     "moments": {
       "title": "Momen belanja",

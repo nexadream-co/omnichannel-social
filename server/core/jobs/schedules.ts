@@ -20,7 +20,9 @@ export const SCHEDULES: ScheduleDef[] = [
   { name: 'engagement.inactivity', cron: '0 7 * * *', tz: 'Asia/Jakarta', enabled: true },
   { name: 'maintenance.purge', cron: '0 3 * * *', tz: 'Asia/Jakarta', enabled: true },
   { name: 'token.refresh', cron: '0 * * * *', tz: 'Asia/Jakarta', enabled: true },
-  { name: 'insights.daily', cron: '0 2 * * *', tz: 'Asia/Jakarta', enabled: true }
+  { name: 'insights.daily', cron: '0 2 * * *', tz: 'Asia/Jakarta', enabled: true },
+  { name: 'planner.weekly', cron: '0 19 * * 0', tz: 'Asia/Jakarta', enabled: true },
+  { name: 'planner.reminders', cron: '0 18 * * *', tz: 'Asia/Jakarta', enabled: true }
 ]
 
 /** The latest cron time at or before `now` in the schedule's timezone. */

@@ -59,7 +59,7 @@ Needs:
 **11. App shell.** Needs: nav (Beranda, Buat Postingan, Kalender, Postingan, Link Produk, Etalase, Balas Otomatis, Statistik, Akun), a big "+ Buat Postingan" button, notifications bell, plan badge, profile menu. Bottom nav plus a floating create button on mobile.
 
 **12. Home (Beranda).** Purpose: "what do I do today?"
-Needs: the onboarding checklist (until done), today's and upcoming posts, alerts that need action (failed post, account needs reconnecting) with fix buttons, clicks this week, top 3 products, auto-replies sent, a tip of the day.
+Needs: the onboarding checklist (until done), today's and upcoming posts, alerts that need action (failed post, account needs reconnecting) with fix buttons, clicks this week, top 3 products, auto-replies sent, a tip of the day. Once the checklist is done or hidden: a "Minggu ini" card (posts and planned ideas vs the weekly target, ideas waiting in Bank Ide, the next shopping moment with "Siapkan konten").
 
 **13. Connected accounts.** Purpose: connect and manage social accounts.
 Needs: big "Hubungkan Instagram / Threads / Facebook" buttons with a one-line explanation each, connected accounts with a status ("Aktif" or "Perlu dihubungkan ulang"), reconnect and disconnect, a "Segera hadir" badge on TikTok, YouTube and X, a help link ("Akun Instagram harus Bisnis/Kreator. Cara ubah →").
@@ -92,10 +92,10 @@ Needs: week view (default) and month view, a day list on phones; posts as solid 
 Needs: tabs (Terjadwal, Draf, Terbit, Gagal), simple filters, status per platform, a "Coba lagi" button on failed posts, empty states that teach.
 
 **18. Post detail.** Purpose: what happened to one post.
-Needs: preview, per-platform status in plain words, a reason and fix button for failures, a link to the live post, basic numbers (views, likes, comments), clicks on attached links, auto-replies sent, edit, duplicate and delete.
+Needs: preview, per-platform status in plain words, a reason and fix button for failures, a link to the live post, basic numbers (views, likes, comments), clicks on attached links, auto-replies sent, edit, duplicate, "Jadikan ide lagi" (back to Bank Ide with its words, media and products) and delete.
 
 **19. Media library (Galeri Media, `/app/media`).** Purpose: reuse photos and videos.
-Needs: grid with a Semua/Foto/Video filter, upload, edit (saves a copy), "Pakai di postingan", delete (refused while a post uses it), storage used. The composer opens it as "Pilih dari Galeri". No search: media has no names worth searching.
+Needs: grid with a Semua/Foto/Video filter, upload, edit (saves a copy), "Pakai di postingan", delete (refused while a post uses it), storage used, and "Jadikan ide": pick up to 10, then one idea each on the next empty days or one carousel idea. The composer opens it as "Pilih dari Galeri". No search: media has no names worth searching.
 
 **19a. Media editor.** Purpose: fix and dress up a photo or video before posting, without leaving the app.
 Needs: full screen, phone first; preview on top, one tool row at the bottom: Durasi (video), Potong (plain-language shapes: Kotak 1:1, Feed 4:5, Reels/Story 9:16…, Putar, Cermin, "Pas + latar blur"), Sesuaikan (3 sliders; hue/sepia/black-and-white under "Opsi lanjutan"), Filter (one-tap looks), Teks (fonts, Polos/Kotak/Garis, colours), Stiker (price tag, discount, "Link di bio"…, price from a product link), Logo (workspace logo from Pengaturan → Tanda air), Sampul and Suara (video). Save makes a new copy; the original stays and a re-edit restores every step. Opened from a composer tile ("Edit"), from the composer hints ("Atur potongan", "Potong video") and from Galeri Media.
@@ -140,7 +140,7 @@ Needs: a list of who commented, what they said, and whether a DM was sent (with 
 ## G. Stats
 
 **27. Stats (Statistik).** Purpose: which content brings clicks.
-Needs: date range (presets 7 or 30 days), total clicks, top products, top posts by clicks, clicks by platform, simple post performance. No complicated charts. Export is a secondary action.
+Needs: date range (presets 7 or 30 days), total clicks, top products, top posts by clicks (each with "Jadikan ide lagi"), clicks by platform, simple post performance. No complicated charts. Export is a secondary action.
 
 ## H. Settings and billing
 

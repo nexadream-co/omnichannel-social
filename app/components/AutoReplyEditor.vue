@@ -3,7 +3,8 @@ import { DEFAULT_PUBLIC_REPLIES, MAX_PUBLIC_REPLIES, RULE_TEMPLATES } from '#sha
 import type { LinkRow } from '~/pages/app/links/index.vue'
 
 /** Auto-reply rule editor in three steps (docs/SCREENS.md #25): post → keywords → message + product. */
-const props = defineProps<{ ruleId?: string, template?: string }>()
+/** `linkId`: a product to fill in (from "Pasang Balas Otomatis" after scheduling a post). */
+const props = defineProps<{ ruleId?: string, template?: string, linkId?: string }>()
 const { t, locale } = useI18n()
 const localePath = useLocalePath()
 const toast = useToast()
@@ -46,6 +47,7 @@ onMounted(async () => {
     } else {
       const template = RULE_TEMPLATES.find(item => item.key === props.template)
       if (template) Object.assign(form, { scope: template.scope, keywords: [...template.keywords], dmMessage: template.dmMessage, publicReplyVariants: [...template.publicReplyVariants] })
+      if (props.linkId) form.linkId = props.linkId
     }
     if (form.linkId) link.value = await apiFetch<LinkRow>(`/api/app/links/${form.linkId}`).catch(() => null)
   } finally {

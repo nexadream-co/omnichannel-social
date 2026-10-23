@@ -89,6 +89,30 @@ export function weekFill(days: string[], filled: Map<string, number>, target: nu
   }
 }
 
+/** How far ahead "Jadikan ide" from Galeri looks for empty days. */
+export const SPREAD_HORIZON_DAYS = 30
+
+/**
+ * One empty day each, in order, from `from` (inclusive) up to the horizon; `busy` days are skipped and every
+ * picked day becomes busy. Ideas that don't fit get null (they stay undated in Bank Ide).
+ */
+export function spreadOverEmptyDays(from: string, busy: Set<string>, count: number, horizonDays = SPREAD_HORIZON_DAYS): (string | null)[] {
+  const taken = new Set(busy)
+  const days: (string | null)[] = []
+  let offset = 0
+  for (let i = 0; i < count; i++) {
+    while (offset < horizonDays && taken.has(addDays(from, offset))) offset++
+    if (offset >= horizonDays) {
+      days.push(null)
+      continue
+    }
+    const day = addDays(from, offset)
+    taken.add(day)
+    days.push(day)
+  }
+  return days
+}
+
 // ---- "Siapkan konten" for a moment: three dated idea skeletons ----
 
 type Locale = 'id' | 'en'

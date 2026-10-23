@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { AUTO_SLUG_LENGTH, detectMerchant, hostAllowed, SLUG_PATTERN } from '../../../shared/utils/links'
 import { assertAbility, type WorkspaceContext } from '../context'
 import type { Executor } from '../db/client'
-import { linkClicks, links, shortLinks } from '../db/schema'
+import { linkClicks, links, postTargets, shortLinks } from '../db/schema'
 import { can } from '../entitlements'
 import { env } from '../env'
 import { appError } from '../errors'
@@ -156,16 +156,15 @@ export async function getLink(ctx: WorkspaceContext, id: string) {
   return toLinkView(row, short)
 }
 
+const shortUrlPattern = () => shortUrl('').replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+
 /**
  * Per-target attribution (ARCHITECTURE §10.2): at publish time, vault short URLs in a caption are swapped for
  * one short link per (target, product), so clicks are attributed to a post and a channel. Idempotent.
  */
 export async function attributeCaption(db: Executor, target: { id: string, workspaceId: string, platform: string }, caption: string): Promise<string> {
-  const base = shortUrl('').replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-  const matches = [...caption.matchAll(new RegExp(`${base}([0-9A-Za-z_-]{3,32})(?![0-9A-Za-z_-])`, 'g'))]
-  if (!matches.length) return caption
-  const vault = await db.select({ slug: shortLinks.slug, linkId: shortLinks.linkId }).from(shortLinks)
-    .where(and(eq(shortLinks.workspaceId, target.workspaceId), eq(shortLinks.source, 'vault'), inArray(shortLinks.slug, [...new Set(matches.map(m => m[1]!))])))
+  const base = shortUrlPattern()
+  const vault = await vaultLinksIn(db, target.workspaceId, caption)
   let result = caption
   for (const entry of vault) {
     const [existing] = await db.select({ slug: shortLinks.slug }).from(shortLinks).where(and(eq(shortLinks.postTargetId, target.id), eq(shortLinks.linkId, entry.linkId))).limit(1)
@@ -179,6 +178,27 @@ export async function attributeCaption(db: Executor, target: { id: string, works
     result = result.replace(new RegExp(`${base}${entry.slug}(?![0-9A-Za-z_-])`, 'g'), shortUrl(slug))
   }
   return result
+}
+
+/** Products whose saved (vault) short link appears in a text, in order of first appearance. */
+export async function vaultLinksIn(db: Executor, workspaceId: string, text: string): Promise<{ slug: string, linkId: string, url: string }[]> {
+  const slugs = [...new Set([...text.matchAll(new RegExp(`${shortUrlPattern()}([0-9A-Za-z_-]{3,32})(?![0-9A-Za-z_-])`, 'g'))].map(m => m[1]!))]
+  if (!slugs.length) return []
+  const rows = await db.select({ slug: shortLinks.slug, linkId: shortLinks.linkId }).from(shortLinks)
+    .where(and(eq(shortLinks.workspaceId, workspaceId), eq(shortLinks.source, 'vault'), inArray(shortLinks.slug, slugs)))
+  return slugs.flatMap(slug => rows.filter(r => r.slug === slug).map(r => ({ ...r, url: shortUrl(r.slug) })))
+}
+
+/**
+ * The products a post promotes: vault links still in its captions (before publishing) plus the per-target
+ * attribution links publishing made (after). `vaultUrls` lets callers strip them from the text.
+ */
+export async function productLinksOfPost(db: Executor, workspaceId: string, postId: string, captions: string[]): Promise<{ linkIds: string[], vaultUrls: string[] }> {
+  const vault = await vaultLinksIn(db, workspaceId, captions.join('\n'))
+  const attributed = await db.select({ linkId: shortLinks.linkId }).from(shortLinks)
+    .innerJoin(postTargets, eq(postTargets.id, shortLinks.postTargetId))
+    .where(and(eq(shortLinks.workspaceId, workspaceId), eq(postTargets.postId, postId)))
+  return { linkIds: [...new Set([...vault.map(v => v.linkId), ...attributed.map(a => a.linkId)])], vaultUrls: vault.map(v => v.url) }
 }
 
 /** A product's short link for a given source (Etalase button, auto-reply DM): one per (link, source). */

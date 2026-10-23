@@ -7,7 +7,7 @@ import type { Executor } from '../db/client'
 import { dmEvents, dmRules, linkClicks, links, mediaAssets, postMedia, postTargets, posts, shortLinks, socialAccounts } from '../db/schema'
 import { assertWithinLimit } from '../entitlements'
 import { appError } from '../errors'
-import { shortLinkFor, shortUrl } from '../links/service'
+import { productLinksOfPost, shortLinkFor, shortUrl } from '../links/service'
 import { decryptAccount } from '../social-accounts'
 
 type Rule = typeof dmRules.$inferSelect
@@ -195,4 +195,25 @@ export async function recentMedia(ctx: WorkspaceContext, accountId: string) {
     }
   }
   return [...byId.values()].sort((a, b) => (b.at?.getTime() ?? 0) - (a.at?.getTime() ?? 0)).slice(0, 30)
+}
+
+/**
+ * After scheduling: "Pasang Balas Otomatis?" when an Instagram post promotes a product that no active rule
+ * sends yet. Read-only; the composer shows it as a toast and the rule editor opens with the product filled in.
+ */
+export async function autoReplyHint(ctx: WorkspaceContext, postId: string): Promise<{ linkId: string, linkTitle: string | null } | null> {
+  assertAbility(ctx, 'autoreply.manage')
+  const [post] = await ctx.db.select({ caption: posts.baseCaption }).from(posts).where(and(eq(posts.id, postId), eq(posts.workspaceId, ctx.workspaceId))).limit(1)
+  if (!post) throw appError(404, 'Postingan tidak ditemukan.', 'NOT_FOUND')
+  const instagram = await ctx.db.select({ caption: postTargets.captionOverride }).from(postTargets)
+    .where(and(eq(postTargets.postId, postId), eq(postTargets.platform, 'instagram'), ne(postTargets.status, 'cancelled')))
+  if (!instagram.length) return null
+  const { linkIds } = await productLinksOfPost(ctx.db, ctx.workspaceId, postId, [post.caption, ...instagram.map(t => t.caption ?? '')])
+  for (const linkId of linkIds) {
+    const [rule] = await ctx.db.select({ id: dmRules.id }).from(dmRules).where(and(eq(dmRules.workspaceId, ctx.workspaceId), eq(dmRules.linkId, linkId), eq(dmRules.active, true))).limit(1)
+    if (rule) continue
+    const [link] = await ctx.db.select({ title: links.title }).from(links).where(and(eq(links.id, linkId), eq(links.workspaceId, ctx.workspaceId), eq(links.archived, false))).limit(1)
+    if (link) return { linkId, linkTitle: link.title }
+  }
+  return null
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { addDays, daysBetween, momentIdeaSkeletons, momentName, SEED_MOMENTS, weekFill, weekStart } from '../../shared/utils/planner'
+import { addDays, daysBetween, momentIdeaSkeletons, momentName, SEED_MOMENTS, spreadOverEmptyDays, weekFill, weekStart } from '../../shared/utils/planner'
 
 describe('planner days', () => {
   it('counts on local calendar days', () => {
@@ -16,6 +16,13 @@ describe('planner days', () => {
     expect(fill).toMatchObject({ count: 2, target: 3, reached: false })
     expect(fill.emptyDays).toEqual(['2026-10-22', '2026-10-23', '2026-10-25'])
     expect(weekFill(days, new Map([['2026-10-20', 3]]), 3, '2026-10-19')).toMatchObject({ reached: true, emptyDays: [] })
+  })
+})
+
+describe('spreading Galeri ideas', () => {
+  it('takes the next empty days in order and leaves the rest undated', () => {
+    expect(spreadOverEmptyDays('2026-10-25', new Set(['2026-10-25', '2026-10-27']), 3)).toEqual(['2026-10-26', '2026-10-28', '2026-10-29'])
+    expect(spreadOverEmptyDays('2026-10-25', new Set(['2026-10-26']), 3, 2)).toEqual(['2026-10-25', null, null])
   })
 })
 

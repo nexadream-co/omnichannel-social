@@ -133,6 +133,23 @@ function fixAction(issue: Issue & { account: Account }) {
   return undefined
 }
 
+/**
+ * A product going out on Instagram that no Balas Otomatis rule sends yet: offer one, with the product filled in.
+ * Best effort: a failed check never gets in the way of the post that was just saved.
+ */
+async function offerAutoReply(postId: string) {
+  if (!auth.hasAbility('autoreply.manage')) return
+  const { hint } = await apiFetch<{ hint: { linkId: string, linkTitle: string | null } | null }>(`/api/app/posts/${postId}/auto-reply-hint`).catch(() => ({ hint: null }))
+  if (!hint) return
+  toast.add({
+    title: t('composer.autoReplyHint'),
+    description: hint.linkTitle ?? undefined,
+    icon: 'i-lucide-message-circle-reply',
+    duration: 10_000,
+    actions: [{ label: t('composer.autoReplyAction'), to: localePath({ path: '/app/auto-reply/new', query: { template: 'mau', link: hint.linkId } }), color: 'primary' }]
+  })
+}
+
 /** "Simpan sebagai ide": not ready to post yet; the first line becomes the idea, the rest its note. */
 const savingIdea = ref(false)
 async function saveAsIdea() {
@@ -196,9 +213,11 @@ async function submit(mode: 'schedule' | 'now' | 'draft') {
       pillar: pillar.value === 'none' ? null : pillar.value,
       ideaId: fromIdea.value?.id
     }
-    if (editId) await apiFetch(`/api/app/posts/${editId}`, { method: 'PATCH', body })
-    else await apiFetch('/api/app/posts', { method: 'POST', body })
+    const saved = editId
+      ? await apiFetch<{ postId: string }>(`/api/app/posts/${editId}`, { method: 'PATCH', body })
+      : await apiFetch<{ postId: string }>('/api/app/posts', { method: 'POST', body })
     toast.add({ title: t(mode === 'draft' ? 'composer.savedDraft' : mode === 'now' ? 'composer.publishedNow' : 'composer.scheduled'), color: 'success' })
+    if (mode !== 'draft') await offerAutoReply(saved.postId)
     await entitlements.load(true)
     await navigateTo(localePath({ path: '/app/posts', query: { tab: mode === 'draft' ? 'draft' : 'scheduled' } }))
   } catch (caught) {

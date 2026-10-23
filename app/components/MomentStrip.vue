@@ -5,7 +5,6 @@ import { daysBetween, MOMENT_KIND_META, momentName, type PlannerMoment } from '#
 const props = defineProps<{ moments: PlannerMoment[], today: string }>()
 const { t, locale } = useI18n()
 const auth = useCreatorAuth()
-const toast = useToast()
 const planner = usePlanner()
 
 const canWrite = computed(() => auth.hasAbility('posts.write'))
@@ -23,14 +22,8 @@ function range(moment: PlannerMoment) {
 
 async function prepare(moment: PlannerMoment) {
   preparing.value = moment.id
-  try {
-    await apiFetch(`/api/app/planner/moments/${moment.id}/prepare`, { method: 'POST', body: { locale: locale.value === 'en' ? 'en' : 'id' } })
-    toast.add({ title: t('planner.moments.preparedToast', { name: momentName(moment, locale.value) }), color: 'success' })
-  } catch (caught) {
-    planner.fail(caught)
-  } finally {
-    preparing.value = null
-  }
+  await planner.prepareMoment(moment)
+  preparing.value = null
 }
 </script>
 

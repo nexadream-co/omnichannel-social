@@ -296,6 +296,9 @@ async function dismiss() {
       </ul>
     </UCard>
 
+    <!-- Rencana konten: only once the onboarding checklist is done or hidden, so the newcomer path stays as it is. -->
+    <WeekCard v-if="auth.hasAbility('posts.read') && !(showChecklist && doneCount < steps.length)" />
+
     <div
       v-if="tip"
       class="flex gap-3 rounded-lg bg-primary/5 border border-primary/20 p-4"
