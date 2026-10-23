@@ -6,7 +6,7 @@ import { watermarkSchema } from '../../shared/media/edit-spec'
 import { recordAudit } from './audit'
 import { assertAbility, type StaffContext, type WorkspaceContext } from './context'
 import {
-  bioItems, bioPages, dmEvents, dmRules, hashtagSets, links, mediaAssets, notifications, payments, posts, postTargets,
+  bioItems, bioPages, contentIdeaLinks, contentIdeaMedia, contentIdeas, dmEvents, dmRules, hashtagSets, links, mediaAssets, notifications, payments, posts, postTargets,
   shortLinks, socialAccounts, staffUsers, subscriptions, users, workspaceMembers, workspaces
 } from './db/schema'
 import { appError } from './errors'
@@ -108,6 +108,11 @@ export async function exportWorkspaceData(ctx: WorkspaceContext) {
       .from(mediaAssets).where(eq(mediaAssets.workspaceId, w)),
     links: await ctx.db.select().from(links).where(eq(links.workspaceId, w)),
     hashtagSets: await ctx.db.select({ name: hashtagSets.name, tags: hashtagSets.tags, createdAt: hashtagSets.createdAt }).from(hashtagSets).where(eq(hashtagSets.workspaceId, w)),
+    contentIdeas: {
+      ideas: await ctx.db.select().from(contentIdeas).where(eq(contentIdeas.workspaceId, w)),
+      products: await ctx.db.select().from(contentIdeaLinks).where(eq(contentIdeaLinks.workspaceId, w)),
+      media: await ctx.db.select().from(contentIdeaMedia).where(eq(contentIdeaMedia.workspaceId, w))
+    },
     shortLinks: await ctx.db.select({ slug: shortLinks.slug, domain: shortLinks.domain, linkId: shortLinks.linkId, source: shortLinks.source, active: shortLinks.active, createdAt: shortLinks.createdAt })
       .from(shortLinks).where(eq(shortLinks.workspaceId, w)),
     etalase: {

@@ -71,6 +71,13 @@
       "when": 1792686265045,
       "tag": "0009_media_editor",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1792765616406,
+      "tag": "0010_planner",
+      "breakpoints": true
     }
   ]
 }

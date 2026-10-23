@@ -18,6 +18,7 @@ const { EMAIL_TEMPLATES, NOTIFICATION_TEMPLATES } = await import('../shared/util
 const { SEED_PLANS } = await import('../shared/utils/plans')
 const { SCHEDULES } = await import('../server/core/jobs/schedules')
 const { SEED_HASHTAGS } = await import('../shared/hashtags/library-seed')
+const { SEED_MOMENTS } = await import('../shared/utils/planner')
 const { baseContext } = await import('../server/core/context')
 const { provisionWorkspace } = await import('../server/core/registration')
 const { encrypt } = await import('../server/core/crypto')
@@ -99,6 +100,9 @@ if (!isProduction) {
 
 step('hashtag list (new tags only, admin edits kept)')
 await db.insert(schema.hashtagLibrary).values(SEED_HASHTAGS).onConflictDoNothing({ target: schema.hashtagLibrary.tag })
+
+step('shopping moments (new rows only, admin edits kept)')
+await db.insert(schema.shoppingMoments).values(SEED_MOMENTS).onConflictDoNothing({ target: schema.shoppingMoments.id })
 
 step('job schedules')
 for (const schedule of SCHEDULES) {

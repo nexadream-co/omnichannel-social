@@ -18,7 +18,8 @@ export const PERMISSIONS = {
   'publishing': { read: 'publishing.read', write: 'publishing.write' },
   'channels': { read: 'channels.read', write: 'channels.write' },
   'links': { read: 'links.read', write: 'links.write' },
-  'hashtags': { read: 'hashtags.read', write: 'hashtags.write' }
+  'hashtags': { read: 'hashtags.read', write: 'hashtags.write' },
+  'moments': { read: 'moments.read', write: 'moments.write' }
 } as const
 
 type Groups = typeof PERMISSIONS
@@ -47,7 +48,8 @@ export const PERMISSION_GROUP_LABELS: Record<PermissionGroup, string> = {
   'publishing': 'Publikasi',
   'channels': 'Kanal & akun sosial',
   'links': 'Link & Etalase',
-  'hashtags': 'Daftar tagar'
+  'hashtags': 'Daftar tagar',
+  'moments': 'Momen belanja'
 }
 
 export const PERMISSION_ACTION_LABELS = { read: 'Lihat', write: 'Ubah' } as const

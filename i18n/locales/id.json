@@ -719,7 +719,10 @@
     "savedDraft": "Draf disimpan.",
     "fixFirst": "Ada yang perlu diperbaiki dulu.",
     "mediaPending": "Tunggu media selesai disiapkan.",
-    "pastTime": "Waktu sudah lewat. Pilih waktu yang akan datang."
+    "pastTime": "Waktu sudah lewat. Pilih waktu yang akan datang.",
+    "saveIdea": "Simpan sebagai ide",
+    "savedIdea": "Disimpan ke Bank Ide.",
+    "fromIdea": "Dari ide: {title}"
   },
   "mediaEditor": {
     "open": "Edit",
@@ -917,18 +920,110 @@
       "clicks": "Klik link",
       "autoReplies": "DM otomatis",
       "pending": "Angka dari platform muncul besok pagi."
-    }
+    },
+    "fromIdea": "Dari ide: {title}"
   },
   "calendar": {
     "title": "Kalender",
-    "subtitle": "Lihat dan pindahkan jadwal postingan.",
+    "subtitle": "Rencanakan ide konten dan atur jadwal postingan.",
     "today": "Hari ini",
     "prev": "Bulan sebelumnya",
     "next": "Bulan berikutnya",
     "empty": "Tidak ada postingan di bulan ini.",
-    "dragHint": "Seret postingan ke tanggal lain untuk memindahkan jadwal.",
+    "dragHint": "Seret postingan atau ide ke tanggal lain untuk memindahkannya.",
     "moved": "Jadwal dipindahkan.",
-    "more": "+{n} lagi"
+    "more": "+{n} lagi",
+    "prevWeek": "Minggu sebelumnya",
+    "nextWeek": "Minggu berikutnya",
+    "viewWeek": "Minggu",
+    "viewMonth": "Bulan",
+    "tabCalendar": "Kalender",
+    "tabIdeas": "Bank Ide",
+    "emptyDay": "Kosong"
+  },
+  "planner": {
+    "pillarLabel": "Jenis konten",
+    "pillarHint": "Membantu menjaga campuran konten supaya tidak jualan terus.",
+    "pillarNone": "Belum dipilih",
+    "pillar": {
+      "promo": "Promo",
+      "review": "Review",
+      "edukasi": "Edukasi",
+      "hiburan": "Hiburan",
+      "cerita": "Cerita"
+    },
+    "momentKind": {
+      "twin_date": "Tanggal kembar",
+      "payday": "Gajian",
+      "holiday": "Hari besar",
+      "campaign": "Kampanye belanja"
+    },
+    "bank": {
+      "title": "Bank Ide",
+      "capturePlaceholder": "Tulis ide konten, lalu tekan Enter",
+      "capture": "Simpan ide",
+      "views": {
+        "unplanned": "Belum ada tanggal",
+        "planned": "Sudah ada tanggal",
+        "used": "Sudah jadi postingan",
+        "archived": "Arsip"
+      },
+      "emptyUnplanned": "Tulis ide konten kapan saja, nanti tinggal jadikan postingan.",
+      "emptyOther": "Belum ada ide di sini.",
+      "dragHint": "Seret ide ke tanggal di kalender."
+    },
+    "idea": {
+      "chip": "Ide",
+      "new": "Ide baru",
+      "edit": "Ubah ide",
+      "title": "Ide",
+      "titleHint": "Satu kalimat cukup. Contoh: Review sunscreen setelah 7 hari dipakai.",
+      "note": "Catatan",
+      "notePlaceholder": "Hook pembuka, poin yang mau dibahas, atau referensi.",
+      "date": "Rencana tanggal",
+      "dateHint": "Kosongkan kalau belum tahu.",
+      "products": "Produk",
+      "addProduct": "Tambah produk",
+      "media": "Foto & video",
+      "addMedia": "Pilih dari Galeri",
+      "saved": "Ide disimpan.",
+      "archived": "Ide diarsipkan.",
+      "restored": "Ide dipulihkan.",
+      "planned": "Ide dipindah ke {date}.",
+      "toPost": "Jadikan postingan",
+      "archive": "Arsipkan",
+      "restore": "Pulihkan",
+      "removeDate": "Hapus tanggal",
+      "openPost": "Lihat postingan",
+      "fromMoment": "Dari momen {name}",
+      "productCount": "{n} produk",
+      "mediaCount": "{n} media",
+      "actions": "Pilihan ide"
+    },
+    "moments": {
+      "title": "Momen belanja",
+      "hint": "Satu ketukan menaruh ide teaser, review dan hari-H di kalender.",
+      "prepare": "Siapkan konten",
+      "prepared": "Sudah disiapkan",
+      "preparedToast": "Ide untuk {name} sudah ada di kalender.",
+      "inDays": "{n} hari lagi",
+      "today": "Hari ini",
+      "ongoing": "Sedang berlangsung"
+    },
+    "rhythm": {
+      "progress": "{count}/{target} terisi minggu ini",
+      "reached": "Target minggu ini tercapai. Mantap!",
+      "target": "Target per minggu",
+      "perWeek": "{n} postingan",
+      "saved": "Target disimpan.",
+      "fill": "Isi"
+    },
+    "pick": {
+      "title": "Isi {date}",
+      "empty": "Belum ada ide tanpa tanggal.",
+      "newIdea": "Tulis ide untuk hari ini",
+      "newPost": "Langsung buat postingan"
+    }
   },
   "links": {
     "title": "Link Produk",

@@ -1,7 +1,7 @@
 import { sql } from 'drizzle-orm'
 import { bigint, foreignKey, type AnyPgColumn, index, integer, jsonb, pgEnum, pgTable, primaryKey, text, unique, uniqueIndex } from 'drizzle-orm/pg-core'
 import type { EditSpec } from '../../../../shared/media/edit-spec'
-import { createdAt, id, tstz, updatedAt } from './_shared'
+import { contentPillar, createdAt, id, tstz, updatedAt } from './_shared'
 import { users } from './creators'
 import { workspaces } from './tenancy'
 
@@ -69,6 +69,7 @@ export const posts = pgTable('posts', {
   status: postStatus().notNull().default('draft'),
   scheduledAt: tstz(),
   version: integer().notNull().default(1),
+  pillar: contentPillar(), // "Jenis konten" (Rencana konten); optional
   createdAt: createdAt(), updatedAt: updatedAt()
 }, t => [unique().on(t.workspaceId, t.id), index().on(t.workspaceId, t.scheduledAt)])
 

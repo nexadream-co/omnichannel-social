@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { PLATFORM_META } from '#shared/channels/registry'
 import type { Platform, PostFormat } from '#shared/channels/types'
+import { PILLAR_META, type ContentPillar } from '#shared/utils/planner'
 import { POST_CHANGE_LABELS, POST_STATUS_META, POST_TARGET_STATUS_META, PUBLISH_ERROR_LABELS } from '#shared/utils/status'
 
 interface Detail {
@@ -8,6 +9,8 @@ interface Detail {
   caption: string
   status: string
   scheduledAt: string | null
+  pillar: ContentPillar | null
+  idea: { id: string, title: string } | null
   media: { id: string, kind: 'image' | 'video', url: string | null }[]
   targets: { id: string, platform: Platform, format: PostFormat, username: string | null, avatarUrl: string | null, accountStatus: string, caption: string, status: string, scheduledAt: string | null, publishedAt: string | null, syncedAt: string | null, removedAt: string | null, permalink: string | null, errorCode: string | null, insights: { metrics: Record<string, number>, capturedAt: string } | null, clicks: number, autoReplies: number, changes: { kind: string, before: string | null, after: string | null, detectedAt: string }[] }[]
 }
@@ -146,7 +149,25 @@ async function remove() {
             v-if="post.scheduledAt && ['scheduled', 'draft'].includes(post.status)"
             class="text-sm text-muted"
           >{{ t('posts.scheduledFor', { date: formatDateTime(post.scheduledAt, { locale, timeZone: tz }) }) }}</span>
+          <UBadge
+            v-if="post.pillar"
+            color="neutral"
+            variant="subtle"
+            :icon="PILLAR_META[post.pillar].icon"
+            :label="t(PILLAR_META[post.pillar].labelKey)"
+            class="ml-auto"
+          />
         </div>
+        <p
+          v-if="post.idea"
+          class="text-sm text-muted flex items-center gap-1.5 mb-3 min-w-0"
+        >
+          <UIcon
+            name="i-lucide-lightbulb"
+            class="size-4 shrink-0"
+          />
+          <span class="truncate">{{ t('posts.fromIdea', { title: post.idea.title }) }}</span>
+        </p>
         <div
           v-if="post.media.length"
           class="grid grid-cols-3 sm:grid-cols-4 gap-2 mb-3"

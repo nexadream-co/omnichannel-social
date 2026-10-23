@@ -4,14 +4,17 @@ import { CHANNELS, PLATFORM_META } from '../../../shared/channels/registry'
 import { defaultFormat } from '../../../shared/channels/formats'
 import type { MediaMeta, PostFormat } from '../../../shared/channels/types'
 import { hasBlockingIssues, validateTarget } from '../../../shared/channels/validate'
+import { CONTENT_PILLARS } from '../../../shared/utils/planner'
 import { recordAudit } from '../audit'
 import { assertAbility, type WorkspaceContext } from '../context'
 import type { Database, Executor } from '../db/client'
-import { dmEvents, jobs, linkClicks, mediaAssets, postMedia, posts, postTargetChanges, postTargets, publishAttempts, shortLinks, socialAccounts } from '../db/schema'
+import { dmEvents, jobs, linkClicks, mediaAssets, postMedia, posts, postTargetChanges, postTargets, publishAttempts, shortLinks, socialAccounts, workspaces } from '../db/schema'
 import { latestInsights } from '../engagement-jobs'
 import { countScheduledThisMonth, getEntitlements } from '../entitlements'
 import { appError } from '../errors'
 import { enqueue } from '../jobs/enqueue'
+import { ideaOfPost, markIdeaUsed, plannerWindow, releaseIdeasOf } from '../planner/ideas'
+import { zonedDateKey } from '../timezone'
 import { refreshPostStatus } from './status'
 
 const FORMATS = ['feed', 'carousel', 'reel', 'story', 'text'] as const
@@ -29,7 +32,9 @@ export const postInputSchema = z.object({
   mediaIds: z.array(z.string()).max(20).default([]),
   targets: z.array(targetInputSchema).min(1, 'Pilih minimal satu akun.').max(30),
   mode: z.enum(['draft', 'schedule', 'now']),
-  scheduledAt: z.iso.datetime({ offset: true }).optional()
+  scheduledAt: z.iso.datetime({ offset: true }).optional(),
+  pillar: z.enum(CONTENT_PILLARS).nullable().optional(), // omitted on update = keep
+  ideaId: z.string().min(1).optional() // Bank Ide → "Jadikan postingan": the idea leaves the bank
 })
 export type PostInput = z.infer<typeof postInputSchema>
 
@@ -109,7 +114,7 @@ export async function createPost(ctx: WorkspaceContext, input: PostInput) {
   if (input.mode !== 'draft') await assertMonthlyAllowance(ctx, resolved.length)
   const status = input.mode === 'draft' ? 'draft' as const : 'scheduled' as const
   const result = await ctx.db.transaction(async (tx) => {
-    const [post] = await tx.insert(posts).values({ workspaceId: ctx.workspaceId, authorUserId: ctx.userId, baseCaption: input.caption, status, scheduledAt }).returning()
+    const [post] = await tx.insert(posts).values({ workspaceId: ctx.workspaceId, authorUserId: ctx.userId, baseCaption: input.caption, status, scheduledAt, pillar: input.pillar ?? null }).returning()
     if (media.length) await tx.insert(postMedia).values(media.map((m, position) => ({ workspaceId: ctx.workspaceId, postId: post!.id, position, mediaId: m.id })))
     const targets = await tx.insert(postTargets).values(resolved.map(r => ({
       workspaceId: ctx.workspaceId, postId: post!.id, socialAccountId: r.account.id, platform: r.account.platform, format: r.format,
@@ -118,6 +123,7 @@ export async function createPost(ctx: WorkspaceContext, input: PostInput) {
       status, scheduledAt
     }))).returning({ id: postTargets.id })
     if (status === 'scheduled') await enqueueTargets(tx, ctx.workspaceId, targets.map(t => t.id), scheduledAt!, post!.version)
+    if (input.ideaId) await markIdeaUsed(tx, ctx.workspaceId, input.ideaId, post!.id)
     return { postId: post!.id, jobIds: (await tx.select({ jobId: postTargets.jobId }).from(postTargets).where(eq(postTargets.postId, post!.id))).map(r => r.jobId) }
   })
   return { ...result, kick: input.mode === 'now' }
@@ -143,7 +149,7 @@ export async function updatePost(ctx: WorkspaceContext, postId: string, input: P
   const result = await ctx.db.transaction(async (tx) => {
     const oldJobs = current.map(t => t.jobId).filter((id): id is string => Boolean(id))
     if (oldJobs.length) await tx.update(jobs).set({ status: 'cancelled', finishedAt: new Date() }).where(and(inArray(jobs.id, oldJobs), eq(jobs.status, 'queued')))
-    await tx.update(posts).set({ baseCaption: input.caption, status, scheduledAt, version, updatedAt: new Date() }).where(eq(posts.id, postId))
+    await tx.update(posts).set({ baseCaption: input.caption, status, scheduledAt, version, ...(input.pillar !== undefined && { pillar: input.pillar }), updatedAt: new Date() }).where(eq(posts.id, postId))
     await tx.delete(postMedia).where(eq(postMedia.postId, postId))
     if (media.length) await tx.insert(postMedia).values(media.map((m, position) => ({ workspaceId: ctx.workspaceId, postId, position, mediaId: m.id })))
     await tx.delete(postTargets).where(eq(postTargets.postId, postId))
@@ -154,6 +160,7 @@ export async function updatePost(ctx: WorkspaceContext, postId: string, input: P
       status, scheduledAt
     }))).returning({ id: postTargets.id })
     if (status === 'scheduled') await enqueueTargets(tx, ctx.workspaceId, targets.map(t => t.id), scheduledAt!, version)
+    if (input.ideaId) await markIdeaUsed(tx, ctx.workspaceId, input.ideaId, postId)
     return { postId, jobIds: (await tx.select({ jobId: postTargets.jobId }).from(postTargets).where(eq(postTargets.postId, postId))).map(r => r.jobId) }
   })
   return { ...result, kick: input.mode === 'now' }
@@ -167,7 +174,8 @@ export async function reschedulePost(ctx: WorkspaceContext, postId: string, sche
     mediaIds: detail.media.map(m => m.id),
     targets: detail.targets.map(t => ({ socialAccountId: t.socialAccountId, format: t.format, captionOverride: t.captionOverride, firstComment: t.options.firstComment, altText: t.options.altText })),
     mode: detail.status === 'draft' ? 'draft' : 'schedule',
-    scheduledAt
+    scheduledAt,
+    pillar: detail.pillar
   })
 }
 
@@ -219,6 +227,7 @@ export async function deletePost(ctx: WorkspaceContext, postId: string) {
   const jobIds = targets.map(t => t.jobId).filter((id): id is string => Boolean(id))
   await ctx.db.transaction(async (tx) => {
     if (jobIds.length) await tx.update(jobs).set({ status: 'cancelled', finishedAt: new Date() }).where(and(inArray(jobs.id, jobIds), eq(jobs.status, 'queued')))
+    await releaseIdeasOf(tx, ctx.workspaceId, postId)
     const deleted = await tx.delete(posts).where(and(eq(posts.id, postId), eq(posts.workspaceId, ctx.workspaceId))).returning({ id: posts.id })
     if (!deleted.length) throw appError(404, 'Postingan tidak ditemukan.', 'NOT_FOUND')
   })
@@ -237,7 +246,7 @@ export async function getPost(ctx: WorkspaceContext, postId: string) {
   ])
   // Numbers per target (SCREENS #16): latest platform insights, clicks on its attribution links, auto-replies sent.
   const targetIds = targets.map(row => row.target.id)
-  const [insights, clicks, dms, changes] = await Promise.all([
+  const [insights, clicks, dms, changes, idea] = await Promise.all([
     latestInsights(ctx.db as Database, targetIds),
     targetIds.length
       ? ctx.db.select({ targetId: shortLinks.postTargetId, n: sql<number>`count(${linkClicks.id})::int` }).from(shortLinks)
@@ -253,10 +262,12 @@ export async function getPost(ctx: WorkspaceContext, postId: string) {
       ? ctx.db.select({ postTargetId: postTargetChanges.postTargetId, kind: postTargetChanges.kind, before: postTargetChanges.before, after: postTargetChanges.after, detectedAt: postTargetChanges.detectedAt })
           .from(postTargetChanges).where(and(eq(postTargetChanges.workspaceId, ctx.workspaceId), inArray(postTargetChanges.postTargetId, targetIds)))
           .orderBy(desc(postTargetChanges.detectedAt)).limit(100)
-      : []
+      : [],
+    ideaOfPost(ctx.db, ctx.workspaceId, postId)
   ])
   return {
     id: post.id, caption: post.baseCaption, status: post.status, scheduledAt: post.scheduledAt, createdAt: post.createdAt, version: post.version,
+    pillar: post.pillar, idea,
     media,
     targets: targets.map(({ target: t, username, avatarUrl, accountStatus }) => ({
       id: t.id, socialAccountId: t.socialAccountId, platform: t.platform, format: t.format, username, avatarUrl, accountStatus,
@@ -328,11 +339,17 @@ export async function listPosts(ctx: WorkspaceContext, query: { page: number, li
 export async function calendarWindow(ctx: WorkspaceContext, from: Date, to: Date) {
   assertAbility(ctx, 'posts.read')
   if (to.getTime() - from.getTime() > 62 * 86_400_000) throw appError(400, 'Rentang kalender maksimal 62 hari.', 'VALIDATION_FAILED')
-  const rows = await ctx.db.select({ id: postTargets.id, postId: postTargets.postId, platform: postTargets.platform, status: postTargets.status, scheduledAt: postTargets.scheduledAt, publishedAt: postTargets.publishedAt, removedAt: postTargets.removedAt, caption: posts.baseCaption })
-    .from(postTargets).innerJoin(posts, eq(posts.id, postTargets.postId))
-    .where(and(eq(postTargets.workspaceId, ctx.workspaceId), gte(postTargets.scheduledAt, from), lt(postTargets.scheduledAt, to), sql`${postTargets.status} <> 'cancelled'`))
-    .orderBy(asc(postTargets.scheduledAt))
-  return { items: rows.map(r => ({ ...r, caption: r.caption.slice(0, 120) })) }
+  const [rows, [workspace]] = await Promise.all([
+    ctx.db.select({ id: postTargets.id, postId: postTargets.postId, platform: postTargets.platform, status: postTargets.status, scheduledAt: postTargets.scheduledAt, publishedAt: postTargets.publishedAt, removedAt: postTargets.removedAt, caption: posts.baseCaption, pillar: posts.pillar })
+      .from(postTargets).innerJoin(posts, eq(posts.id, postTargets.postId))
+      .where(and(eq(postTargets.workspaceId, ctx.workspaceId), gte(postTargets.scheduledAt, from), lt(postTargets.scheduledAt, to), sql`${postTargets.status} <> 'cancelled'`))
+      .orderBy(asc(postTargets.scheduledAt)),
+    ctx.db.select({ timezone: workspaces.timezone }).from(workspaces).where(eq(workspaces.id, ctx.workspaceId))
+  ])
+  // Planned ideas live on local days: the window's instants become days on the workspace clock.
+  const tz = workspace?.timezone ?? 'Asia/Jakarta'
+  const planner = await plannerWindow(ctx, zonedDateKey(from, tz), zonedDateKey(to, tz), zonedDateKey(new Date(), tz))
+  return { items: rows.map(r => ({ ...r, caption: r.caption.slice(0, 120) })), ...planner }
 }
 
 export async function publishAttemptsOf(ctx: WorkspaceContext, targetId: string) {

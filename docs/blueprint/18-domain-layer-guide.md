@@ -13,6 +13,7 @@ The platform layer (files 01–17) is the foundation. This file explains how Soc
 | Etalase | `server/core/bio/` | `bio_pages`, `bio_categories`, `bio_items` | `bio.manage` | `bioPages`, feature `removeBranding` |
 | Auto-reply | `server/core/autoreply/` | `dm_rules`, `dm_events`, `webhook_events` | `autoreply.manage` | `autoReplyRules`, `autoReplyDmsPerMonth` |
 | Hashtags | `server/core/hashtags/`, `shared/hashtags/` | `hashtag_library` (global), `hashtag_sets`, `hashtag_research_runs`, `hashtag_signals` (global cache) | `posts.read`, `posts.write`; staff `hashtags.read` / `hashtags.write` | `tagResearchPerMonth` |
+| Content planner | `server/core/planner/`, `shared/utils/planner.ts` | `content_ideas`, `content_idea_links`, `content_idea_media`, `shopping_moments` (global); `posts.pillar`, `workspaces.posts_per_week` | `posts.read`, `posts.write`; staff `moments.read` / `moments.write` | none (free on every plan) |
 
 ## 2. Recipe for a domain feature
 

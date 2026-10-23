@@ -6,6 +6,7 @@ import { countChars, validateTarget } from '#shared/channels/validate'
 import type { Aspect } from '#shared/media/edit-spec'
 import { suggestAspect } from '#shared/media/presets'
 import type { MediaView } from '#shared/media/types'
+import { CONTENT_PILLARS, IDEA_TITLE_MAX, PILLAR_META, type ContentPillar, type IdeaDetail } from '#shared/utils/planner'
 import type { UploadItem } from '~/components/MediaUploader.vue'
 
 interface Account { id: string, platform: Platform, username: string | null, avatarUrl: string | null, status: string }
@@ -21,6 +22,9 @@ const entitlements = useEntitlements()
 
 const editId = typeof route.query.post === 'string' ? route.query.post : null
 const duplicateId = typeof route.query.duplicate === 'string' ? route.query.duplicate : null
+// Bank Ide → "Jadikan postingan": saving the post takes the idea out of the bank.
+const ideaId = !editId && !duplicateId && typeof route.query.idea === 'string' ? route.query.idea : null
+const fromIdea = ref<Pick<IdeaDetail, 'id' | 'title' | 'note'> | null>(null)
 useHead({ title: () => editId ? t('composer.editTitle') : t('composer.title') })
 
 const tz = computed(() => auth.profile.value?.displayTimezone ?? 'Asia/Jakarta')
@@ -36,12 +40,18 @@ if (typeof route.query.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(route.que
 const loading = ref(true)
 const submitting = ref<null | 'schedule' | 'now' | 'draft'>(null)
 const serverIssues = ref<(Issue & { socialAccountId?: string })[]>([])
+const pillar = ref<ContentPillar | 'none'>('none')
+const pillarItems = computed(() => [{ value: 'none', label: t('planner.pillarNone') }, ...CONTENT_PILLARS.map(value => ({ value, label: t(PILLAR_META[value].labelKey), icon: PILLAR_META[value].icon }))])
 
 // "Tambah link produk": the vault short link goes into the caption; publishing swaps in a per-post link (attribution).
 const linkPickerOpen = ref(false)
 function insertLink(link: { shortUrl: string | null }) {
   if (!link.shortUrl) return
   caption.value = caption.value.trimEnd() ? `${caption.value.trimEnd()}\n\n${link.shortUrl}` : link.shortUrl
+}
+
+function readyItem(picked: MediaView): UploadItem {
+  return { key: picked.id, mediaId: picked.id, previewUrl: picked.url ?? picked.posterUrl, posterUrl: picked.posterUrl, kind: picked.kind, mime: picked.mime, bytes: picked.bytes, status: 'ready', progress: 100, error: null, width: picked.width, height: picked.height, durationMs: picked.durationMs }
 }
 
 // Threads takes one tag: the tag panel hands over a one-tag copy of the caption for every selected Threads account.
@@ -62,18 +72,27 @@ onMounted(async () => {
   selected.value = accounts.value.map(a => a.id) // smart default: post everywhere
   const sourceId = editId ?? duplicateId
   if (sourceId) {
-    const post = await apiFetch<{ caption: string, scheduledAt: string | null, media: { id: string, kind: 'image' | 'video', url: string | null, status: UploadItem['status'], width: number | null, height: number | null, durationMs: number | null }[], targets: { socialAccountId: string, format: PostFormat, captionOverride: string | null, options: { firstComment?: string, altText?: string } }[] }>(`/api/app/posts/${sourceId}`)
+    const post = await apiFetch<{ caption: string, scheduledAt: string | null, pillar: ContentPillar | null, media: { id: string, kind: 'image' | 'video', url: string | null, status: UploadItem['status'], width: number | null, height: number | null, durationMs: number | null }[], targets: { socialAccountId: string, format: PostFormat, captionOverride: string | null, options: { firstComment?: string, altText?: string } }[] }>(`/api/app/posts/${sourceId}`)
     caption.value = post.caption
+    pillar.value = post.pillar ?? 'none'
     media.value = post.media.map(m => ({ key: m.id, mediaId: m.id, previewUrl: m.url, kind: m.kind, mime: m.kind === 'video' ? 'video/mp4' : 'image/jpeg', bytes: 0, status: m.status, progress: 100, error: null, width: m.width, height: m.height, durationMs: m.durationMs }))
     selected.value = post.targets.map(t => t.socialAccountId).filter(id => accounts.value.some(a => a.id === id))
     for (const target of post.targets) Object.assign(ensureOptions(target.socialAccountId), { captionOverride: target.captionOverride ?? '', format: target.format, firstComment: target.options.firstComment ?? '', altText: target.options.altText ?? '' })
     if (editId && post.scheduledAt && new Date(post.scheduledAt) > new Date()) Object.assign(slot, zonedParts(new Date(post.scheduledAt), tz.value))
+  } else if (ideaId) {
+    // The idea's line opens the caption, its products follow as short links; the note stays a reminder above.
+    const idea = await apiFetch<IdeaDetail>(`/api/app/planner/ideas/${ideaId}`).catch(() => null)
+    if (idea?.status === 'open') {
+      fromIdea.value = { id: idea.id, title: idea.title, note: idea.note }
+      caption.value = [idea.title, ...idea.links.map(l => l.shortUrl).filter(Boolean)].join('\n\n')
+      media.value = idea.media.filter(m => m.status === 'ready').map(readyItem)
+      pillar.value = idea.pillar ?? 'none'
+      if (idea.plannedOn && idea.plannedOn >= zonedParts(new Date(), tz.value).date) slot.date = idea.plannedOn
+    }
   } else if (typeof route.query.media === 'string') {
     // Galeri Media → "Pakai di postingan".
     const picked = await apiFetch<MediaView>(`/api/app/media/${route.query.media}`).catch(() => null)
-    if (picked?.status === 'ready') {
-      media.value = [{ key: picked.id, mediaId: picked.id, previewUrl: picked.url ?? picked.posterUrl, posterUrl: picked.posterUrl, kind: picked.kind, mime: picked.mime, bytes: picked.bytes, status: 'ready', progress: 100, error: null, width: picked.width, height: picked.height, durationMs: picked.durationMs }]
-    }
+    if (picked?.status === 'ready') media.value = [readyItem(picked)]
   }
   loading.value = false
 })
@@ -114,6 +133,31 @@ function fixAction(issue: Issue & { account: Account }) {
   return undefined
 }
 
+/** "Simpan sebagai ide": not ready to post yet; the first line becomes the idea, the rest its note. */
+const savingIdea = ref(false)
+async function saveAsIdea() {
+  const [first = '', ...rest] = caption.value.trim().split('\n')
+  savingIdea.value = true
+  try {
+    await apiFetch('/api/app/planner/ideas', {
+      method: 'POST',
+      body: {
+        title: first.trim().slice(0, IDEA_TITLE_MAX),
+        note: rest.join('\n').trim() || null,
+        plannedOn: slot.date || null,
+        pillar: pillar.value === 'none' ? null : pillar.value,
+        mediaIds: media.value.filter(m => m.mediaId && m.status === 'ready').map(m => m.mediaId)
+      }
+    })
+    toast.add({ title: t('composer.savedIdea'), color: 'success' })
+    await navigateTo(localePath('/app/calendar'))
+  } catch (caught) {
+    toast.add({ title: extractErrorMessage(caught, t('authError.generic')), color: 'error' })
+  } finally {
+    savingIdea.value = false
+  }
+}
+
 const counters = computed(() => [...new Set(selectedAccounts.value.map(a => a.platform))].map(platform => ({ platform, count: countChars(caption.value), max: CHANNELS[platform].maxChars })))
 
 const remaining = computed(() => entitlements.isUnlimited('scheduledPostsPerMonth') ? null : entitlements.remaining('scheduledPostsPerMonth'))
@@ -148,7 +192,9 @@ async function submit(mode: 'schedule' | 'now' | 'draft') {
         altText: ensureOptions(account.id).altText || undefined
       })),
       mode,
-      scheduledAt: mode === 'now' ? undefined : scheduledAt
+      scheduledAt: mode === 'now' ? undefined : scheduledAt,
+      pillar: pillar.value === 'none' ? null : pillar.value,
+      ideaId: fromIdea.value?.id
     }
     if (editId) await apiFetch(`/api/app/posts/${editId}`, { method: 'PATCH', body })
     else await apiFetch('/api/app/posts', { method: 'POST', body })
@@ -201,6 +247,15 @@ async function submit(mode: 'schedule' | 'now' | 'draft') {
       class="grid lg:grid-cols-[1fr_22rem] gap-6 items-start"
     >
       <div class="space-y-5 min-w-0">
+        <UAlert
+          v-if="fromIdea"
+          color="info"
+          variant="subtle"
+          icon="i-lucide-lightbulb"
+          :title="t('composer.fromIdea', { title: fromIdea.title })"
+          :description="fromIdea.note ?? undefined"
+          class="whitespace-pre-line"
+        />
         <UCard>
           <div class="space-y-5">
             <div>
@@ -311,6 +366,16 @@ async function submit(mode: 'schedule' | 'now' | 'draft') {
             />
             <template #content>
               <div class="space-y-6 pt-4">
+                <UFormField
+                  :label="t('planner.pillarLabel')"
+                  :description="t('planner.pillarHint')"
+                >
+                  <USelect
+                    v-model="pillar"
+                    :items="pillarItems"
+                    class="w-full sm:w-56"
+                  />
+                </UFormField>
                 <div
                   v-for="account in selectedAccounts"
                   :key="account.id"
@@ -421,6 +486,17 @@ async function submit(mode: 'schedule' | 'now' | 'draft') {
               :disabled="Boolean(submitting)"
               :label="t('composer.draft')"
               @click="submit('draft')"
+            />
+            <UButton
+              v-if="!editId && !fromIdea"
+              block
+              variant="link"
+              color="neutral"
+              icon="i-lucide-lightbulb"
+              :loading="savingIdea"
+              :disabled="Boolean(submitting) || !caption.trim()"
+              :label="t('composer.saveIdea')"
+              @click="saveAsIdea"
             />
           </div>
         </UCard>

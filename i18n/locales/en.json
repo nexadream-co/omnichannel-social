@@ -719,7 +719,10 @@
     "savedDraft": "Draft saved.",
     "fixFirst": "Some things need fixing first.",
     "mediaPending": "Wait for the media to finish preparing.",
-    "pastTime": "That time has passed. Pick a future time."
+    "pastTime": "That time has passed. Pick a future time.",
+    "saveIdea": "Save as idea",
+    "savedIdea": "Saved to the idea bank.",
+    "fromIdea": "From idea: {title}"
   },
   "mediaEditor": {
     "open": "Edit",
@@ -917,18 +920,110 @@
       "clicks": "Link clicks",
       "autoReplies": "Auto DMs",
       "pending": "Platform numbers appear tomorrow morning."
-    }
+    },
+    "fromIdea": "From idea: {title}"
   },
   "calendar": {
     "title": "Calendar",
-    "subtitle": "See and move your planned posts.",
+    "subtitle": "Plan content ideas and arrange your post schedule.",
     "today": "Today",
     "prev": "Previous month",
     "next": "Next month",
     "empty": "No posts this month.",
-    "dragHint": "Drag a post to another day to reschedule it.",
+    "dragHint": "Drag a post or an idea to another day to move it.",
     "moved": "Schedule moved.",
-    "more": "+{n} more"
+    "more": "+{n} more",
+    "prevWeek": "Previous week",
+    "nextWeek": "Next week",
+    "viewWeek": "Week",
+    "viewMonth": "Month",
+    "tabCalendar": "Calendar",
+    "tabIdeas": "Idea bank",
+    "emptyDay": "Empty"
+  },
+  "planner": {
+    "pillarLabel": "Content type",
+    "pillarHint": "Helps keep a healthy mix so you are not selling all the time.",
+    "pillarNone": "Not set",
+    "pillar": {
+      "promo": "Promo",
+      "review": "Review",
+      "edukasi": "Education",
+      "hiburan": "Entertainment",
+      "cerita": "Story"
+    },
+    "momentKind": {
+      "twin_date": "Twin-date sale",
+      "payday": "Payday",
+      "holiday": "Holiday",
+      "campaign": "Shopping campaign"
+    },
+    "bank": {
+      "title": "Idea bank",
+      "capturePlaceholder": "Write a content idea, then press Enter",
+      "capture": "Save idea",
+      "views": {
+        "unplanned": "No date yet",
+        "planned": "Has a date",
+        "used": "Turned into posts",
+        "archived": "Archive"
+      },
+      "emptyUnplanned": "Write content ideas any time, then turn them into posts later.",
+      "emptyOther": "No ideas here yet.",
+      "dragHint": "Drag an idea onto a day in the calendar."
+    },
+    "idea": {
+      "chip": "Idea",
+      "new": "New idea",
+      "edit": "Edit idea",
+      "title": "Idea",
+      "titleHint": "One sentence is enough. Example: Sunscreen review after 7 days of use.",
+      "note": "Notes",
+      "notePlaceholder": "Opening hook, points to cover, or references.",
+      "date": "Planned date",
+      "dateHint": "Leave empty if you are not sure yet.",
+      "products": "Products",
+      "addProduct": "Add product",
+      "media": "Photos & videos",
+      "addMedia": "Pick from Gallery",
+      "saved": "Idea saved.",
+      "archived": "Idea archived.",
+      "restored": "Idea restored.",
+      "planned": "Idea moved to {date}.",
+      "toPost": "Turn into a post",
+      "archive": "Archive",
+      "restore": "Restore",
+      "removeDate": "Remove date",
+      "openPost": "View post",
+      "fromMoment": "From {name}",
+      "productCount": "{n} products",
+      "mediaCount": "{n} media",
+      "actions": "Idea options"
+    },
+    "moments": {
+      "title": "Shopping moments",
+      "hint": "One tap puts a teaser, a review and a day-of idea on your calendar.",
+      "prepare": "Prepare content",
+      "prepared": "Prepared",
+      "preparedToast": "Ideas for {name} are on your calendar.",
+      "inDays": "in {n} days",
+      "today": "Today",
+      "ongoing": "Happening now"
+    },
+    "rhythm": {
+      "progress": "{count}/{target} planned this week",
+      "reached": "This week's target is reached. Nice!",
+      "target": "Weekly target",
+      "perWeek": "{n} posts",
+      "saved": "Target saved.",
+      "fill": "Fill"
+    },
+    "pick": {
+      "title": "Fill {date}",
+      "empty": "No undated ideas yet.",
+      "newIdea": "Write an idea for this day",
+      "newPost": "Create a post now"
+    }
   },
   "links": {
     "title": "Product links",

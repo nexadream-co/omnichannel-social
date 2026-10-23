@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm'
-import { boolean, index, integer, jsonb, pgTable, text, uniqueIndex } from 'drizzle-orm/pg-core'
+import { boolean, index, integer, jsonb, pgTable, smallint, text, uniqueIndex } from 'drizzle-orm/pg-core'
 import type { WorkspaceWatermark } from '../../../../shared/media/edit-spec'
 import { createdAt, id, tstz, updatedAt, workspaceRole, workspaceStatus } from './_shared'
 import { users } from './creators'
@@ -21,6 +21,7 @@ export const workspaces = pgTable('workspaces', {
   niche: text(),
   affiliatePrograms: text().array().notNull().default(sql`'{}'::text[]`),
   watermark: jsonb().$type<WorkspaceWatermark>(), // the logo the media editor places with one tap
+  postsPerWeek: smallint(), // Kalender weekly target; null = the default (shared/utils/planner.ts)
   createdAt: createdAt(), updatedAt: updatedAt()
 }, t => [index().on(t.status), index().on(t.deletedAt), index().on(t.createdAt)])
 

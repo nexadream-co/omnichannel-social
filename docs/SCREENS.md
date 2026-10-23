@@ -83,8 +83,10 @@ Needs: a selectable list, friendly errors with a how-to-fix guide (e.g., "Akun p
   - Caption too long for Threads.
   - Daily posting limit reached.
 
-**16. Calendar (Kalender).** Purpose: see and move planned posts.
-Needs: month and week views (a list view on phones), color by platform, status icons, drag to reschedule, tap an empty day to create.
+**16. Calendar (Kalender) = the content planner.** Purpose: decide what to post and when, then see and move it.
+Needs: week view (default) and month view, a day list on phones; posts as solid chips (color by platform, status icons) and planned ideas as dashed chips, both dragged to another day (never into the past). **Momen belanja** strip (11.11, gajian, Lebaran…, coming 30 days) with "Siapkan konten" = three dated ideas (teaser, review, day-of). **Target per minggu** ("2/3 terisi minggu ini", default 3). **Bank Ide** beside the calendar on desktop, a tab on phones and tablets: one-line capture ("Tulis ide konten, lalu tekan Enter"), views Belum ada tanggal / Sudah ada tanggal / Sudah jadi postingan / Arsip, cards draggable onto a day. Idea editor (slideover): idea, note, date, Jenis konten, products, media from Galeri, "Jadikan postingan" (opens the composer pre-filled), Arsipkan / Pulihkan. "+" on a day: with ideas waiting it offers them ("Isi"), otherwise it opens the composer on that date as before. Free on every plan; never part of onboarding.
+
+**16a. Shopping moments (back-office, `/admin/moments`).** Purpose: keep the creators' shopping calendar right (Ramadan and Lebaran move every year). Needs: upcoming / all list, add and edit (name in Bahasa and English, kind, dates, preparation days), switch off instead of delete.
 
 **17. Posts list (Postingan).** Purpose: manage all posts.
 Needs: tabs (Terjadwal, Draf, Terbit, Gagal), simple filters, status per platform, a "Coba lagi" button on failed posts, empty states that teach.

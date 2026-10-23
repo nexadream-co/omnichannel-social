@@ -466,6 +466,17 @@ Hashtags help a post get found; the UI never promises views. Matching is **rule-
 - **Saved sets** (`hashtag_sets`, free, 50 per workspace).
 - Instagram hashtag search needs Facebook Login (PLATFORM-CONSTRAINTS), so it is left for a later phase.
 
+### 8.8 Rencana konten (content planner)
+
+The step before the composer: **what to post, and when**. It lives inside the Kalender (no new menu item), is free on every plan and is never part of onboarding. Every suggestion is rule-based (no AI).
+
+- **Ideas** (`content_ideas`, per workspace): `title` (the only required field), `note`, `pillar`, `planned_on date` (a local day on the workspace clock, no time), `status` (`open` / `used` / `archived`), `post_id`, `moment_id`. Products in `content_idea_links` (composite FK to `links`) and media in `content_idea_media` (composite FK to `media_assets`, **cascade**: deleting a Galeri photo drops it from ideas instead of blocking the delete). A sanity cap of 500 open ideas, not a plan limit.
+- **Idea ↔ post:** ideas carry no publishing state, so the publish state machine is untouched. `createPost` / `updatePost` take an optional `ideaId` and mark that open idea `used` with `post_id` in the same transaction; `deletePost` puts it back to `open` on the same day. A used idea is read-only ("Ubah postingannya saja").
+- **Jenis konten** (`content_pillar`: promo, review, edukasi, hiburan, cerita) is optional on ideas and on `posts.pillar`; a calendar drag (`reschedulePost`) keeps it. Phase 2 uses it for the content-mix hint and clicks per pillar.
+- **Shopping moments** (`shopping_moments`, global reference data, deterministic ids, migration 0010 + seed for 2026–2027, edited at `/admin/moments`, `isActive` instead of delete): kind `twin_date` / `payday` / `holiday` / `campaign`, `starts_on`–`ends_on`, `prep_days`. "Siapkan konten" (`prepareMoment`) creates three dated ideas from the kind's pack (`shared/utils/planner.ts`: sale = teaser H-prep, review H-1, day-of; payday; holiday), in the creator's language; days already gone move to today; once per moment unless those ideas were archived. Islamic dates are estimates staff correct when announced.
+- **Calendar window:** `GET /api/app/posts/calendar` returns the posts plus the open ideas planned in the window (instants turned into local days on the workspace clock), the moments overlapping it **or starting within 30 days** (a week view alone would show 11.11 too late to prepare), `postsPerWeek` (`workspaces.posts_per_week`, default 3, changed with `posts.write`) and the count of undated ideas (none → "+" on a day goes straight to the composer).
+- **Phase 2 (not built):** best time from the creator's own `insight_snapshots` (replacing the fixed `suggestedSlot()`), forgotten and best-clicked products from Link Produk, the content-mix hint, "Jadikan ide lagi" on top posts, Galeri batch "Jadikan N ide", a Sunday planning email and an H-1 reminder (`planner.weekly`, `planner.reminders`).
+
 ## 9. Webhooks
 
 ### 9.1 Meta
