@@ -24,6 +24,10 @@ watch(() => route.fullPath, () => {
   menuOpen.value = false
 })
 
+// A signed-in creator gets one way back into the app instead of "Masuk / Coba gratis".
+const { signedIn, check: checkSession } = usePublicSession()
+onMounted(checkSession)
+
 // Highlight the landing section in view, so the nav shows where the reader is.
 const activeSection = ref<string | null>(null)
 let sectionObserver: IntersectionObserver | null = null
@@ -85,17 +89,24 @@ const socials = computed(() => {
           <LocaleSwitch />
           <UColorModeButton />
           <UButton
-            :to="localePath('/app/auth/login')"
-            variant="ghost"
-            color="neutral"
-            :label="t('landing.ctaLogin')"
-            class="hidden sm:inline-flex"
+            v-if="signedIn"
+            :to="localePath('/app')"
+            :label="t('landing.ctaApp')"
           />
-          <UButton
-            :to="localePath('/app/auth/register')"
-            :label="t('landing.ctaRegister')"
-            class="hidden sm:inline-flex"
-          />
+          <template v-else>
+            <UButton
+              :to="localePath('/app/auth/login')"
+              variant="ghost"
+              color="neutral"
+              :label="t('landing.ctaLogin')"
+              class="hidden sm:inline-flex"
+            />
+            <UButton
+              :to="localePath('/app/auth/register')"
+              :label="t('landing.ctaRegister')"
+              class="hidden sm:inline-flex"
+            />
+          </template>
           <UButton
             class="lg:hidden"
             color="neutral"
@@ -129,19 +140,28 @@ const socials = computed(() => {
         </nav>
         <div class="mt-6 grid gap-2">
           <UButton
-            :to="localePath('/app/auth/register')"
+            v-if="signedIn"
+            :to="localePath('/app')"
             size="lg"
             block
-            :label="t('landing.ctaRegister')"
+            :label="t('landing.ctaApp')"
           />
-          <UButton
-            :to="localePath('/app/auth/login')"
-            size="lg"
-            block
-            color="neutral"
-            variant="outline"
-            :label="t('landing.ctaLogin')"
-          />
+          <template v-else>
+            <UButton
+              :to="localePath('/app/auth/register')"
+              size="lg"
+              block
+              :label="t('landing.ctaRegister')"
+            />
+            <UButton
+              :to="localePath('/app/auth/login')"
+              size="lg"
+              block
+              color="neutral"
+              variant="outline"
+              :label="t('landing.ctaLogin')"
+            />
+          </template>
         </div>
       </template>
     </USlideover>

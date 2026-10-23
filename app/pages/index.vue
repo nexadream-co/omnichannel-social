@@ -36,6 +36,7 @@ useHead(() => ({
 }))
 
 const registrationOpen = computed(() => data.value?.registrationOpen !== false)
+const { signedIn } = usePublicSession()
 // Hero price chips come from the plans themselves, so they never disagree with the pricing section.
 const planChips = computed(() => {
   const plans = data.value?.plans ?? []
@@ -99,30 +100,40 @@ const whatsappUrl = computed(() => data.value?.company.whatsapp ? `https://wa.me
           </p>
           <div class="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start">
             <UButton
-              v-if="registrationOpen"
-              :to="localePath('/app/auth/register')"
+              v-if="signedIn"
+              :to="localePath('/app')"
               size="xl"
               class="justify-center"
-              :label="t('landing.ctaRegister')"
+              :label="t('landing.ctaApp')"
               trailing-icon="i-lucide-arrow-right"
             />
-            <UButton
-              v-else
-              size="xl"
-              class="justify-center"
-              color="neutral"
-              variant="soft"
-              disabled
-              :label="t('landing.ctaClosed')"
-            />
-            <UButton
-              :to="localePath('/app/auth/login')"
-              size="xl"
-              class="justify-center"
-              color="neutral"
-              variant="outline"
-              :label="t('landing.ctaLogin')"
-            />
+            <template v-else>
+              <UButton
+                v-if="registrationOpen"
+                :to="localePath('/app/auth/register')"
+                size="xl"
+                class="justify-center"
+                :label="t('landing.ctaRegister')"
+                trailing-icon="i-lucide-arrow-right"
+              />
+              <UButton
+                v-else
+                size="xl"
+                class="justify-center"
+                color="neutral"
+                variant="soft"
+                disabled
+                :label="t('landing.ctaClosed')"
+              />
+              <UButton
+                :to="localePath('/app/auth/login')"
+                size="xl"
+                class="justify-center"
+                color="neutral"
+                variant="outline"
+                :label="t('landing.ctaLogin')"
+              />
+            </template>
           </div>
           <div class="flex flex-wrap justify-center gap-2 lg:justify-start">
             <UBadge
@@ -443,7 +454,7 @@ const whatsappUrl = computed(() => data.value?.company.whatsapp ? `https://wa.me
 
     <!-- Final CTA -->
     <section
-      v-if="registrationOpen"
+      v-if="registrationOpen || signedIn"
       class="border-t border-default bg-muted/40 py-14 sm:py-20"
     >
       <UContainer class="text-center space-y-5">
@@ -454,13 +465,16 @@ const whatsappUrl = computed(() => data.value?.company.whatsapp ? `https://wa.me
         <h2 class="text-2xl sm:text-3xl font-bold tracking-tight text-highlighted text-balance">
           {{ t('landing.finalTitle') }}
         </h2>
-        <p class="text-muted">
+        <p
+          v-if="!signedIn"
+          class="text-muted"
+        >
           {{ t('landing.noCard') }}
         </p>
         <UButton
-          :to="localePath('/app/auth/register')"
+          :to="localePath(signedIn ? '/app' : '/app/auth/register')"
           size="xl"
-          :label="t('landing.ctaRegister')"
+          :label="t(signedIn ? 'landing.ctaApp' : 'landing.ctaRegister')"
           trailing-icon="i-lucide-arrow-right"
         />
       </UContainer>

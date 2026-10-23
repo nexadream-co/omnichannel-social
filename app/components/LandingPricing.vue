@@ -8,6 +8,9 @@ const price = (p: Plan) => (period.value === 'yearly' ? p.priceYearly : p.priceM
 const save = computed(() => Math.max(0, ...props.plans.filter(p => p.priceMonthly > 0 && p.priceYearly > 0).map(p => Math.round((1 - p.priceYearly / (p.priceMonthly * 12)) * 100))))
 const { lines: planLines } = usePlanLines()
 const featured = computed(() => props.trialPlanSlug)
+// Signed in: a paid plan opens Langganan to upgrade, the free plan just opens the app.
+const { signedIn } = usePublicSession()
+const planTarget = (p: Plan) => localePath(!signedIn.value ? '/app/auth/register' : price(p) > 0 ? '/app/billing' : '/app')
 </script>
 
 <template>
@@ -67,16 +70,19 @@ const featured = computed(() => props.trialPlanSlug)
           </li>
         </ul>
         <UButton
-          v-if="registrationOpen"
-          :to="localePath('/app/auth/register')"
+          v-if="registrationOpen || signedIn"
+          :to="planTarget(plan)"
           size="lg"
           block
           :variant="plan.slug === featured ? 'solid' : 'outline'"
-          :label="price(plan) > 0 ? t('landing.choose', { plan: plan.name }) : t('landing.startFree')"
+          :label="price(plan) > 0 ? t('landing.choose', { plan: plan.name }) : t(signedIn ? 'landing.ctaApp' : 'landing.startFree')"
         />
       </div>
     </div>
-    <p class="text-center text-sm text-muted">
+    <p
+      v-if="!signedIn"
+      class="text-center text-sm text-muted"
+    >
       {{ t('landing.noCard') }}
     </p>
   </div>
