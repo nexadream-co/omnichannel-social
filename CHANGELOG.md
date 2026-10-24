@@ -2,6 +2,7 @@
 
 ## 0.1.0 (Draft)
 
+- UX audit of every screen (phone and desktop screenshots, prioritised findings, a feedback and celebration system, drag and gesture proposals and a roadmap) in `docs/ux-audit/`. Documentation only; nothing in the app changed.
 - Project foundation: Nuxt 4 app with the landing page, creator console (`/app`) and staff back-office (`/admin`) shells, in Bahasa Indonesia and English, with dark mode.
 - Creators can sign up with email and password (or Google when configured), verify their email, sign in, reset their password and sign out. Every new creator gets a workspace with a 14-day Kreator trial.
 - Staff can sign in to the back-office, which shows the sidebar their role allows.
