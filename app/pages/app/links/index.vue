@@ -22,6 +22,7 @@ const entitlements = useEntitlements()
 const undo = useUndoToast()
 const { spark, haptic } = useCelebrate()
 const { readClipboard, watchFill } = useAddProductLink()
+const productPhoto = useProductPhoto()
 useHead({ title: () => t('links.title') })
 
 const showArchived = ref(false)
@@ -52,7 +53,9 @@ onMounted(() => {
 })
 
 /** Fills the card as the autofill job delivers; a spark when the title and photo have both arrived. */
+const fillingIds = ref(new Set<string>())
 function fill(id: string, tries?: number) {
+  fillingIds.value.add(id)
   void watchFill(id, (link) => {
     const before = list.items.value.find(row => row.id === id)
     list.items.value = list.items.value.map(row => row.id === id ? { ...row, ...link, clicks7d: row.clicks7d } : row)
@@ -63,7 +66,22 @@ function fill(id: string, tries?: number) {
         if (el) spark(el)
       })
     }
-  }, tries)
+  }, tries).finally(() => fillingIds.value.delete(id))
+}
+
+// Shops that hide their photo (Tokopedia) leave the card empty: the creator adds one from the card.
+const photoBusyId = ref<string | null>(null)
+async function pickPhoto(link: LinkRow, file: File) {
+  photoBusyId.value = link.id
+  try {
+    const updated = await productPhoto.setLinkPhoto(link.id, file)
+    list.items.value = list.items.value.map(row => row.id === link.id ? { ...row, ...updated, clicks7d: row.clicks7d } : row)
+    toast.add({ title: t('links.photoSaved'), color: 'success' })
+  } catch (caught) {
+    toast.add({ title: extractErrorMessage(caught, t('authError.generic')), color: 'error' })
+  } finally {
+    photoBusyId.value = null
+  }
 }
 
 const pendingUrl = ref<string | null>(null)
@@ -217,7 +235,15 @@ const searching = computed(() => Boolean(list.search.value.trim()) || showArchiv
         :key="link.id"
         class="flex gap-3 rounded-lg border border-default bg-default p-2 sm:flex-col sm:p-0 sm:overflow-hidden"
       >
+        <ProductPhotoButton
+          v-if="!link.imageUrl && !fillingIds.has(link.id)"
+          :src="null"
+          :busy="photoBusyId === link.id"
+          class="size-[72px] sm:aspect-[4/3] sm:size-auto sm:w-full"
+          @pick="pickPhoto(link, $event)"
+        />
         <NuxtLink
+          v-else
           :to="localePath(`/app/links/${link.id}`)"
           class="shrink-0"
         >
@@ -262,7 +288,7 @@ const searching = computed(() => Boolean(list.search.value.trim()) || showArchiv
             />
           </p>
           <p
-            v-if="!link.title || !link.imageUrl"
+            v-if="fillingIds.has(link.id)"
             class="flex items-center gap-1 text-xs text-muted"
           >
             <UIcon

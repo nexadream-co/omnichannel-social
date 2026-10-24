@@ -577,6 +577,9 @@
   "settings": {
     "title": "Pengaturan",
     "subtitle": "Pengaturan akun dan data kamu.",
+    "appearanceTitle": "Tampilan",
+    "theme": "Tema",
+    "themeHint": "Berlaku di perangkat ini saja.",
     "workspaceName": "Nama akun",
     "timezone": "Zona waktu",
     "timezoneHint": "Dipakai untuk jadwal postingan dan statistik harian.",
@@ -1293,6 +1296,14 @@
     "advanced": "Opsi lanjutan",
     "pastePlaceholder": "Tempel link produk…",
     "pasteButton": "Tempel",
+    "previewClear": "Hapus link",
+    "previewNoPhoto": "Fotonya belum bisa diambil dari toko. Ketuk Foto untuk menambahkan sendiri.",
+    "photo": "Foto",
+    "addPhoto": "Tambah foto produk",
+    "changePhoto": "Ganti foto produk",
+    "photoUnreadable": "Foto ini tidak bisa dibaca. Pilih foto JPG atau PNG lain.",
+    "photoSaved": "Foto produk disimpan",
+    "noPhoto": "Belum ada foto",
     "addShort": "Tambah",
     "pasteInvalid": "Linknya belum terbaca. Salin link produk lengkap, mulai dari https://",
     "pasteNothing": "Belum ada link produk di salinanmu. Salin dulu linknya dari Shopee atau TikTok Shop.",
@@ -1391,10 +1402,14 @@
     "notFoundBody": "Nama Etalase ini belum dipakai.",
     "inactive": "Etalase sedang tidak aktif",
     "inactiveBody": "Pemilik Etalase ini sedang tidak menampilkannya.",
-    "madeWith": "dibuat dengan Socialz.id",
     "noResults": "Tidak ada produk yang cocok.",
     "opening": "Membuka {merchant}…",
-    "createOwn": "Buat Etalase-mu sendiri, gratis"
+    "createOwn": "Buat Etalase-mu sendiri, gratis",
+    "productCount": "{n} produk pilihan",
+    "resultCount": "{n} produk ditemukan",
+    "pinned": "Favorit",
+    "ctaTitle": "Jualan produk afiliasi juga?",
+    "ctaBody": "Kumpulkan link Shopee, Tokopedia dan TikTok Shop di satu halaman seperti ini, lalu jadwalkan postinganmu. Gratis."
   },
   "analytics": {
     "title": "Statistik",
@@ -1652,7 +1667,6 @@
       "tagResearchPerMonth": "Riset tagar tanpa batas"
     },
     "feature": {
-      "removeBranding": "Tanpa tulisan \"dibuat dengan Socialz.id\"",
       "customSlug": "Nama link pendek sendiri",
       "anyDestination": "Link ke situs mana saja",
       "analyticsExport": "Unduh statistik (CSV)",

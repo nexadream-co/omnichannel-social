@@ -6,7 +6,7 @@ import { assertAbility, type WorkspaceContext } from '../context'
 import type { Executor } from '../db/client'
 import { getDb } from '../db/client'
 import { bioCategories, bioItems, bioPages, links, workspaces } from '../db/schema'
-import { assertWithinLimit, can } from '../entitlements'
+import { assertWithinLimit } from '../entitlements'
 import { appError } from '../errors'
 import { bioUrl, shortLinkFor, shortUrl } from '../links/service'
 
@@ -193,7 +193,7 @@ export async function removeCategory(ctx: WorkspaceContext, categoryId: string) 
 
 /**
  * The public payload (GET /api/public/bio/:handle). Only published pages of active workspaces render.
- * Plain text only; product buttons are bio short links. Branding unless the plan has removeBranding (degrade).
+ * Plain text only; product buttons are bio short links. Every plan shows the Socialz.id block (no removeBranding).
  */
 export async function getPublicBio(handle: string, db: Executor = getDb()) {
   const normalized = normalizeHandle(handle)
@@ -218,7 +218,6 @@ export async function getPublicBio(handle: string, db: Executor = getDb()) {
     theme: BIO_THEMES[(page.theme as { preset?: BioThemeKey }).preset ?? 'rose'] ?? BIO_THEMES.rose,
     socials: page.socials,
     indexable: (page.seo as { indexable?: boolean }).indexable !== false,
-    branding: !(await can(page.workspaceId, 'removeBranding', db)),
     categories,
     items: items.filter(({ link, item }) => item.type !== 'product' || (link && !link.archived)).map(({ item, link, slug }) => ({
       id: item.id, categoryId: item.categoryId, pinned: item.pinned, badge: item.badge,

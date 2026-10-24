@@ -6,10 +6,10 @@ export function useAddProductLink() {
   const config = useRuntimeConfig()
 
   /** POST /api/app/links. Throws, so callers can hand plan errors to entitlements.handlePlanError. */
-  function create(url: string, opts: { showInBio?: boolean, title?: string, priceIdr?: number } = {}) {
+  function create(url: string, opts: { showInBio?: boolean, title?: string, priceIdr?: number, imageUrl?: string, imageSourceUrl?: string } = {}) {
     return apiFetch<{ link: LinkRow, customIgnored: boolean }>('/api/app/links', {
       method: 'POST',
-      body: { destinationUrl: url.trim(), title: opts.title || undefined, priceIdr: opts.priceIdr || undefined, showInBio: opts.showInBio }
+      body: { destinationUrl: url.trim(), title: opts.title || undefined, priceIdr: opts.priceIdr || undefined, imageUrl: opts.imageUrl || undefined, imageSourceUrl: opts.imageSourceUrl || undefined, showInBio: opts.showInBio }
     })
   }
 

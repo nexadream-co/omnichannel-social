@@ -81,7 +81,7 @@ Rules:
 - **Visibility:** only `bio_pages.published = true` and workspace `status = 'active'` render. A suspended or deleted workspace shows the generic "Etalase tidak tersedia" page (no detail).
 - **Text only.** Creator-supplied fields render as plain text, never HTML. **Strict CSP** on `/bio/**`: `default-src 'self'; img-src 'self' https://{{MEDIA_DOMAIN}} data:; script-src 'self'; style-src 'self' 'unsafe-inline'; frame-ancestors 'none'`.
 - **Every product button goes through a short link** (`short_links.source = 'bio'`), so Etalase clicks are tracked. Buttons are plain `<a href="https://{{SHORT_DOMAIN}}/{slug}" rel="nofollow noopener">`.
-- **Branding footer:** "dibuat dengan Socialz.id" (linking to the landing with a referral parameter) is shown unless the workspace's plan has feature `removeBranding`. Reading the feature goes through the entitlements module; when a plan downgrades, the footer simply reappears (degrade silently).
+- **Socialz.id block:** every Etalase, on every plan, ends with the Socialz.id logo (linking to the landing with `?ref=etalase`) and a "Buat Etalase-mu sendiri, gratis" button to sign-up (`?ref=etalase&from=<handle>`). There is no plan feature to hide it (decided 2026-10-24; `removeBranding` was removed in migration 0014).
 - **SEO:** `useSeoMeta` with the creator's name, bio and avatar as OG image; indexable unless the creator turns off "Tampilkan di mesin pencari" (adds `noindex`).
 - **Handles** are `citext` unique, 3–30 chars `[a-z0-9._]`, with a reserved list (`app`, `admin`, `api`, `r`, `bio`, `socialz`, `help`, `bantuan`, legal words, platform names).
 

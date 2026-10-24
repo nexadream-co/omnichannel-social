@@ -854,6 +854,7 @@ const previewOpen = ref(false)
         :saving="sheetSaving"
         @save="saveSheet"
         @remove="removeFromSheet"
+        @photo="request('/api/app/bio', {}).catch(fail)"
       />
 
       <BioShareSheet

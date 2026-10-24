@@ -37,3 +37,37 @@ export function hostAllowed(url: string, allowlist: string[]): boolean {
     return false
   }
 }
+
+/**
+ * The product name some shops put in the link itself ("…/ddailylife-lemari-plastik-1733843815370622331"),
+ * for when the shop page cannot be read. Null for short links and ID-only paths.
+ */
+export function titleFromUrl(url: string): string | null {
+  let parsed: URL
+  try {
+    parsed = new URL(url)
+  } catch {
+    return null
+  }
+  const segments = parsed.pathname.split('/').filter(Boolean)
+  const merchant = detectMerchant(url)
+  let slug: string | undefined
+  if (merchant === 'tokopedia' && /(^|\.)tokopedia\.com$/i.test(parsed.hostname) && segments.length === 2) {
+    slug = segments[1]!.replace(/-\d{6,}$/, '')
+  } else if (merchant === 'shopee' && segments.length === 1 && /-i\.\d+\.\d+$/.test(segments[0]!)) {
+    slug = segments[0]!.replace(/-i\.\d+\.\d+$/, '')
+  } else if (merchant === 'lazada' && segments[0] === 'products' && segments.length === 2) {
+    slug = segments[1]!.replace(/\.html$/i, '').replace(/-i\d+(-s\d+)?$/, '')
+  }
+  if (!slug) return null
+  let words: string
+  try {
+    words = decodeURIComponent(slug)
+  } catch {
+    return null
+  }
+  // Hyphens between digits stay ("1-6 susun"); the rest become spaces.
+  words = words.replace(/(?<!\d)-|-(?!\d)/g, ' ').replace(/\s+/g, ' ').trim()
+  if (words.length < 3 || !/\p{L}/u.test(words)) return null
+  return words.replace(/(^|\s)(\p{Ll})/gu, (_m, space: string, letter: string) => space + letter.toUpperCase()).slice(0, 200)
+}

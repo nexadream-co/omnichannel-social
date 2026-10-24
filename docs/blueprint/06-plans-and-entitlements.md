@@ -24,7 +24,6 @@ export const LIMIT_KEYS = [
 export type LimitKey = (typeof LIMIT_KEYS)[number]
 
 export const FEATURE_KEYS = [
-  'removeBranding',    // hide "dibuat dengan Socialz.id" on the Etalase
   'customSlug',        // choose your own short link names
   'anyDestination',    // shorten any https URL, not only allowlisted affiliate domains
   'analyticsExport',   // CSV export of statistics
@@ -84,7 +83,6 @@ Always read plan JSON through `normalizeLimits` / `normalizeFeatures`. A new key
 | mediaStorageMb | 500 | 5.000 | 20.000 |
 | activityLogRetentionDays | 0 | 30 | 90 |
 | tagResearchPerMonth | 0 | 100 | -1 |
-| removeBranding | – | ✓ | ✓ |
 | anyDestination | – | ✓ | ✓ |
 | customSlug | – | ✓ | ✓ |
 | analyticsExport | – | ✓ | ✓ |
@@ -196,7 +194,7 @@ Three behaviours exist; one is picked per rule:
 |---|---|---|
 | **Refuse** (402) | creating something new beyond a cap; using a paid action | connecting a 3rd account on Gratis → `LIMIT_REACHED`; CSV export → `PLAN_REQUIRED` |
 | **Clamp** (succeed with less) | reading history further back than allowed | `clickRetentionDays` clamps the date window and returns `window.clamped: true` so the UI explains |
-| **Degrade silently** (keep data, stop the effect) | a downgrade must not destroy configuration | `removeBranding` off → the Etalase shows the footer again, but the setting is kept |
+| **Degrade silently** (keep data, stop the effect) | a downgrade must not destroy configuration | a downgraded owner's Etalase pages beyond `bioPages` are deactivated, not deleted |
 
 | Rule | Where | Past the limit |
 |---|---|---|
@@ -210,7 +208,6 @@ Three behaviours exist; one is picked per rule:
 | `tagResearchPerMonth` | "Riset" in the composer's hashtag panel | 402 `PLAN_REQUIRED` when 0, `LIMIT_REACHED` when used up; the quality check and list ideas stay free |
 | `clickRetentionDays` | statistics window resolver | window clamped, flagged |
 | `activityLogRetentionDays` | activity log query (also capped by `privacy.auditRetentionDays`) | window clamped |
-| `removeBranding` | Etalase render | footer shown, setting kept |
 | `anyDestination` | link create/edit (when `channels.links.freePlanAllowlistOnly` is on) | 402 `PLAN_REQUIRED` for non-allowlisted domains; existing links keep working |
 | `customSlug` | create / edit a short link | custom slug ignored on save → auto slug, with a hint that it's a Kreator feature |
 | `analyticsExport` | `requireEntitlement` on export routes | 402 `PLAN_REQUIRED` |

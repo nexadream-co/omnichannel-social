@@ -577,6 +577,9 @@
   "settings": {
     "title": "Settings",
     "subtitle": "Account settings and your data.",
+    "appearanceTitle": "Appearance",
+    "theme": "Theme",
+    "themeHint": "Applies to this device only.",
     "workspaceName": "Account name",
     "timezone": "Time zone",
     "timezoneHint": "Used for post schedules and daily statistics.",
@@ -1293,6 +1296,14 @@
     "advanced": "Advanced options",
     "pastePlaceholder": "Paste a product link…",
     "pasteButton": "Paste",
+    "previewClear": "Clear link",
+    "previewNoPhoto": "We couldn't get the photo from the shop. Tap Photo to add your own.",
+    "photo": "Photo",
+    "addPhoto": "Add a product photo",
+    "changePhoto": "Change product photo",
+    "photoUnreadable": "We couldn't read this photo. Pick another JPG or PNG.",
+    "photoSaved": "Product photo saved",
+    "noPhoto": "No photo yet",
     "addShort": "Add",
     "pasteInvalid": "We could not read that link. Copy the full product link, starting with https://",
     "pasteNothing": "There is no product link in your clipboard yet. Copy it from Shopee or TikTok Shop first.",
@@ -1391,10 +1402,14 @@
     "notFoundBody": "This storefront name isn't in use.",
     "inactive": "Storefront unavailable",
     "inactiveBody": "The owner isn't showing this storefront right now.",
-    "madeWith": "made with Socialz.id",
     "noResults": "No matching products.",
     "opening": "Opening {merchant}…",
-    "createOwn": "Make your own storefront, free"
+    "createOwn": "Make your own storefront, free",
+    "productCount": "{n} picked products",
+    "resultCount": "{n} products found",
+    "pinned": "Favorite",
+    "ctaTitle": "Selling affiliate products too?",
+    "ctaBody": "Put your Shopee, Tokopedia and TikTok Shop links on one page like this, then schedule your posts. Free."
   },
   "analytics": {
     "title": "Statistics",
@@ -1652,7 +1667,6 @@
       "tagResearchPerMonth": "Unlimited hashtag research"
     },
     "feature": {
-      "removeBranding": "No \"made with Socialz.id\" footer",
       "customSlug": "Custom short link names",
       "anyDestination": "Links to any website",
       "analyticsExport": "Download statistics (CSV)",

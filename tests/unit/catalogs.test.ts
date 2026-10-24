@@ -11,8 +11,8 @@ import { SETTINGS_CATALOG } from '../../shared/utils/settings'
 describe('plans', () => {
   it('fills keys a stored plan predates with the conservative default', () => {
     expect(normalizeLimits({ socialAccounts: 5, bogus: 9 })).toEqual({ ...DEFAULT_LIMITS, socialAccounts: 5 })
-    expect(normalizeFeatures({ teamAccess: true, removeBranding: 'yes' }).teamAccess).toBe(true)
-    expect(normalizeFeatures({ removeBranding: 'yes' }).removeBranding).toBe(false)
+    expect(normalizeFeatures({ teamAccess: true, customSlug: 'yes' }).teamAccess).toBe(true)
+    expect(normalizeFeatures({ customSlug: 'yes' }).customSlug).toBe(false)
   })
   it('formats unlimited and units', () => {
     expect(formatLimit('autoReplyRules', -1)).toBe('Tanpa batas')

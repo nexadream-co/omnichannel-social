@@ -119,7 +119,7 @@ describe('redirect + clicks', () => {
 })
 
 describe('Etalase', () => {
-  it('checks handles, adds existing products, publishes within the plan limit, and degrades branding', async () => {
+  it('checks handles, adds existing products, publishes within the plan limit', async () => {
     await plan('gratis')
     // Handlers validate with createBioSchema before calling core.
     expect(createBioSchema.safeParse({ handle: 'admin', title: 'X' }).success).toBe(false)
@@ -133,15 +133,11 @@ describe('Etalase', () => {
     const pub = await getPublicBio('RINA.SHOP')
     expect(pub.state).toBe('ok')
     if (pub.state === 'ok') {
-      expect(pub.branding).toBe(true) // Gratis shows the footer
       expect(pub.items[0]!.url).toMatch(new RegExp(`^${shortUrl('').replace(/\/$/, '')}/`))
     }
     // A new product created with showInBio lands on the Etalase.
     await createLink(ctx, { destinationUrl: 'https://s.shopee.co.id/p2', title: 'Lipstik' })
     expect(await getDb().select().from(bioItems)).toHaveLength(2)
-    await plan('kreator')
-    const paid = await getPublicBio('rina.shop')
-    expect(paid.state === 'ok' && paid.branding).toBe(false)
   })
 
   it('refuses a taken handle', async () => {

@@ -1,15 +1,22 @@
 <script setup lang="ts">
+import type { Merchant } from '#shared/utils/links'
+
 export interface BioItemPatch { badge: string | null, categoryId: string | null, pinned: boolean, visible: boolean }
 
-/** Edit one Etalase product: label, category, pin and hide. Opens on tap from the editor list. */
+/**
+ * Edit one Etalase product: photo, label, category, pin and hide. Opens on tap from the editor list. The photo
+ * is saved on the product link right away (it shows everywhere the product does); `photo` asks for a reload.
+ */
 const props = defineProps<{
-  item: { title: string | null, badge: string | null, categoryId: string | null, pinned: boolean, visible: boolean } | null
+  item: { linkId: string | null, title: string | null, imageUrl: string | null, merchant: Merchant | null, badge: string | null, categoryId: string | null, pinned: boolean, visible: boolean } | null
   categories: { id: string, name: string }[]
   saving?: boolean
 }>()
 const open = defineModel<boolean>('open', { default: false })
-const emit = defineEmits<{ save: [patch: BioItemPatch], remove: [] }>()
+const emit = defineEmits<{ save: [patch: BioItemPatch], remove: [], photo: [] }>()
 const { t } = useI18n()
+const toast = useToast()
+const productPhoto = useProductPhoto()
 
 const form = reactive<BioItemPatch>({ badge: null, categoryId: null, pinned: false, visible: true })
 watch(() => [props.item, open.value] as const, ([item, isOpen]) => {
@@ -17,6 +24,21 @@ watch(() => [props.item, open.value] as const, ([item, isOpen]) => {
 }, { immediate: true })
 
 const categoryOptions = computed(() => [{ label: t('bio.noCategory'), value: 'none' }, ...props.categories.map(c => ({ label: c.name, value: c.id }))])
+
+const photoBusy = ref(false)
+async function pickPhoto(file: File) {
+  if (!props.item?.linkId) return
+  photoBusy.value = true
+  try {
+    await productPhoto.setLinkPhoto(props.item.linkId, file)
+    toast.add({ title: t('links.photoSaved'), color: 'success' })
+    emit('photo')
+  } catch (caught) {
+    toast.add({ title: extractErrorMessage(caught, t('authError.generic')), color: 'error' })
+  } finally {
+    photoBusy.value = false
+  }
+}
 
 function submit() {
   emit('save', { ...form, badge: form.badge?.trim() || null })
@@ -34,6 +56,22 @@ function submit() {
         class="space-y-4"
         @submit.prevent="submit"
       >
+        <div
+          v-if="item?.linkId"
+          class="flex items-center gap-3"
+        >
+          <ProductPhotoButton
+            :src="item.imageUrl"
+            :title="item.title"
+            :merchant="item.merchant"
+            :busy="photoBusy"
+            class="size-16"
+            @pick="pickPhoto"
+          />
+          <p class="text-sm text-muted">
+            {{ item.imageUrl ? t('links.changePhoto') : t('links.previewNoPhoto') }}
+          </p>
+        </div>
         <UFormField :label="t('bio.badge')">
           <UInput
             :model-value="form.badge ?? ''"

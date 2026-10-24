@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { isBlockedAddress, safeFetch } from '../../server/core/net/safe-fetch'
 import { parsePrice, unfurlHtml } from '../../server/core/net/unfurl'
+import { titleFromUrl } from '../../shared/utils/links'
 
 describe('parsePrice', () => {
   it('reads rupiah in machine and display formats', () => {
@@ -35,5 +36,22 @@ describe('safe-fetch guard', () => {
     await expect(safeFetch('https://127.0.0.1/')).rejects.toMatchObject({ reason: 'blocked_address' })
     await expect(safeFetch('https://[::1]/')).rejects.toMatchObject({ reason: 'blocked_address' })
     await expect(safeFetch('https://localhost/')).rejects.toMatchObject({ reason: 'blocked_address' })
+  })
+})
+
+describe('titleFromUrl', () => {
+  it('reads the product name from Tokopedia, Shopee and Lazada links', () => {
+    expect(titleFromUrl('https://www.tokopedia.com/ddailylife/ddailylife-lemari-plastik-dengan-roda-1-6-susun-rak-serbaguna-1733843815370622331?t_id=1'))
+      .toBe('Ddailylife Lemari Plastik Dengan Roda 1-6 Susun Rak Serbaguna')
+    expect(titleFromUrl('https://shopee.co.id/Kaos-Polos-Cotton-Combed-30s-i.12345.67890')).toBe('Kaos Polos Cotton Combed 30s')
+    expect(titleFromUrl('https://www.lazada.co.id/products/sepatu-sneakers-pria-i123456-s789.html')).toBe('Sepatu Sneakers Pria')
+  })
+
+  it('gives up on short links, ID-only paths and other shops', () => {
+    expect(titleFromUrl('https://s.shopee.co.id/AbC123')).toBeNull()
+    expect(titleFromUrl('https://shopee.co.id/product/123/456')).toBeNull()
+    expect(titleFromUrl('https://tokopedia.link/xyz')).toBeNull()
+    expect(titleFromUrl('https://www.tokopedia.com/ddailylife')).toBeNull()
+    expect(titleFromUrl('https://example.com/kaos-polos')).toBeNull()
   })
 })

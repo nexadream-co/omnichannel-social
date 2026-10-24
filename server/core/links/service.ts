@@ -37,6 +37,8 @@ export const linkSchema = z.object({
   destinationUrl: z.url({ protocol: /^https$/, error: 'Tempel link produk yang diawali https://' }).max(2000),
   title: z.string().trim().max(200).nullable().optional(),
   imageUrl: z.url().max(2000).nullable().optional(),
+  // The photo the paste preview found: the autofill job re-hosts it instead of reading the page again.
+  imageSourceUrl: z.url({ protocol: /^https$/ }).max(2000).optional(),
   priceIdr: z.number().int().min(0).max(1_000_000_000).nullable().optional(),
   tags: z.array(z.string().trim().min(1).max(30)).max(10).optional(),
   customSlug: z.string().trim().optional(),
@@ -91,7 +93,7 @@ export async function createLink(ctx: WorkspaceContext, input: z.infer<typeof li
     }).returning()
     const { slug, customIgnored } = await allocateSlug(ctx, tx, input.customSlug)
     await tx.insert(shortLinks).values({ workspaceId: ctx.workspaceId, slug, domain: new URL(env().shortUrl).host, linkId: row!.id, source: 'vault' })
-    const jobId = !input.title || !input.imageUrl || !input.priceIdr ? await enqueue(tx, 'links.unfurl', { linkId: row!.id, workspaceId: ctx.workspaceId }, { singletonKey: row!.id }) : null
+    const jobId = !input.title || !input.imageUrl || !input.priceIdr ? await enqueue(tx, 'links.unfurl', { linkId: row!.id, workspaceId: ctx.workspaceId, imageSourceUrl: input.imageSourceUrl ?? null }, { singletonKey: row!.id }) : null
     return { link: toLinkView(row!, { slug }), customIgnored, jobId }
   })
   if (input.showInBio !== false) { // on unless explicitly turned off
@@ -102,7 +104,7 @@ export async function createLink(ctx: WorkspaceContext, input: z.infer<typeof li
   return result
 }
 
-export const linkPatchSchema = linkSchema.omit({ customSlug: true, showInBio: true }).partial().extend({ archived: z.boolean().optional() })
+export const linkPatchSchema = linkSchema.omit({ customSlug: true, showInBio: true, imageSourceUrl: true }).partial().extend({ archived: z.boolean().optional() })
 
 export async function updateLink(ctx: WorkspaceContext, id: string, input: z.infer<typeof linkPatchSchema>) {
   assertAbility(ctx, 'links.manage')

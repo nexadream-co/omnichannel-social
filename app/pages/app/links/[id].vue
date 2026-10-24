@@ -26,6 +26,8 @@ const days = ref<7 | 30 | 90>(7)
 const form = reactive({ title: '', priceIdr: null as number | null })
 const saving = ref(false)
 const pop = useCheckPop()
+const productPhoto = useProductPhoto()
+const photoBusy = ref(false)
 const dirty = computed(() => Boolean(link.value) && (form.title !== (link.value!.title ?? '') || (form.priceIdr ?? null) !== (link.value!.priceIdr ?? null)))
 useUnsavedChanges(dirty)
 
@@ -51,6 +53,18 @@ async function save() {
   }
 }
 
+async function pickPhoto(file: File) {
+  photoBusy.value = true
+  try {
+    link.value = await productPhoto.setLinkPhoto(id, file)
+    toast.add({ title: t('links.photoSaved'), color: 'success' })
+  } catch (caught) {
+    toast.add({ title: extractErrorMessage(caught, t('authError.generic')), color: 'error' })
+  } finally {
+    photoBusy.value = false
+  }
+}
+
 function sourceLabel(row: { source: string, channel: string | null }) {
   const source = t(`analytics.source.${row.source}`)
   return row.channel && row.channel in PLATFORM_META ? `${source} · ${PLATFORM_META[row.channel as Platform].name}` : source
@@ -63,13 +77,13 @@ const ranges = computed(() => ([7, 30, 90] as const).map(value => ({ value, labe
     <CommandBar :title="t('links.stats')" />
     <UCard v-if="link">
       <div class="flex gap-4">
-        <SmartImage
+        <ProductPhotoButton
           :src="link.imageUrl"
           :title="link.title"
-          :alt="link.title ?? ''"
           :merchant="link.merchant"
-          kind="product"
-          class="size-20 shrink-0 rounded-md"
+          :busy="photoBusy"
+          class="size-20"
+          @pick="pickPhoto"
         />
         <div class="min-w-0 flex-1 space-y-1">
           <span

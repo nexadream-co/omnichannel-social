@@ -13,7 +13,6 @@ export const LIMIT_KEYS = [
 export type LimitKey = (typeof LIMIT_KEYS)[number]
 
 export const FEATURE_KEYS = [
-  'removeBranding',
   'customSlug',
   'anyDestination',
   'analyticsExport',
@@ -42,7 +41,6 @@ export const LIMIT_META: Record<LimitKey, { label: string, sentence: string, hin
 }
 
 export const FEATURE_META: Record<FeatureKey, { label: string, hint: string }> = {
-  removeBranding: { label: 'Tanpa tulisan "dibuat dengan Socialz.id"', hint: 'Etalase tampil tanpa merek Socialz.id.' },
   customSlug: { label: 'Nama link pendek sendiri', hint: 'Pilih sendiri nama link pendek kamu.' },
   anyDestination: { label: 'Link ke situs mana saja', hint: 'Tidak terbatas pada toko afiliasi.' },
   analyticsExport: { label: 'Unduh statistik (CSV)', hint: '' },
@@ -121,12 +119,12 @@ export const SEED_PLANS: SeedPlan[] = [
     slug: 'kreator', name: 'Kreator', description: 'Untuk kreator yang rutin posting dan jualan.',
     priceMonthly: 49_000, priceYearly: 490_000, trialDays: 14, isActive: true, isPublic: true, order: 1,
     limits: { socialAccounts: 5, scheduledPostsPerMonth: 300, bioPages: 1, autoReplyRules: 10, autoReplyDmsPerMonth: 1_000, clickRetentionDays: 180, teamMembers: 1, mediaStorageMb: 5_000, activityLogRetentionDays: 30, tagResearchPerMonth: 100 },
-    features: { removeBranding: true, customSlug: true, anyDestination: true, analyticsExport: true, teamAccess: false, activityLog: true, prioritySupport: false }
+    features: { customSlug: true, anyDestination: true, analyticsExport: true, teamAccess: false, activityLog: true, prioritySupport: false }
   },
   {
     slug: 'pro', name: 'Pro', description: 'Untuk kreator dengan banyak akun dan tim kecil.',
     priceMonthly: 99_000, priceYearly: 990_000, trialDays: 14, isActive: false, isPublic: false, order: 2,
     limits: { socialAccounts: 12, scheduledPostsPerMonth: 1_500, bioPages: 3, autoReplyRules: UNLIMITED, autoReplyDmsPerMonth: 5_000, clickRetentionDays: 365, teamMembers: 3, mediaStorageMb: 20_000, activityLogRetentionDays: 90, tagResearchPerMonth: UNLIMITED },
-    features: { removeBranding: true, customSlug: true, anyDestination: true, analyticsExport: true, teamAccess: true, activityLog: true, prioritySupport: true }
+    features: { customSlug: true, anyDestination: true, analyticsExport: true, teamAccess: true, activityLog: true, prioritySupport: true }
   }
 ]

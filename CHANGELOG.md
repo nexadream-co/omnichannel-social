@@ -2,6 +2,9 @@
 
 ## 0.1.0 (Draft)
 
+- The public Etalase is redesigned: a header tinted with the creator's theme, bigger photo and social buttons, a search field with an icon, a product count, wider cards in three columns on desktop, and the shop shown as a coloured dot. Every Etalase now ends with a Socialz.id block (logo and a "Buat Etalase-mu sendiri, gratis" button to sign-up), on every plan: the "Tanpa tulisan dibuat dengan Socialz.id" plan feature is removed (migration 0014).
+- Pasting a product link no longer saves it on its own: a preview card shows the shop's photo, title and price, and the creator adds it with Tambah (or Enter). When the preview finds a photo, the autofill saves that photo even if the shop page cannot be read again.
+- Shops that hide their product page from us (Tokopedia) still get a product name, read from the link itself, and the creator can add the photo by hand: on the paste preview, on an empty product card in Link pendek, on the product page, and in the Etalase product sheet. The "Mengisi detail produk…" spinner now stops when the autofill is done instead of spinning forever.
 - UX audit of every screen (phone and desktop screenshots, prioritised findings, a feedback and celebration system, drag and gesture proposals and a roadmap) in `docs/ux-audit/`. Documentation only; nothing in the app changed.
 - Project foundation: Nuxt 4 app with the landing page, creator console (`/app`) and staff back-office (`/admin`) shells, in Bahasa Indonesia and English, with dark mode.
 - Creators can sign up with email and password (or Google when configured), verify their email, sign in, reset their password and sign out. Every new creator gets a workspace with a 14-day Kreator trial.
@@ -12,6 +15,7 @@
 - The error page sends visitors back to the console they came from.
 - Creators and staff can edit their profile (name, phone shown as 0812-…, photo resized in the browser) and change their password; Google-only creators can create one.
 - Workspace settings (name, time zone, niche, affiliate programs), a one-click data export, and an account deletion request; the public /hapus-akun page explains the process in both languages.
+- Settings has a Tampilan card: the light, dark or device theme (saved per device, the same choice as the user menu) and the app language (saved on the account, the same choice as on the profile page).
 - Team: owners on plans with team access invite editors or viewers, manage roles, deactivate members; invitees accept from the emailed link. Plan-gated menu entries show a lock.
 - Meta data deletion and deauthorize callbacks, with a public status page.
 - The onboarding guide on Beranda can be hidden.

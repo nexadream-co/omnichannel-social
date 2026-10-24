@@ -10,7 +10,7 @@ The platform layer (files 01–17) is the foundation. This file explains how Soc
 | Media | `server/core/media/` | `media_assets` | `media.manage` | `mediaStorageMb` |
 | Publishing | `server/core/publishing/` | `posts`, `post_media`, `post_targets`, `publish_attempts`, `platform_publish_ledger`, `insight_snapshots` | `posts.read`, `posts.write` | `scheduledPostsPerMonth` |
 | Links | `server/core/links/` | `links`, `short_links`, `link_clicks` | `links.manage`, `analytics.read` | `clickRetentionDays`, feature `customSlug`, `analyticsExport` |
-| Etalase | `server/core/bio/` | `bio_pages`, `bio_categories`, `bio_items` | `bio.manage` | `bioPages`, feature `removeBranding` |
+| Etalase | `server/core/bio/` | `bio_pages`, `bio_categories`, `bio_items` | `bio.manage` | `bioPages` |
 | Auto-reply | `server/core/autoreply/` | `dm_rules`, `dm_events`, `webhook_events` | `autoreply.manage` | `autoReplyRules`, `autoReplyDmsPerMonth` |
 | Hashtags | `server/core/hashtags/`, `shared/hashtags/` | `hashtag_library` (global), `hashtag_sets`, `hashtag_research_runs`, `hashtag_signals` (global cache) | `posts.read`, `posts.write`; staff `hashtags.read` / `hashtags.write` | `tagResearchPerMonth` |
 | Content planner | `server/core/planner/`, `shared/utils/planner.ts` | `content_ideas`, `content_idea_links`, `content_idea_media`, `shopping_moments` (global); `posts.pillar`, `workspaces.posts_per_week` | `posts.read`, `posts.write`; staff `moments.read` / `moments.write` | none (free on every plan) |

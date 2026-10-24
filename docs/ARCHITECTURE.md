@@ -548,7 +548,7 @@ When a post is scheduled, vault links in the caption are replaced by **one short
 - SSR rendered, cached briefly, mobile-first.
 - Only plain text from users is rendered (no HTML), under a strict CSP.
 - Product cards link through `short_links` with `source=bio`, so bio clicks are tracked.
-- When the plan lacks `removeBranding`, the page shows a small "dibuat dengan Socialz.id" footer.
+- Every Etalase, on every plan, ends with a Socialz.id block: the logo (linking to the landing with `?ref=etalase`) and a "Buat Etalase-mu sendiri, gratis" button to sign-up (`?ref=etalase&from=<handle>`). There is no plan feature to hide it (decided 2026-10-24).
 
 ---
 

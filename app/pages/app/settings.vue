@@ -2,9 +2,10 @@
 import { INDONESIAN_TIMEZONES, type IndonesianTimezone } from '#shared/utils/auth'
 
 definePageMeta({ layout: 'creator' })
-const { t, locale } = useI18n()
+const { t, locale, locales, setLocale } = useI18n()
 const toast = useToast()
 const auth = useCreatorAuth()
+const colorMode = useColorMode()
 useHead({ title: () => t('settings.title') })
 
 const canManage = computed(() => auth.hasAbility('settings.manage'))
@@ -35,6 +36,26 @@ onMounted(async () => {
 
 const timezones = computed(() => INDONESIAN_TIMEZONES.map(value => ({ value, label: t(`timezones.${value}`) })))
 const programs = computed(() => PROGRAMS.map(value => ({ value, label: t(`programs.${value}`) })))
+type Theme = 'system' | 'light' | 'dark'
+const themes = computed(() => (['system', 'light', 'dark'] as const).map(value => ({ value, label: t(`nav.theme_${value}`) })))
+const theme = computed({
+  get: () => colorMode.preference as Theme,
+  set: (value: Theme) => {
+    colorMode.preference = value
+  }
+})
+
+// Saved on the account too, so the language on the profile page stays the same choice.
+const languages = computed(() => locales.value.map(entry => ({ value: entry.code, label: entry.name ?? entry.code })))
+async function changeLanguage(code: 'id' | 'en') {
+  try {
+    await apiFetch('/api/app/me', { method: 'PATCH', body: { locale: code } })
+    await setLocale(code)
+    await auth.fetchProfile()
+  } catch (caught) {
+    toast.add({ title: extractErrorMessage(caught, t('authError.generic')), color: 'error' })
+  }
+}
 
 async function save() {
   saving.value = true
@@ -134,6 +155,48 @@ async function requestDelete() {
     </UCard>
 
     <WatermarkSettings v-if="canManage" />
+
+    <UCard>
+      <template #header>
+        <h2 class="font-semibold text-highlighted">
+          {{ t('settings.appearanceTitle') }}
+        </h2>
+      </template>
+      <div class="space-y-5">
+        <UFormField
+          :label="t('settings.theme')"
+          :description="t('settings.themeHint')"
+          name="theme"
+        >
+          <!-- The theme lives in this browser only, so the server cannot render the selection. -->
+          <ClientOnly>
+            <URadioGroup
+              v-model="theme"
+              :items="themes"
+              orientation="horizontal"
+              variant="card"
+              :ui="{ fieldset: 'grid grid-cols-1 sm:grid-cols-3 gap-2', item: 'w-full' }"
+            />
+            <template #fallback>
+              <USkeleton class="h-12 w-full" />
+            </template>
+          </ClientOnly>
+        </UFormField>
+        <UFormField
+          :label="t('nav.language')"
+          name="language"
+        >
+          <URadioGroup
+            :model-value="locale"
+            :items="languages"
+            orientation="horizontal"
+            variant="card"
+            :ui="{ fieldset: 'grid grid-cols-1 sm:grid-cols-2 gap-2', item: 'w-full' }"
+            @update:model-value="changeLanguage($event as 'id' | 'en')"
+          />
+        </UFormField>
+      </div>
+    </UCard>
 
     <UCard v-if="canAccount">
       <template #header>
