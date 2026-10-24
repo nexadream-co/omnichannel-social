@@ -3,7 +3,7 @@ import { PLATFORM_META } from '#shared/channels/registry'
 import type { Platform } from '#shared/channels/types'
 import { SOCIAL_ACCOUNT_STATUS_META } from '#shared/utils/status'
 
-interface Account { id: string, platform: Platform, username: string | null, avatarUrl: string | null, status: string }
+interface Account { id: string, platform: Platform, username: string | null, avatarUrl: string | null, status: string, createdAt: string, upcomingPosts: number, activeRules: number }
 interface Channels { items: Account[], platforms: { platform: Platform, configured: boolean }[] }
 
 definePageMeta({ layout: 'creator' })
@@ -13,21 +13,36 @@ const route = useRoute()
 const toast = useToast()
 const auth = useCreatorAuth()
 const { confirm } = useConfirmDialog()
+const { reach } = useMilestones()
+const { spark } = useCelebrate()
 useHead({ title: () => t('accounts.title') })
 
 const data = ref<Channels | null>(null)
+const selectionOpen = ref(false)
+const justConnected = ref<{ platform: string } | null>(null)
+const avatars = ref<Record<string, HTMLElement | null>>({})
 async function load() {
-  data.value = await apiFetch<Channels>('/api/app/channels')
+  data.value = await apiFetch<Channels>('/api/app/channels', { query: { usage: 1 } })
 }
 onMounted(async () => {
   await load()
+  selectionOpen.value = Boolean(auth.workspace.value?.needsAccountSelection)
   // Results of the OAuth round trip arrive as query params (the callback is a browser redirect).
   const error = route.query.error ? String(route.query.error) : null
   const connected = route.query.connected ? Number(route.query.connected) : 0
   const platform = route.query.platform && String(route.query.platform) in PLATFORM_META ? PLATFORM_META[String(route.query.platform) as Platform].name : ''
   if (error === 'limit_reached') useEntitlements().upgradeRequired(null, t('accounts.error.limit_reached'))
   else if (error) toast.add({ title: t(`accounts.error.${error}`, t('accounts.error.unknown')), color: 'error', duration: 8000 })
-  else if (connected) toast.add({ title: t('accounts.connected', { count: connected, platform }), color: 'success' })
+  else if (connected) {
+    toast.add({ title: t('accounts.connected', { count: connected, platform }), color: 'success' })
+    if (reach('firstAccountConnected')) {
+      justConnected.value = { platform }
+      const newest = [...(data.value?.items ?? [])].sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0]
+      await nextTick()
+      const el = newest ? avatars.value[newest.id] : null
+      if (el) spark(el)
+    }
+  }
   if (error || connected) await navigateTo({ query: {} }, { replace: true })
 })
 
@@ -36,6 +51,10 @@ const COMING_SOON: Platform[] = ['tiktok', 'youtube', 'x']
 
 function connectUrl(platform: Platform) {
   return `/api/app/channels/${platform}/connect?return=${encodeURIComponent(locale.value === 'en' ? '/en/app/accounts' : '/app/accounts')}`
+}
+
+function menuItems(account: Account) {
+  return [[{ label: t('accounts.disconnect'), icon: 'i-lucide-unplug', color: 'error' as const, onSelect: () => disconnect(account) }]]
 }
 
 async function disconnect(account: Account) {
@@ -67,6 +86,25 @@ async function disconnect(account: Account) {
       :actions="[{ label: t('accounts.resend'), to: localePath('/app/auth/verify-email'), color: 'warning', variant: 'outline' }]"
     />
 
+    <UAlert
+      v-if="justConnected"
+      color="success"
+      variant="subtle"
+      icon="i-lucide-party-popper"
+      :title="t('accounts.firstConnected', { platform: justConnected.platform })"
+      :actions="[{ label: t('accounts.firstPost'), to: localePath('/app/compose'), color: 'success' }]"
+    />
+
+    <UAlert
+      v-if="canManage && auth.workspace.value?.needsAccountSelection && !selectionOpen"
+      color="warning"
+      variant="subtle"
+      icon="i-lucide-circle-alert"
+      class="sticky top-2 z-10"
+      :title="t('billing.selectTitle')"
+      :actions="[{ label: t('billing.selectNow'), color: 'warning', onClick: () => { selectionOpen = true } }]"
+    />
+
     <UCard
       v-if="data && (data.items.length || !canManage)"
       :ui="{ body: 'p-0 sm:p-0' }"
@@ -82,55 +120,69 @@ async function disconnect(account: Account) {
       >
         {{ t('accounts.empty') }}
       </p>
-      <ul
+      <TransitionGroup
         v-else
+        name="list"
+        tag="ul"
         class="divide-y divide-default"
       >
         <li
           v-for="account in data.items"
           :key="account.id"
-          class="px-4 py-3 flex flex-wrap items-center gap-3"
+          class="px-4 py-3 flex flex-wrap items-center gap-x-3 gap-y-2"
         >
-          <UAvatar
-            :src="account.avatarUrl ?? undefined"
-            :icon="PLATFORM_META[account.platform].icon"
-            :alt="account.username ?? ''"
-          />
-          <div class="min-w-0 flex-1">
-            <p class="font-medium text-highlighted truncate">
-              {{ account.username || PLATFORM_META[account.platform].name }}
-            </p>
-            <p class="text-sm text-muted flex items-center gap-1">
-              <UIcon
-                :name="PLATFORM_META[account.platform].icon"
-                class="size-3.5"
-              />
-              {{ PLATFORM_META[account.platform].name }}
-            </p>
-          </div>
-          <StatusBadge
-            :value="account.status"
-            :meta="SOCIAL_ACCOUNT_STATUS_META"
-          />
-          <template v-if="canManage">
-            <UButton
-              v-if="account.status === 'needs_reauth'"
-              :to="connectUrl(account.platform)"
-              external
-              size="sm"
-              color="warning"
-              :label="t('accounts.reconnect')"
+          <span
+            :ref="(el) => { avatars[account.id] = el as HTMLElement | null }"
+            class="shrink-0"
+          >
+            <SmartImage
+              :src="account.avatarUrl"
+              :alt="account.username ?? ''"
+              :title="account.username"
+              kind="avatar"
+              class="size-10 rounded-full"
             />
+          </span>
+          <div class="min-w-0 flex-1 space-y-1">
+            <p class="flex items-center gap-1.5 min-w-0">
+              <span class="font-medium text-highlighted truncate">{{ account.username || PLATFORM_META[account.platform].name }}</span>
+              <span class="text-sm text-muted flex items-center gap-1 shrink-0">
+                <UIcon
+                  :name="PLATFORM_META[account.platform].icon"
+                  class="size-3.5"
+                />
+                <span class="hidden min-[420px]:inline">{{ PLATFORM_META[account.platform].name }}</span>
+              </span>
+            </p>
+            <StatusBadge
+              :value="account.status"
+              :meta="SOCIAL_ACCOUNT_STATUS_META"
+            />
+          </div>
+          <UDropdownMenu
+            v-if="canManage"
+            :items="menuItems(account)"
+            :content="{ align: 'end' }"
+          >
             <UButton
-              size="sm"
+              icon="i-lucide-ellipsis"
               color="neutral"
               variant="ghost"
-              :label="t('accounts.disconnect')"
-              @click="disconnect(account)"
+              square
+              :aria-label="t('common.more')"
             />
-          </template>
+          </UDropdownMenu>
+          <UButton
+            v-if="canManage && account.status === 'needs_reauth'"
+            :to="connectUrl(account.platform)"
+            external
+            size="sm"
+            color="warning"
+            class="basis-full justify-center sm:basis-auto sm:ml-13"
+            :label="t('accounts.reconnect')"
+          />
         </li>
-      </ul>
+      </TransitionGroup>
     </UCard>
 
     <UCard v-if="data && canManage">
@@ -195,6 +247,7 @@ async function disconnect(account: Account) {
     </div>
     <AccountSelectionDialog
       v-if="data"
+      v-model:open="selectionOpen"
       :accounts="data.items"
       @saved="load"
     />

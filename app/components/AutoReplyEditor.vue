@@ -9,6 +9,7 @@ const { t, locale } = useI18n()
 const localePath = useLocalePath()
 const toast = useToast()
 const entitlements = useEntitlements()
+const { haptic } = useCelebrate()
 
 interface Account { id: string, platform: string, username: string | null, status: string }
 interface Media { externalId: string, caption: string, thumbUrl: string | null }
@@ -52,8 +53,15 @@ onMounted(async () => {
     if (form.linkId) link.value = await apiFetch<LinkRow>(`/api/app/links/${form.linkId}`).catch(() => null)
   } finally {
     loading.value = false
+    baseline.value = JSON.stringify(form)
   }
 })
+
+// Unsaved-changes guard: dirty = the form differs from how it looked once loaded (and from the last save).
+const baseline = ref<string | null>(null)
+const dirty = computed(() => baseline.value !== null && JSON.stringify(form) !== baseline.value)
+const { allowNextLeave } = useUnsavedChanges(dirty)
+const pop = useCheckPop()
 
 watch(() => [form.socialAccountId, form.scope], async () => {
   if (form.scope !== 'post' || !form.socialAccountId) return
@@ -104,7 +112,12 @@ async function save(active: boolean) {
   fieldError.value = null
   try {
     await apiFetch(props.ruleId ? `/api/app/autoreply/rules/${props.ruleId}` : '/api/app/autoreply/rules', { method: props.ruleId ? 'PUT' : 'POST', body: body(active) })
+    baseline.value = JSON.stringify(form)
+    allowNextLeave()
+    haptic('success')
+    pop.trigger()
     toast.add({ title: active ? t('autoReply.activated') : t('autoReply.saved'), color: 'success' })
+    await new Promise(resolve => setTimeout(resolve, 700))
     await navigateTo(localePath('/app/auto-reply'))
   } catch (caught) {
     fieldError.value = extractErrorField(caught)
@@ -152,7 +165,7 @@ watch(testOpen, (open) => {
     </div>
     <form
       v-else
-      class="space-y-4"
+      class="space-y-4 pb-20 lg:pb-0"
       @submit.prevent="save(true)"
     >
       <!-- 1. Post -->
@@ -215,12 +228,13 @@ watch(testOpen, (open) => {
                   :aria-pressed="form.externalMediaId === item.externalId"
                   @click="form.externalMediaId = item.externalId"
                 >
-                  <img
+                  <SmartImage
                     v-if="item.thumbUrl"
                     :src="item.thumbUrl"
-                    alt=""
-                    class="size-full object-cover"
-                  >
+                    :title="item.caption"
+                    kind="post"
+                    class="size-full"
+                  />
                   <span
                     v-else
                     class="block p-1.5 text-[11px] leading-tight text-muted line-clamp-5"
@@ -327,12 +341,13 @@ watch(testOpen, (open) => {
                 v-if="link"
                 class="flex items-center gap-3 rounded-lg border border-default p-2"
               >
-                <img
-                  v-if="link.imageUrl"
+                <SmartImage
                   :src="link.imageUrl"
-                  alt=""
-                  class="size-12 rounded object-cover shrink-0"
-                >
+                  :title="link.title"
+                  :merchant="link.merchant"
+                  kind="product"
+                  class="size-12 rounded shrink-0"
+                />
                 <div class="min-w-0 flex-1">
                   <p class="text-sm text-default line-clamp-1">
                     {{ link.title || link.destinationUrl }}
@@ -377,6 +392,28 @@ watch(testOpen, (open) => {
                 autoresize
                 class="w-full"
               />
+              <i18n-t
+                keypath="autoReply.tokenHint"
+                tag="p"
+                class="mt-1.5 text-xs text-muted"
+              >
+                <template #nama>
+                  <UBadge
+                    color="neutral"
+                    variant="subtle"
+                    size="sm"
+                    label="{nama}"
+                  />
+                </template>
+                <template #link>
+                  <UBadge
+                    color="neutral"
+                    variant="subtle"
+                    size="sm"
+                    label="{link}"
+                  />
+                </template>
+              </i18n-t>
               <div class="flex flex-wrap gap-2 mt-1.5">
                 <UButton
                   size="xs"
@@ -397,6 +434,11 @@ watch(testOpen, (open) => {
                 />
               </div>
             </UFormField>
+            <AutoReplyChatPreview
+              :keyword="form.keywords[0]"
+              :message="form.dmMessage"
+              :link="link"
+            />
             <div class="space-y-2">
               <USwitch
                 v-model="form.publicReply"
@@ -448,32 +490,34 @@ watch(testOpen, (open) => {
         :title="t('autoReply.limitsNote')"
       />
 
-      <div class="flex flex-col-reverse sm:flex-row gap-2 sm:justify-end">
-        <UButton
-          color="neutral"
-          variant="ghost"
-          icon="i-lucide-flask-conical"
-          :label="t('autoReply.test')"
-          class="justify-center"
-          @click="testOpen = true"
-        />
+      <StickyActionBar>
+        <template #leading>
+          <UButton
+            color="neutral"
+            variant="ghost"
+            icon="i-lucide-flask-conical"
+            :label="t('autoReply.test')"
+            @click="testOpen = true"
+          />
+        </template>
         <UButton
           v-if="!ruleId || !wasActive"
           color="neutral"
           variant="outline"
           :label="t('autoReply.saveDraft')"
           :loading="saving === 'draft'"
-          class="justify-center"
+          :disabled="saving === 'active'"
           @click="save(false)"
         />
-        <UButton
+        <SaveButton
           type="submit"
           :label="ruleId && wasActive ? t('common.save') : t('autoReply.activate')"
+          :busy-label="t('busy.saving')"
           :loading="saving === 'active'"
+          :done="pop.done.value"
           icon="i-lucide-check"
-          class="justify-center"
         />
-      </div>
+      </StickyActionBar>
     </form>
 
     <ProductLinkPicker

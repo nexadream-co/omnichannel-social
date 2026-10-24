@@ -15,7 +15,8 @@ export interface CreatorProfile {
   }
   workspace: { id: string, name: string, slug: string, status: string, timezone: string, onboardingCompletedAt: string | null, needsAccountSelection: boolean }
   subscription: { status: string, planSlug: string, planName: string, trialEndsAt: string | null, currentPeriodEnd: string | null }
-  onboarding: { accountConnected: boolean, bioCreated: boolean, linkAdded: boolean, postScheduled: boolean, dismissed: boolean }
+  onboarding: { accountConnected: boolean, bioCreated: boolean, linkAdded: boolean, postScheduled: boolean, autoReplyAdded: boolean, dismissed: boolean }
+  milestones: Record<string, string>
   displayTimezone: string
   impersonating: boolean
 }

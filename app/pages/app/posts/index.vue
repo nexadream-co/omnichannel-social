@@ -2,19 +2,23 @@
 import { PLATFORM_META } from '#shared/channels/registry'
 import type { Platform } from '#shared/channels/types'
 import { POST_STATUS_META, POST_TARGET_STATUS_META } from '#shared/utils/status'
+import { useIntervalFn, useTimeoutFn } from '@vueuse/core'
+import type { OverduePost } from '~/components/OverduePostCard.vue'
 
 interface PostRow {
   id: string
   caption: string
   status: string
+  overdue: boolean
   scheduledAt: string | null
   createdAt: string
   thumbnail: { url: string | null, kind: 'image' | 'video' } | null
-  targets: { id: string, platform: Platform, status: string, removedAt: string | null, editedAt: string | null, username: string | null, errorCode: string | null }[]
+  targets: { id: string, platform: Platform, status: string, removedAt: string | null, editedAt: string | null, username: string | null, errorCode: string | null, socialAccountId: string, accountStatus: string }[]
 }
+interface Counts { scheduled: number, overdue: number, draft: number, published: number, failed: number }
 
 definePageMeta({ layout: 'creator' })
-const { t, locale } = useI18n()
+const { t, te, locale } = useI18n()
 const localePath = useLocalePath()
 const route = useRoute()
 const router = useRouter()
@@ -27,13 +31,61 @@ const TABS = ['scheduled', 'draft', 'published', 'failed', 'all'] as const
 type Tab = typeof TABS[number]
 const tab = ref<Tab>(TABS.includes(route.query.tab as Tab) ? route.query.tab as Tab : 'scheduled')
 watch(tab, value => router.replace({ query: { tab: value } }))
-const filters = computed(() => ({ tab: tab.value }))
+// Scheduled: what is overdue sits in its own section above, so the list below is only what still waits.
+const filters = computed(() => tab.value === 'scheduled' ? { tab: tab.value, due: 'upcoming' } : { tab: tab.value })
 const list = useServerList<PostRow>('/api/app/posts', { filters })
 onMounted(list.refresh)
 
+const counts = ref<Counts | null>(null)
+const overdue = ref<OverduePost[]>([])
+// The section starts with the first 20; "Lihat semua" pages through the rest (the list below only holds upcoming posts).
+const showAllOverdue = ref(false)
+async function loadSide() {
+  counts.value = await apiFetch<Counts>('/api/app/posts/counts').catch(() => counts.value)
+  if (!counts.value?.overdue) {
+    overdue.value = []
+    return
+  }
+  const limit = showAllOverdue.value ? 100 : 20
+  const items: OverduePost[] = []
+  for (let page = 1; ; page++) {
+    const response = await apiFetch<{ items: OverduePost[], meta: { pageCount: number } }>('/api/app/posts', { query: { tab: 'scheduled', due: 'overdue', limit, page } }).catch(() => null)
+    if (!response) break
+    items.push(...response.items)
+    if (!showAllOverdue.value || page >= response.meta.pageCount) break
+  }
+  overdue.value = items
+}
+onMounted(loadSide)
+const stopMutation = onApiMutation(changed => (changed === '/api/app/posts' || changed === '/api/app/post-targets') && loadSide())
+onScopeDispose(stopMutation)
+
 const tz = computed(() => auth.profile.value?.displayTimezone)
 const canWrite = computed(() => auth.hasAbility('posts.write'))
-const tabs = computed(() => TABS.map(value => ({ value, label: t(`posts.tabs.${value}`) })))
+const COUNTED: Partial<Record<Tab, keyof Counts>> = { scheduled: 'scheduled', draft: 'draft', failed: 'failed' }
+const tabs = computed(() => TABS.map((value) => {
+  const key = COUNTED[value]
+  const n = key ? counts.value?.[key] ?? 0 : 0
+  return { value, label: n ? t('posts.tabCount', { label: t(`posts.tabs.${value}`), n }) : t(`posts.tabs.${value}`) }
+}))
+
+// Publishing is checked again every 15 s while anything on screen is on its way out; nothing runs otherwise.
+const publishing = computed(() => list.items.value.some(post => post.status === 'publishing'))
+const poll = useIntervalFn(() => void list.refresh(), 15_000, { immediate: false })
+watch(publishing, busy => busy ? poll.resume() : poll.pause(), { immediate: true })
+
+// A post that was on its way and is now out gets a brief "Terbit ✓".
+const justPublished = ref(new Set<string>())
+watch(list.items, (next, prev) => {
+  const was = new Set(prev.filter(post => post.status === 'publishing').map(post => post.id))
+  for (const post of next) {
+    if (!was.has(post.id) || !['published', 'partial'].includes(post.status)) continue
+    justPublished.value = new Set([...justPublished.value, post.id])
+    setTimeout(() => {
+      justPublished.value = new Set([...justPublished.value].filter(id => id !== post.id))
+    }, 1200)
+  }
+})
 
 async function act(fn: () => Promise<unknown>, success: string) {
   try {
@@ -45,24 +97,46 @@ async function act(fn: () => Promise<unknown>, success: string) {
   }
 }
 
+const undo = useUndoToast()
 async function cancel(post: PostRow) {
+  const original = post.scheduledAt
+  // Far enough ahead: cancel at once and offer "Urungkan". Close to its time there is no safe way back, so ask first.
+  if (original && new Date(original).getTime() - Date.now() > 120_000) {
+    await undo.run({
+      title: t('posts.cancelledUndo'),
+      apply: () => {
+        list.items.value = list.items.value.filter(item => item.id !== post.id)
+      },
+      rollback: () => void list.refresh(),
+      commit: () => apiFetch(`/api/app/posts/${post.id}/cancel`, { method: 'POST' }),
+      undo: async () => {
+        await apiFetch(`/api/app/posts/${post.id}/reschedule`, { method: 'POST', body: { scheduledAt: original } })
+        await list.refresh()
+      }
+    })
+    return
+  }
   if (!(await confirm({ title: t('posts.cancelConfirm'), color: 'error', confirmLabel: t('posts.cancel') }))) return
   await act(() => apiFetch(`/api/app/posts/${post.id}/cancel`, { method: 'POST' }), t('posts.cancelled'))
 }
 
+const retrying = ref<string | null>(null)
 async function retry(targetId: string) {
+  retrying.value = targetId
   await act(() => apiFetch(`/api/app/post-targets/${targetId}/retry`, { method: 'POST' }), t('posts.retried'))
+  retrying.value = null
 }
 
 // "Sinkronkan" on Terbit / Semua: one background run for the workspace (numbers, caption edits, deletion; nightly at 02:00 WIB).
 const showSync = computed(() => tab.value === 'published' || tab.value === 'all')
 const syncing = ref(false)
+const afterSync = useTimeoutFn(() => void list.refresh(), 10_000, { immediate: false })
 async function sync() {
   syncing.value = true
   try {
     await apiFetch('/api/app/posts/sync', { method: 'POST' })
     toast.add({ title: t('posts.syncStarted'), color: 'success' })
-    setTimeout(list.refresh, 10_000)
+    afterSync.start()
   } catch (caught) {
     toast.add({ title: extractErrorMessage(caught, t('authError.generic')), color: 'error' })
   } finally {
@@ -132,6 +206,34 @@ function menu(post: PostRow) {
     </div>
 
     <div
+      v-if="tab === 'scheduled' && overdue.length"
+      class="mb-5 space-y-2"
+    >
+      <h2 class="text-sm font-semibold text-highlighted">
+        {{ t('posts.needsAction') }}
+      </h2>
+      <TransitionGroup
+        name="list"
+        tag="div"
+        class="space-y-2"
+      >
+        <OverduePostCard
+          v-for="post in overdue"
+          :key="post.id"
+          :post="post"
+          @changed="() => { loadSide(); list.refresh() }"
+        />
+      </TransitionGroup>
+      <UButton
+        v-if="!showAllOverdue && (counts?.overdue ?? 0) > overdue.length"
+        variant="link"
+        color="neutral"
+        :label="t('posts.overdueAll', { n: counts?.overdue ?? 0 })"
+        @click="() => { showAllOverdue = true; loadSide() }"
+      />
+    </div>
+
+    <div
       v-if="list.status.value === 'loading' && !list.items.value.length"
       class="space-y-3"
     >
@@ -141,26 +243,20 @@ function menu(post: PostRow) {
         class="h-24 w-full"
       />
     </div>
-    <UCard
-      v-else-if="!list.items.value.length"
-      class="text-center"
-    >
-      <UIcon
-        :name="tab === 'failed' ? 'i-lucide-circle-check' : 'i-lucide-calendar-plus'"
-        class="size-8 text-muted mx-auto"
+    <template v-else-if="!list.items.value.length">
+      <EmptyState
+        v-if="!(tab === 'scheduled' && overdue.length)"
+        :icon="tab === 'failed' ? 'i-lucide-circle-check' : tab === 'draft' ? 'i-lucide-file-pen-line' : tab === 'published' ? 'i-lucide-send' : 'i-lucide-calendar-plus'"
+        :tone="tab === 'failed' ? 'happy' : 'default'"
+        :title="t(`posts.emptyState.${tab}.title`)"
+        :description="te(`posts.emptyState.${tab}.description`) ? t(`posts.emptyState.${tab}.description`) : undefined"
+        :action="canWrite && tab !== 'failed' ? { label: t('posts.create'), to: localePath('/app/compose'), icon: 'i-lucide-plus' } : undefined"
       />
-      <p class="mt-3 text-default">
-        {{ t(`posts.empty.${tab}`) }}
-      </p>
-      <UButton
-        v-if="canWrite && tab !== 'failed'"
-        :to="localePath('/app/compose')"
-        :label="t('posts.create')"
-        class="mt-4"
-      />
-    </UCard>
-    <ul
+    </template>
+    <TransitionGroup
       v-else
+      name="list"
+      tag="ul"
       class="space-y-3"
     >
       <li
@@ -171,18 +267,14 @@ function menu(post: PostRow) {
           <div class="flex gap-3">
             <NuxtLink
               :to="localePath(`/app/posts/${post.id}`)"
-              class="shrink-0 size-16 rounded-md overflow-hidden bg-elevated flex items-center justify-center"
+              class="shrink-0"
+              :aria-label="t('posts.detail')"
             >
-              <img
-                v-if="post.thumbnail?.url && post.thumbnail.kind === 'image'"
-                :src="post.thumbnail.url"
-                alt=""
-                class="size-full object-cover"
-              >
-              <UIcon
-                v-else
-                :name="post.thumbnail?.kind === 'video' ? 'i-lucide-video' : 'i-lucide-text'"
-                class="size-6 text-muted"
+              <SmartImage
+                :src="post.thumbnail?.kind === 'image' ? post.thumbnail.url : null"
+                kind="post"
+                :title="post.caption"
+                class="size-16 rounded-md bg-elevated"
               />
             </NuxtLink>
             <div class="min-w-0 flex-1 space-y-1.5">
@@ -217,8 +309,17 @@ function menu(post: PostRow) {
                 {{ lastEdit(post) }}
               </p>
               <p class="text-xs text-muted">
+                <UBadge
+                  v-if="justPublished.has(post.id)"
+                  color="success"
+                  variant="subtle"
+                  icon="i-lucide-check"
+                  :label="t('posts.publishedDone')"
+                  class="animate-nav-pop"
+                />
                 <StatusBadge
-                  :value="post.status"
+                  v-else
+                  :value="post.overdue ? 'overdue' : post.status"
                   :meta="POST_STATUS_META"
                 />
                 <span
@@ -226,6 +327,12 @@ function menu(post: PostRow) {
                   class="ml-2"
                 >{{ formatDateTime(post.scheduledAt, { locale, timeZone: tz }) }}</span>
               </p>
+              <UProgress
+                v-if="post.status === 'publishing'"
+                size="2xs"
+                color="warning"
+                :aria-label="t('busy.publishing')"
+              />
               <div class="flex flex-wrap gap-1.5">
                 <span
                   v-for="target in post.targets"
@@ -243,10 +350,11 @@ function menu(post: PostRow) {
                     :meta="POST_TARGET_STATUS_META"
                   />
                   <UButton
-                    v-if="canWrite && target.status === 'failed'"
+                    v-if="canWrite && (target.status === 'failed' || (post.overdue && target.status === 'scheduled' && target.accountStatus === 'active'))"
                     size="xs"
                     variant="link"
-                    :label="t('posts.retry')"
+                    :label="retrying === target.id ? t('busy.publishing') : target.status === 'failed' ? t('posts.retry') : t('posts.publishNow')"
+                    :loading="retrying === target.id"
                     class="px-1"
                     @click="retry(target.id)"
                   />
@@ -256,7 +364,7 @@ function menu(post: PostRow) {
           </div>
         </UCard>
       </li>
-    </ul>
+    </TransitionGroup>
     <div
       v-if="list.pageCount.value > 1"
       class="flex justify-center mt-4"

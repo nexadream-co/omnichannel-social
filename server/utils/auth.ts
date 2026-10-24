@@ -53,7 +53,7 @@ export async function requireStaffContext(event: H3Event): Promise<StaffRequestC
   if (event.context.staffContext) return event.context.staffContext as StaffRequestContext
   const base = requestContext(event)
   const session = await readSession(headersOf(event), 'staff')
-  if (!session) throw appError(401, 'Sesi Anda sudah berakhir. Silakan masuk lagi.', 'UNAUTHENTICATED')
+  if (!session) throw appError(401, 'Sesi kamu sudah berakhir. Silakan masuk lagi.', 'UNAUTHENTICATED')
   const access = await resolveStaffAccess(base.db, session)
   const ctx: StaffRequestContext = {
     ...base,
@@ -75,7 +75,7 @@ export async function requireStaffContext(event: H3Event): Promise<StaffRequestC
 export async function requirePermission(event: H3Event, key: PermissionKey): Promise<StaffRequestContext> {
   const ctx = await requireStaffContext(event)
   if (!ctx.isSuperAdmin && !ctx.permissions.has(key)) {
-    throw appError(403, 'Anda tidak punya akses untuk tindakan ini.', 'FORBIDDEN', { permission: key })
+    throw appError(403, 'Kamu tidak punya akses untuk tindakan ini.', 'FORBIDDEN', { permission: key })
   }
   return ctx
 }

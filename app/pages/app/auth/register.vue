@@ -27,7 +27,7 @@ async function onSubmit() {
   errorMessage.value = null
   try {
     await auth.signUp({ ...state, phone: state.phone || undefined, acceptTerms: true })
-    await navigateTo(localePath('/app'))
+    await navigateTo({ path: localePath('/app'), query: { welcome: '1' } })
   } catch (caught) {
     // Server messages are Bahasa sentences meant to be shown verbatim (docs/blueprint/12 §4).
     errorMessage.value = extractErrorMessage(caught, t('authError.generic'))
@@ -65,7 +65,7 @@ async function onSubmit() {
           icon="i-simple-icons-google"
           size="lg"
           :label="t('auth.googleButton')"
-          @click="auth.signInWithGoogle('/app')"
+          @click="auth.signInWithGoogle('/app?welcome=1')"
         />
         <USeparator :label="t('common.or')" />
       </template>
@@ -106,12 +106,10 @@ async function onSubmit() {
           name="password"
           :hint="t('auth.passwordHint')"
         >
-          <UInput
+          <AuthPasswordInput
             v-model="state.password"
-            type="password"
             autocomplete="new-password"
-            class="w-full"
-            size="lg"
+            meter
           />
         </UFormField>
         <UFormField

@@ -5,6 +5,9 @@ const { t, locale } = useI18n()
 const localePath = useLocalePath()
 const period = ref<'monthly' | 'yearly'>('monthly')
 const price = (p: Plan) => (period.value === 'yearly' ? p.priceYearly : p.priceMonthly)
+// Yearly is shown as a monthly figure first (display only; the amount charged stays the integer yearly price).
+const shownPrice = (p: Plan) => (period.value === 'yearly' && p.priceYearly > 0 ? Math.round(p.priceYearly / 12) : price(p))
+const formatPrice = (n: number) => formatIDR(n, locale.value)
 const save = computed(() => Math.max(0, ...props.plans.filter(p => p.priceMonthly > 0 && p.priceYearly > 0).map(p => Math.round((1 - p.priceYearly / (p.priceMonthly * 12)) * 100))))
 const { lines: planLines } = usePlanLines()
 const featured = computed(() => props.trialPlanSlug)
@@ -31,7 +34,7 @@ const planTarget = (p: Plan) => localePath(!signedIn.value ? '/app/auth/register
         :key="plan.slug"
         v-reveal
         class="relative rounded-2xl border bg-default p-6 flex flex-col gap-5"
-        :class="plan.slug === featured ? 'border-primary shadow-lg shadow-primary/10 ring-1 ring-primary' : 'border-default'"
+        :class="plan.slug === featured ? 'order-first sm:order-none border-primary shadow-lg shadow-primary/10 ring-1 ring-primary' : 'border-default'"
       >
         <UBadge
           v-if="plan.slug === featured && plan.trialDays > 0"
@@ -49,13 +52,29 @@ const planTarget = (p: Plan) => localePath(!signedIn.value ? '/app/auth/register
             {{ plan.description }}
           </p>
         </div>
-        <p>
-          <span class="text-4xl font-bold text-highlighted">{{ price(plan) > 0 ? formatIDR(price(plan), locale) : t('landing.free') }}</span>
-          <span
-            v-if="price(plan) > 0"
-            class="text-muted"
-          >{{ period === 'yearly' ? t('landing.perYear') : t('landing.perMonth') }}</span>
-        </p>
+        <div>
+          <p>
+            <span class="text-4xl font-bold text-highlighted">
+              <TickNumber
+                v-if="price(plan) > 0"
+                :value="shownPrice(plan)"
+                :format="formatPrice"
+                :duration="250"
+              />
+              <template v-else>{{ t('landing.free') }}</template>
+            </span>
+            <span
+              v-if="price(plan) > 0"
+              class="text-muted"
+            >{{ t('landing.perMonth') }}</span>
+          </p>
+          <p
+            v-if="price(plan) > 0 && period === 'yearly'"
+            class="mt-1 text-xs text-muted"
+          >
+            {{ t('landing.yearlyBilled', { total: formatIDR(plan.priceYearly, locale) }) }}
+          </p>
+        </div>
         <ul class="space-y-2 text-sm flex-1">
           <li
             v-for="item in planLines(plan)"

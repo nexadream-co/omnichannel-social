@@ -92,17 +92,22 @@ export interface CreatorNavItem {
   feature?: FeatureKey
   /** Shown in the phone bottom nav (max 4 + "Lainnya"). */
   bottomNav?: boolean
+  /** The raised centre button of the phone bottom nav. */
+  bottomNavCenter?: boolean
 }
 
-/** Code-defined creator rail (docs/blueprint/13 §5). */
+/**
+ * Code-defined creator rail (docs/blueprint/13 §5).
+ * Phone bottom nav: Beranda · Kalender · [Buat] · Postingan · Lainnya.
+ */
 export const CREATOR_NAV: CreatorNavItem[] = [
   { key: 'home', labelKey: 'nav.home', to: '/app', icon: 'i-lucide-house', bottomNav: true },
-  { key: 'compose', labelKey: 'nav.compose', to: '/app/compose', icon: 'i-lucide-square-pen', ability: 'posts.write' },
+  { key: 'compose', labelKey: 'nav.compose', to: '/app/compose', icon: 'i-lucide-square-pen', ability: 'posts.write', bottomNavCenter: true },
   { key: 'calendar', labelKey: 'nav.calendar', to: '/app/calendar', icon: 'i-lucide-calendar', ability: 'posts.read', bottomNav: true },
-  { key: 'posts', labelKey: 'nav.posts', to: '/app/posts', icon: 'i-lucide-list', ability: 'posts.read' },
+  { key: 'posts', labelKey: 'nav.posts', to: '/app/posts', icon: 'i-lucide-list', ability: 'posts.read', bottomNav: true },
   { key: 'media', labelKey: 'nav.media', to: '/app/media', icon: 'i-lucide-images', ability: 'posts.read' },
-  { key: 'links', labelKey: 'nav.links', to: '/app/links', icon: 'i-lucide-link', ability: 'links.manage', bottomNav: true },
-  { key: 'bio', labelKey: 'nav.bio', to: '/app/bio', icon: 'i-lucide-store', ability: 'bio.manage', bottomNav: true },
+  { key: 'links', labelKey: 'nav.links', to: '/app/links', icon: 'i-lucide-link', ability: 'links.manage' },
+  { key: 'bio', labelKey: 'nav.bio', to: '/app/bio', icon: 'i-lucide-store', ability: 'bio.manage' },
   { key: 'autoReply', labelKey: 'nav.autoReply', to: '/app/auto-reply', icon: 'i-lucide-message-circle-reply', ability: 'autoreply.manage' },
   { key: 'analytics', labelKey: 'nav.analytics', to: '/app/analytics', icon: 'i-lucide-chart-column', ability: 'analytics.read' },
   { key: 'accounts', labelKey: 'nav.accounts', to: '/app/accounts', icon: 'i-lucide-at-sign', ability: 'accounts.manage' },

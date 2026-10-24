@@ -4,7 +4,7 @@ import { PILLAR_META, type IdeaDetail } from '#shared/utils/planner'
 
 /** One idea in Bank Ide. Draggable onto a Kalender day (desktop) when it is still open. */
 const props = defineProps<{ idea: IdeaDetail }>()
-const emit = defineEmits<{ open: [idea: IdeaDetail] }>()
+const emit = defineEmits<{ open: [idea: IdeaDetail], schedule: [idea: IdeaDetail] }>()
 const { t } = useI18n()
 const localePath = useLocalePath()
 const auth = useCreatorAuth()
@@ -12,6 +12,7 @@ const planner = usePlanner()
 
 const canWrite = computed(() => auth.hasAbility('posts.write'))
 const draggable = computed(() => canWrite.value && props.idea.status === 'open')
+const grabbed = ref(false)
 const thumb = computed(() => {
   const first = props.idea.media[0]
   return first ? (first.kind === 'image' ? first.url : first.posterUrl) : null
@@ -23,6 +24,7 @@ const menu = computed<DropdownMenuItem[][]>(() => {
   if (idea.status === 'archived') return [[{ label: t('planner.idea.restore'), icon: 'i-lucide-archive-restore', onSelect: () => planner.restoreIdea(idea.id) }]]
   return [
     [
+      { label: t('calendar.scheduleIdea'), icon: 'i-lucide-calendar-plus', onSelect: () => emit('schedule', idea) },
       { label: t('planner.idea.toPost'), icon: 'i-lucide-square-pen', onSelect: () => planner.toPost(idea.id) },
       { label: t('planner.idea.edit'), icon: 'i-lucide-pencil', onSelect: () => emit('open', idea) },
       ...(idea.plannedOn ? [{ label: t('planner.idea.removeDate'), icon: 'i-lucide-calendar-x', onSelect: () => planner.planIdea(idea.id, null) }] : [])
@@ -34,18 +36,18 @@ const menu = computed<DropdownMenuItem[][]>(() => {
 
 <template>
   <div
-    class="group rounded-md border border-dashed border-accented bg-default p-2.5 flex gap-2.5"
-    :class="draggable ? 'cursor-grab active:cursor-grabbing' : ''"
+    class="group rounded-md border border-dashed border-accented bg-default p-2.5 flex gap-2.5 motion-safe:transition-transform"
+    :class="grabbed ? 'motion-safe:scale-[1.03] shadow-lg cursor-grabbing' : draggable ? 'cursor-grab' : ''"
     :draggable="draggable"
-    @dragstart="planner.drag.value = { kind: 'idea', id: idea.id }"
-    @dragend="planner.drag.value = null"
+    @dragstart="planner.drag.value = { kind: 'idea', id: idea.id, from: idea.plannedOn }; grabbed = true"
+    @dragend="planner.drag.value = null; grabbed = false"
   >
-    <img
+    <SmartImage
       v-if="thumb"
       :src="thumb"
-      alt=""
-      class="size-12 rounded object-cover shrink-0"
-    >
+      kind="media"
+      class="size-12 rounded shrink-0"
+    />
     <button
       type="button"
       class="flex-1 min-w-0 text-left"
@@ -87,6 +89,16 @@ const menu = computed<DropdownMenuItem[][]>(() => {
         </span>
       </div>
     </button>
+    <UButton
+      v-if="canWrite && idea.status === 'open' && !idea.plannedOn"
+      icon="i-lucide-calendar-plus"
+      size="xs"
+      color="neutral"
+      variant="soft"
+      class="lg:hidden self-start"
+      :label="t('calendar.scheduleShort')"
+      @click="emit('schedule', idea)"
+    />
     <UDropdownMenu
       v-if="canWrite || idea.status === 'used'"
       :items="menu"

@@ -27,14 +27,17 @@ const items = computed<DropdownMenuItem[][]>(() => {
   groups.push([
     { type: 'label', label: t('nav.groupApp') },
     {
-      label: t('nav.darkMode'),
-      icon: 'i-lucide-moon',
-      type: 'checkbox',
-      checked: colorMode.value === 'dark',
-      onSelect: (event: Event) => {
-        event.preventDefault()
-        colorMode.preference = colorMode.value === 'dark' ? 'light' : 'dark'
-      }
+      label: t('nav.theme'),
+      icon: 'i-lucide-sun-moon',
+      children: (['system', 'light', 'dark'] as const).map(mode => ({
+        label: t(`nav.theme_${mode}`),
+        type: 'checkbox' as const,
+        checked: colorMode.preference === mode,
+        onSelect: (event: Event) => {
+          event.preventDefault()
+          colorMode.preference = mode
+        }
+      }))
     },
     {
       label: t('nav.language'),

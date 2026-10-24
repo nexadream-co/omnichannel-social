@@ -24,6 +24,7 @@ const isStaff = computed(() => route.path.startsWith('/admin'))
     </header>
     <main class="flex-1 flex items-start sm:items-center justify-center px-4 pb-12 pt-4">
       <div class="w-full max-w-md">
+        <AuthArt v-if="!isStaff" />
         <slot />
       </div>
     </main>

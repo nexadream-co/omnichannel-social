@@ -6,7 +6,6 @@ import type { LinkRow } from '~/pages/app/links/index.vue'
 const open = defineModel<boolean>('open', { default: false })
 const emit = defineEmits<{ pick: [link: LinkRow] }>()
 const { t, locale } = useI18n()
-const localePath = useLocalePath()
 
 const search = ref('')
 const links = ref<LinkRow[]>([])
@@ -28,15 +27,28 @@ function pick(link: LinkRow) {
   emit('pick', link)
   open.value = false
 }
+
+const creating = ref(false)
+function onCreated(link: LinkRow) {
+  creating.value = false
+  pick({ ...link, clicks7d: link.clicks7d ?? 0 })
+}
 </script>
 
 <template>
-  <UModal
+  <ResponsiveSheet
     v-model:open="open"
     :title="t('links.insert')"
     :description="t('links.insertHint')"
   >
     <template #body>
+      <LinkPasteField
+        compact
+        class="mb-3"
+        @start="creating = true"
+        @done="onCreated"
+        @fail="creating = false"
+      />
       <UInput
         v-if="links.length > 5"
         v-model="search"
@@ -45,7 +57,7 @@ function pick(link: LinkRow) {
         class="w-full mb-3"
       />
       <div
-        v-if="loading"
+        v-if="loading || creating"
         class="space-y-2"
       >
         <USkeleton
@@ -54,20 +66,13 @@ function pick(link: LinkRow) {
           class="h-14 w-full"
         />
       </div>
-      <div
+      <EmptyState
         v-else-if="!links.length"
-        class="text-center py-4 space-y-3"
-      >
-        <p class="text-sm text-muted">
-          {{ t('links.insertEmpty') }}
-        </p>
-        <UButton
-          :to="localePath('/app/links')"
-          icon="i-lucide-plus"
-          variant="soft"
-          :label="t('links.add')"
-        />
-      </div>
+        compact
+        icon="i-lucide-link"
+        :title="t('links.insertEmptyTitle')"
+        :description="t('links.insertEmpty')"
+      />
       <ul
         v-else
         class="divide-y divide-default -my-2"
@@ -81,15 +86,12 @@ function pick(link: LinkRow) {
             class="w-full py-2 flex items-center gap-3 text-left hover:bg-elevated/50 rounded"
             @click="pick(link)"
           >
-            <img
-              v-if="link.imageUrl"
+            <SmartImage
               :src="link.imageUrl"
-              alt=""
-              class="size-12 rounded object-cover shrink-0"
-            >
-            <div
-              v-else
-              class="size-12 rounded bg-elevated shrink-0"
+              :title="link.title"
+              :merchant="link.merchant"
+              kind="product"
+              class="size-12 rounded shrink-0"
             />
             <div class="min-w-0 flex-1">
               <p class="text-sm text-default line-clamp-2">
@@ -108,5 +110,5 @@ function pick(link: LinkRow) {
         </li>
       </ul>
     </template>
-  </UModal>
+  </ResponsiveSheet>
 </template>

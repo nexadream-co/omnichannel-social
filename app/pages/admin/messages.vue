@@ -127,7 +127,7 @@ async function remove(m: Message) {
           class="flex flex-wrap gap-2 w-full"
         >
           <UButton
-            :to="`mailto:${selected.email}?subject=${encodeURIComponent(`Re: ${selected.subject ?? 'Pesan Anda'}`)}`"
+            :to="`mailto:${selected.email}?subject=${encodeURIComponent(`Re: ${selected.subject ?? 'Pesan kamu'}`)}`"
             external
             icon="i-lucide-reply"
             label="Balas lewat email"

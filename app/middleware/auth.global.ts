@@ -22,8 +22,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
     if (!auth.isAuthenticated.value) {
       return navigateTo({ path: localePath('/app/auth/login'), query: path === '/app' ? undefined : { redirect: to.fullPath } })
     }
-    // After a downgrade the owner picks which accounts stay active; upgrading instead is the other way out.
-    if (auth.workspace.value?.needsAccountSelection && path !== '/app/accounts' && path !== '/app/billing') return navigateTo(localePath('/app/accounts'))
+    // No hard redirect after a downgrade: the excess accounts are already off, so the accounts page only asks which ones stay.
     return
   }
 

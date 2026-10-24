@@ -24,6 +24,8 @@ onMounted(async () => {
 })
 const locked = computed(() => entitlements.data.value !== null && !entitlements.has('teamAccess'))
 
+const PREVIEW_ROWS = [{ role: 'editor', icon: 'i-lucide-pencil-line' }, { role: 'viewer', icon: 'i-lucide-eye' }]
+
 const roles = computed(() => (['editor', 'viewer'] as const).map(value => ({ value, label: t(`role.${value}.label`), description: t(`role.${value}.summary`) })))
 const inviteOpen = ref(false)
 const inviteForm = reactive({ email: '', name: '', role: 'editor' as 'editor' | 'viewer' })
@@ -96,6 +98,19 @@ const seatsLabel = computed(() => {
       <p class="text-sm text-muted mt-1">
         {{ t('team.lockedBody') }}
       </p>
+      <ul class="mt-4 space-y-2 text-left max-w-sm mx-auto">
+        <li
+          v-for="row in PREVIEW_ROWS"
+          :key="row.role"
+          class="flex items-start gap-2 rounded-lg border border-default px-3 py-2 text-sm"
+        >
+          <UIcon
+            :name="row.icon"
+            class="size-4 text-primary shrink-0 mt-0.5"
+          />
+          <span class="text-default">{{ t(`team.preview.${row.role}`) }}</span>
+        </li>
+      </ul>
       <UButton
         :to="localePath('/app/billing')"
         :label="t('team.seePlans')"
@@ -113,7 +128,17 @@ const seatsLabel = computed(() => {
             <span class="text-sm text-muted">{{ seatsLabel }}</span>
           </div>
         </template>
-        <ul class="divide-y divide-default">
+        <EmptyState
+          v-if="!team.members.length"
+          compact
+          icon="i-lucide-users"
+          :title="t('team.emptyTitle')"
+          :description="t('team.emptyBody')"
+        />
+        <ul
+          v-else
+          class="divide-y divide-default"
+        >
           <li
             v-for="member in team.members"
             :key="member.id"

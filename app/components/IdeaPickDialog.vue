@@ -45,12 +45,12 @@ async function pick(idea: IdeaDetail) {
             class="h-11 w-full"
           />
         </div>
-        <p
+        <EmptyState
           v-else-if="!ideas.length"
-          class="text-sm text-muted text-center py-4"
-        >
-          {{ t('planner.pick.empty') }}
-        </p>
+          icon="i-lucide-lightbulb"
+          :title="t('planner.pick.empty')"
+          compact
+        />
         <ul
           v-else
           class="space-y-2 max-h-80 overflow-y-auto"

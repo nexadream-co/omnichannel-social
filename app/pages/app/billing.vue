@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import type { FeatureKey, LimitKey } from '#shared/utils/plans'
+import { DOWNGRADE_REASON_META, type DowngradeReason } from '#shared/utils/billing-history'
+import { FEATURE_KEYS, type FeatureKey, type LimitKey } from '#shared/utils/plans'
 import { PAYMENT_STATUS_KEYS, type PaymentStatusValue } from '#shared/utils/payments'
 
 interface Payment { id: string, orderId: string, amount: number, status: PaymentStatusValue, planSlug: string | null, period: 'monthly' | 'yearly', paymentType: string | null, redirectUrl: string | null, paidAt: string | null, expiresAt: string | null, createdAt: string }
@@ -8,6 +9,7 @@ interface View {
   subscription: { status: 'trialing' | 'active' | 'past_due' | 'cancelled' | 'downgraded' | 'suspended', period: 'monthly' | 'yearly', trialEndsAt: string | null, currentPeriodEnd: string | null, graceEndsAt: string | null, cancelledAt: string | null, plan: { slug: string, name: string } }
   effectivePlan: { slug: string, name: string }
   renewalReminderDays: number
+  lastDowngrade: { reason: DowngradeReason, at: string, fromPlanSlug: string | null, fromPlanName: string | null } | null
   plans: PlanCard[]
   pendingPayments: Payment[]
   checkoutAvailable: boolean
@@ -21,6 +23,9 @@ const router = useRouter()
 const toast = useToast()
 const auth = useCreatorAuth()
 const entitlements = useEntitlements()
+const { reach } = useMilestones()
+const { spark } = useCelebrate()
+const celebration = reactive({ open: false, planName: '', features: [] as FeatureKey[] })
 const { confirm } = useConfirmDialog()
 useHead({ title: () => t('billing.title') })
 
@@ -47,6 +52,8 @@ async function handleReturn() {
   const orderId = typeof route.query.order_id === 'string' ? route.query.order_id : typeof route.query.reference === 'string' ? route.query.reference : null
   if (!orderId) return
   await router.replace({ query: {} })
+  await entitlements.load()
+  const before = entitlements.data.value?.features
   const read = () => apiFetch<Payment>('/api/app/subscription/payments/by-order', { query: { orderId } }).catch(() => null)
   let payment = await read()
   if (payment && (payment.status === 'pending' || payment.status === 'challenge')) {
@@ -54,11 +61,21 @@ async function handleReturn() {
     payment = await read()
   }
   if (!payment) return
-  if (payment.status === 'paid') toast.add({ title: t('billing.return.paid'), color: 'success', icon: 'i-lucide-circle-check' })
-  else if (payment.status === 'pending' || payment.status === 'challenge') toast.add({ title: t('billing.return.pending'), color: 'info' })
-  else toast.add({ title: t('billing.return.failed'), color: 'error' })
+  const paid = payment.status === 'paid'
+  const first = paid && reach('upgradePaid')
+  if (paid && !first) {
+    toast.add({ title: t('billing.return.paid'), color: 'success', icon: 'i-lucide-circle-check' })
+    spark({ x: window.innerWidth / 2, y: 96 })
+  } else if (payment.status === 'pending' || payment.status === 'challenge') toast.add({ title: t('billing.return.pending'), color: 'info' })
+  else if (!paid) toast.add({ title: t('billing.return.failed'), color: 'error' })
   await entitlements.load(true)
   await auth.fetchProfile()
+  if (first) {
+    const after = entitlements.data.value
+    celebration.features = after ? FEATURE_KEYS.filter(key => after.features[key] && !before?.[key]) : []
+    celebration.planName = after?.planName ?? ''
+    celebration.open = true
+  }
 }
 
 onMounted(async () => {
@@ -117,6 +134,15 @@ async function choose(plan: PlanCard) {
   }
 }
 
+/** "Aktifkan lagi": the same checkout, for the plan the workspace fell from. */
+function reactivate() {
+  const slug = view.value?.lastDowngrade?.fromPlanSlug
+  const plan = view.value?.plans.find(p => p.slug === slug)
+  if (!plan) return
+  period.value = s.value?.period ?? 'monthly'
+  return choose(plan)
+}
+
 async function cancelPayment(payment: Payment) {
   busy.value = payment.id
   try {
@@ -149,6 +175,7 @@ const paymentColor = (status: PaymentStatusValue) => (status === 'paid' ? 'succe
 <template>
   <div class="w-full max-w-5xl mx-auto space-y-6">
     <CommandBar
+      compact
       :title="t('billing.title')"
       :description="t('billing.subtitle')"
     />
@@ -214,8 +241,26 @@ const paymentColor = (status: PaymentStatusValue) => (status === 'paid' ? 'succe
             >
               {{ statusLine }}
             </p>
+            <p
+              v-if="view.lastDowngrade"
+              class="text-sm text-muted flex items-start gap-1.5"
+            >
+              <UIcon
+                :name="DOWNGRADE_REASON_META[view.lastDowngrade.reason].icon"
+                class="size-4 shrink-0 mt-0.5"
+              />
+              {{ t(DOWNGRADE_REASON_META[view.lastDowngrade.reason].i18nKey, { date: date(view.lastDowngrade.at) }) }}
+            </p>
           </div>
-          <div class="flex gap-2 shrink-0">
+          <div class="flex flex-wrap gap-2 shrink-0">
+            <UButton
+              v-if="view.lastDowngrade?.fromPlanSlug && view.lastDowngrade.fromPlanName && view.checkoutAvailable"
+              v-spark
+              :label="t('billing.reactivate', { plan: view.lastDowngrade.fromPlanName })"
+              :loading="busy === view.lastDowngrade.fromPlanSlug"
+              :disabled="impersonating || busy !== null"
+              @click="reactivate"
+            />
             <UButton
               v-if="s!.status === 'cancelled'"
               :label="t('billing.resume')"
@@ -233,6 +278,8 @@ const paymentColor = (status: PaymentStatusValue) => (status === 'paid' ? 'succe
           </div>
         </div>
       </UCard>
+
+      <PlanUsageMeters />
 
       <!-- Unfinished payments: always the complete list, never paged -->
       <UCard
@@ -336,6 +383,7 @@ const paymentColor = (status: PaymentStatusValue) => (status === 'paid' ? 'succe
             </ul>
             <UButton
               v-if="buttonFor(plan)"
+              v-spark
               block
               size="lg"
               :variant="buttonFor(plan)!.variant"
@@ -358,12 +406,13 @@ const paymentColor = (status: PaymentStatusValue) => (status === 'paid' ? 'succe
             {{ t('billing.history') }}
           </h2>
         </template>
-        <p
+        <EmptyState
           v-if="!history?.items.length"
-          class="p-6 text-sm text-muted text-center"
-        >
-          {{ t('billing.historyEmpty') }}
-        </p>
+          compact
+          icon="i-lucide-receipt"
+          :title="t('billing.historyEmpty')"
+          :description="t('billing.historyEmptyBody')"
+        />
         <ul
           v-else
           class="divide-y divide-default"
@@ -406,5 +455,11 @@ const paymentColor = (status: PaymentStatusValue) => (status === 'paid' ? 'succe
         </div>
       </UCard>
     </template>
+
+    <UpgradeCelebration
+      v-model:open="celebration.open"
+      :plan-name="celebration.planName"
+      :features="celebration.features"
+    />
   </div>
 </template>

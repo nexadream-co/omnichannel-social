@@ -1,7 +1,9 @@
+import { haptic } from '~/utils/haptics'
+import { zonedParts } from '~/utils/schedule'
 import { momentName, type PlannerMoment } from '#shared/utils/planner'
 
 /** What is being dragged on the Kalender: a scheduled post (reschedule) or an idea (move its planned day). */
-export type PlannerDrag = { kind: 'post', postId: string, time: string } | { kind: 'idea', id: string }
+export type PlannerDrag = { kind: 'post', postId: string, time: string, scheduledAt: string } | { kind: 'idea', id: string, from: string | null }
 
 /**
  * Shared by the Kalender, Bank Ide and the idea editor. Every write goes through apiFetch, so the calendar
@@ -12,11 +14,27 @@ export function usePlanner() {
   const toast = useToast()
   const localePath = useLocalePath()
   const drag = useState<PlannerDrag | null>('planner-drag', () => null)
+  const undoable = useUndoToast()
 
+  const auth = useCreatorAuth()
+  const tzOf = () => auth.profile.value?.displayTimezone ?? 'Asia/Jakarta'
   const fail = (caught: unknown) => toast.add({ title: extractErrorMessage(caught, t('authError.generic')), color: 'error' })
   const dayLabel = (day: string) => formatDate(`${day}T12:00:00Z`, { locale: locale.value, timeZone: 'UTC' })
 
-  async function planIdea(id: string, plannedOn: string | null) {
+  /** `from` given (a move that can be undone): the toast offers "Urungkan", which puts the idea back on `from`. */
+  async function planIdea(id: string, plannedOn: string | null, from?: string | null) {
+    if (from !== undefined) {
+      let ok = true
+      await undoable.run({
+        title: plannedOn ? t('calendar.ideaMovedTo', { day: dayLabel(plannedOn) }) : t('planner.idea.saved'),
+        commit: () => apiFetch(`/api/app/planner/ideas/${id}`, { method: 'PATCH', body: { plannedOn } }),
+        undo: () => apiFetch(`/api/app/planner/ideas/${id}`, { method: 'PATCH', body: { plannedOn: from } }),
+        rollback: () => {
+          ok = false
+        }
+      })
+      return ok
+    }
     try {
       await apiFetch(`/api/app/planner/ideas/${id}`, { method: 'PATCH', body: { plannedOn } })
       toast.add({ title: plannedOn ? t('planner.idea.planned', { date: dayLabel(plannedOn) }) : t('planner.idea.saved'), color: 'success' })
@@ -27,10 +45,39 @@ export function usePlanner() {
     }
   }
 
+  /** Archives at once; the toast's "Urungkan" reopens the idea. */
   async function archiveIdea(id: string) {
+    let ok = true
+    await undoable.run({
+      title: t('planner.idea.archived'),
+      commit: () => apiFetch(`/api/app/planner/ideas/${id}`, { method: 'DELETE' }),
+      undo: () => apiFetch(`/api/app/planner/ideas/${id}`, { method: 'PATCH', body: { status: 'open' } }),
+      rollback: () => {
+        ok = false
+      }
+    })
+    return ok
+  }
+
+  /** Moves a post to another day or time; the toast's "Urungkan" reschedules it back to `from`. */
+  async function movePost(postId: string, to: string, from: string) {
+    let ok = true
+    await undoable.run({
+      title: t('calendar.movedTo', { day: dayLabel(zonedParts(new Date(to), tzOf()).date) }),
+      commit: () => apiFetch(`/api/app/posts/${postId}/reschedule`, { method: 'POST', body: { scheduledAt: to } }),
+      undo: () => apiFetch(`/api/app/posts/${postId}/reschedule`, { method: 'POST', body: { scheduledAt: from } }),
+      rollback: () => {
+        ok = false
+      }
+    })
+    if (ok) haptic('success')
+    return ok
+  }
+
+  /** One-line capture into Bank Ide (undated). */
+  async function captureIdea(title: string) {
     try {
-      await apiFetch(`/api/app/planner/ideas/${id}`, { method: 'DELETE' })
-      toast.add({ title: t('planner.idea.archived'), color: 'success' })
+      await apiFetch('/api/app/planner/ideas', { method: 'POST', body: { title } })
       return true
     } catch (caught) {
       fail(caught)
@@ -81,5 +128,5 @@ export function usePlanner() {
     return navigateTo(localePath({ path: '/app/compose', query: { idea: id } }))
   }
 
-  return { drag, dayLabel, planIdea, archiveIdea, restoreIdea, prepareMoment, repeatPost, toPost, fail }
+  return { drag, dayLabel, tzOf, planIdea, archiveIdea, movePost, captureIdea, restoreIdea, prepareMoment, repeatPost, toPost, fail }
 }

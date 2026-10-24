@@ -2,6 +2,7 @@
 /** Bantuan (rail footer): the CMS help guide, the FAQ and how to reach the team. All content is editable in /admin. */
 definePageMeta({ layout: 'creator' })
 const { t } = useI18n()
+const auth = useCreatorAuth()
 useHead({ title: () => t('help.title') })
 
 const [{ data: guide }, { data: landing }] = await Promise.all([
@@ -18,6 +19,14 @@ const whatsappUrl = computed(() => landing.value?.company.whatsapp ? `https://wa
       :title="t('help.title')"
       :description="t('help.subtitle')"
     />
+    <UCard v-if="auth.profile.value">
+      <template #header>
+        <h2 class="font-semibold text-highlighted">
+          {{ t('help.quickStart') }}
+        </h2>
+      </template>
+      <OnboardingSteps :onboarding="auth.profile.value.onboarding" />
+    </UCard>
     <UCard v-if="guide">
       <template #header>
         <h2 class="font-semibold text-highlighted">

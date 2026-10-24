@@ -21,6 +21,7 @@ export const workspaces = pgTable('workspaces', {
   niche: text(),
   affiliatePrograms: text().array().notNull().default(sql`'{}'::text[]`),
   watermark: jsonb().$type<WorkspaceWatermark>(), // the logo the media editor places with one tap
+  milestones: jsonb().$type<Record<string, string>>().notNull().default({}), // key -> ISO time a first-time moment was reached (shared/utils/milestones.ts)
   postsPerWeek: smallint(), // Kalender weekly target; null = the default (shared/utils/planner.ts)
   createdAt: createdAt(), updatedAt: updatedAt()
 }, t => [index().on(t.status), index().on(t.deletedAt), index().on(t.createdAt)])

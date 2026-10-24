@@ -1,0 +1,30 @@
+<div id="socialz-splash" aria-hidden="true">
+  <span>Socialz.id</span>
+</div>
+<style>
+  #socialz-splash {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    font-family: ui-sans-serif, system-ui, sans-serif;
+  }
+  #socialz-splash span {
+    color: #e6114f;
+    font-size: 1.75rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  @media (prefers-color-scheme: dark) {
+    #socialz-splash { background: #18181b; }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    #socialz-splash span { animation: socialz-splash-pulse 1.2s ease-in-out infinite; }
+  }
+  @keyframes socialz-splash-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.35; }
+  }
+</style>

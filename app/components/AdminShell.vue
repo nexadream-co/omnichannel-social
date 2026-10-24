@@ -40,14 +40,17 @@ const userItems = computed<DropdownMenuItem[][]>(() => [
     { label: 'Ubah kata sandi', icon: 'i-lucide-key-round', to: '/admin/change-password' }
   ],
   [{
-    label: 'Mode gelap',
-    icon: 'i-lucide-moon',
-    type: 'checkbox',
-    checked: colorMode.value === 'dark',
-    onSelect: (event: Event) => {
-      event.preventDefault()
-      colorMode.preference = colorMode.value === 'dark' ? 'light' : 'dark'
-    }
+    label: 'Tampilan',
+    icon: 'i-lucide-sun-moon',
+    children: ([['system', 'Ikuti perangkat'], ['light', 'Terang'], ['dark', 'Gelap']] as const).map(([mode, label]) => ({
+      label,
+      type: 'checkbox' as const,
+      checked: colorMode.preference === mode,
+      onSelect: (event: Event) => {
+        event.preventDefault()
+        colorMode.preference = mode
+      }
+    }))
   }],
   [{ label: 'Keluar', icon: 'i-lucide-log-out', onSelect: () => auth.signOut() }]
 ])
@@ -93,7 +96,12 @@ const { data: platformStatus } = useFetch<{ publishingPaused: boolean, autoReply
         />
       </template>
       <template #footer="{ collapsed }">
-        <UDashboardSidebarCollapse />
+        <UTooltip
+          :text="collapsed ? 'Lebarkan menu' : 'Ciutkan menu'"
+          :content="{ side: 'right' }"
+        >
+          <UDashboardSidebarCollapse />
+        </UTooltip>
         <p
           v-if="!collapsed"
           class="text-xs text-dimmed px-2"

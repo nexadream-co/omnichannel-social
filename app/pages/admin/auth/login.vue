@@ -15,6 +15,8 @@ const error = ref<string | null>(null)
 const MESSAGES: Record<string, string> = {
   'authError.rateLimited': 'Terlalu banyak percobaan. Coba lagi beberapa menit lagi.',
   'authError.invalidCredentials': 'Email atau kata sandi salah.',
+  'authError.offline': 'Kamu sedang offline. Cek koneksi lalu coba lagi.',
+  'authError.reload': 'Halaman ini perlu dimuat ulang. Muat ulang lalu coba lagi.',
   'authError.generic': 'Terjadi kesalahan. Coba lagi sebentar lagi.'
 }
 
@@ -71,12 +73,9 @@ async function onSubmit() {
           label="Kata sandi"
           name="password"
         >
-          <UInput
+          <AuthPasswordInput
             v-model="state.password"
-            type="password"
             autocomplete="current-password"
-            class="w-full"
-            size="lg"
           />
         </UFormField>
         <div class="flex justify-end">

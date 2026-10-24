@@ -97,12 +97,9 @@ async function onSubmit() {
           :label="t('auth.password')"
           name="password"
         >
-          <UInput
+          <AuthPasswordInput
             v-model="state.password"
-            type="password"
             autocomplete="current-password"
-            class="w-full"
-            size="lg"
           />
         </UFormField>
         <div class="flex justify-end">

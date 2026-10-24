@@ -1,5 +1,5 @@
 <script setup lang="ts">
-defineProps<{ title: string, description?: string, loading?: boolean, submitLabel?: string, wide?: boolean }>()
+defineProps<{ title: string, description?: string, loading?: boolean, submitLabel?: string, busyLabel?: string, done?: boolean, wide?: boolean }>()
 const emit = defineEmits<{ submit: [] }>()
 const open = defineModel<boolean>('open', { default: false })
 const { t } = useI18n()
@@ -23,9 +23,11 @@ const { t } = useI18n()
           :label="t('common.cancel')"
           @click="open = false"
         />
-        <UButton
+        <SaveButton
           :loading="loading"
-          :label="submitLabel ?? t('common.save')"
+          :done="done"
+          :label="submitLabel"
+          :busy-label="busyLabel"
           @click="emit('submit')"
         />
       </div>

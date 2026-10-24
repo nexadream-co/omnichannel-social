@@ -109,6 +109,17 @@ async function shiftClock(action: string) {
 }
 const statusItems = Object.entries(SUBSCRIPTION_STATUS).filter(([k]) => k !== 'suspended').map(([value, s]) => ({ value, label: s.label }))
 const SHOWN_LIMITS = LIMIT_KEYS.filter(k => k !== 'activityLogRetentionDays')
+function openSuspend() {
+  suspendReason.value = ''
+  suspendOpen.value = true
+}
+// The two actions that are hard to undo live behind one "Bahaya" menu, away from the everyday buttons.
+const dangerItems = computed(() => [
+  can('workspaces.write') && data.value?.workspace.status === 'active'
+    ? { label: 'Tangguhkan', icon: 'i-lucide-ban', color: 'error' as const, onSelect: openSuspend }
+    : null,
+  isSuper.value ? { label: 'Hapus', icon: 'i-lucide-trash-2', color: 'error' as const, onSelect: () => { void remove() } } : null
+].filter(item => item !== null))
 </script>
 
 <template>
@@ -145,29 +156,25 @@ const SHOWN_LIMITS = LIMIT_KEYS.filter(k => k !== 'activityLogRetentionDays')
         @click="openPlan"
       />
       <UButton
-        v-if="can('workspaces.write') && data.workspace.status === 'active'"
-        icon="i-lucide-ban"
-        color="error"
-        variant="soft"
-        label="Tangguhkan"
-        @click="suspendReason = ''; suspendOpen = true"
-      />
-      <UButton
         v-if="can('workspaces.write') && data.workspace.status === 'suspended'"
         icon="i-lucide-rotate-ccw"
         label="Pulihkan"
         :loading="busy === 'reinstate'"
         @click="reinstate"
       />
-      <UButton
-        v-if="isSuper"
-        icon="i-lucide-trash-2"
-        color="error"
-        variant="ghost"
-        label="Hapus"
-        :loading="busy === 'delete'"
-        @click="remove"
-      />
+      <UDropdownMenu
+        v-if="dangerItems.length"
+        :items="dangerItems"
+        :content="{ align: 'end' }"
+      >
+        <UButton
+          icon="i-lucide-ellipsis"
+          color="error"
+          variant="soft"
+          label="Bahaya"
+          :loading="busy === 'delete'"
+        />
+      </UDropdownMenu>
     </CommandBar>
 
     <UAlert

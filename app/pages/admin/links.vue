@@ -86,7 +86,7 @@ const bioColumns: TableColumn<BioRow>[] = [
         />
       </div>
       <UCard :ui="{ body: 'p-0 sm:p-0' }">
-        <UTable
+        <AdminTable
           :data="links.items.value"
           :columns="linkColumns"
           :loading="links.status.value === 'loading'"
@@ -150,7 +150,7 @@ const bioColumns: TableColumn<BioRow>[] = [
               />
             </template>
           </template>
-        </UTable>
+        </AdminTable>
       </UCard>
       <div
         v-if="links.pageCount.value > 1"
@@ -171,7 +171,7 @@ const bioColumns: TableColumn<BioRow>[] = [
         class="w-full"
       />
       <UCard :ui="{ body: 'p-0 sm:p-0' }">
-        <UTable
+        <AdminTable
           :data="bios.items.value"
           :columns="bioColumns"
           :loading="bios.status.value === 'loading'"
@@ -214,7 +214,7 @@ const bioColumns: TableColumn<BioRow>[] = [
               @click="ask('bio', row.original.id, `@${row.original.handle}`)"
             />
           </template>
-        </UTable>
+        </AdminTable>
       </UCard>
       <div
         v-if="bios.pageCount.value > 1"

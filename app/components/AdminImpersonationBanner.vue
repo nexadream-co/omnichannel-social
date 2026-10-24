@@ -24,7 +24,7 @@ async function stop() {
       name="i-lucide-user-round-cog"
       class="size-4 shrink-0"
     />
-    <span class="flex-1 min-w-0 leading-snug">Anda sedang menyamar sebagai {{ auth.profile.value.user.name }} ({{ auth.profile.value.user.role.name }}). Semua tindakan tercatat.</span>
+    <span class="flex-1 min-w-0 leading-snug">Kamu sedang menyamar sebagai {{ auth.profile.value.user.name }} ({{ auth.profile.value.user.role.name }}). Semua tindakan tercatat.</span>
     <UButton
       size="xs"
       color="warning"

@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { addDays, DEFAULT_POSTS_PER_WEEK, weekFill, weekStart, type IdeaDetail, type PlannerIdea, type PlannerMoment } from '#shared/utils/planner'
-import type { CalendarEntry } from '~/utils/calendar'
+import { usePreferredReducedMotion } from '@vueuse/core'
+import { haptic } from '~/utils/haptics'
+import type { CalendarEntry, DayPost } from '~/utils/calendar'
 
 /** Kalender = the planner: posts, planned ideas and shopping moments on one calendar, with Bank Ide beside it. */
 interface CalendarWindow { items: CalendarEntry[], ideas: PlannerIdea[], moments: PlannerMoment[], postsPerWeek: number, unplannedIdeas: number }
@@ -9,7 +11,6 @@ type Mode = 'week' | 'month'
 definePageMeta({ layout: 'creator' })
 const { t, locale } = useI18n()
 const localePath = useLocalePath()
-const toast = useToast()
 const auth = useCreatorAuth()
 const planner = usePlanner()
 useHead({ title: () => t('calendar.title') })
@@ -26,6 +27,20 @@ onMounted(() => {
     if (localStorage.getItem(MODE_KEY) === 'month') mode.value = 'month'
   } catch { /* storage blocked: keep the default */ }
 })
+// Minggu ↔ Bulan cross-fades with the View Transitions API where it exists and motion is welcome.
+const reducedMotion = usePreferredReducedMotion()
+function setMode(next: Mode) {
+  if (next === mode.value) return
+  const start = import.meta.client ? (document as Document & { startViewTransition?: (update: () => Promise<void>) => unknown }).startViewTransition?.bind(document) : undefined
+  if (!start || reducedMotion.value === 'reduce') {
+    mode.value = next
+    return
+  }
+  start(async () => {
+    mode.value = next
+    await nextTick()
+  })
+}
 watch(mode, (value) => {
   try {
     localStorage.setItem(MODE_KEY, value)
@@ -57,6 +72,7 @@ function step(delta: number) {
 
 const data = shallowRef<CalendarWindow>({ items: [], ideas: [], moments: [], postsPerWeek: DEFAULT_POSTS_PER_WEEK, unplannedIdeas: 0 })
 const loading = ref(false)
+const loaded = ref(false)
 let sequence = 0
 async function load() {
   const current = ++sequence
@@ -65,7 +81,10 @@ async function load() {
     const from = toZonedIso(days.value[0]!, '00:00', tz.value)
     const to = toZonedIso(addDays(days.value.at(-1)!, 1), '00:00', tz.value)
     const response = await apiFetch<CalendarWindow>('/api/app/posts/calendar', { query: { from, to } })
-    if (current === sequence) data.value = response
+    if (current === sequence) {
+      data.value = response
+      loaded.value = true
+    }
   } catch (caught) {
     if (current === sequence) planner.fail(caught)
   } finally {
@@ -96,18 +115,43 @@ const title = computed(() => {
 })
 const isCurrent = computed(() => days.value.includes(today) && (mode.value === 'week' || month.value === today.slice(0, 7)))
 
-// Drop on a day: a post keeps its time of day; an idea just moves. Nothing lands in the past.
+// Drop on a day: a post keeps its time of day; an idea just moves. Nothing lands in the past (the grid says so
+// while hovering). Both moves come with an "Urungkan" toast.
 async function drop(day: string) {
   const item = planner.drag.value
   planner.drag.value = null
-  if (!item || !canWrite.value || day < today) return
-  if (item.kind === 'idea') return void planner.planIdea(item.id, day)
-  try {
-    await apiFetch(`/api/app/posts/${item.postId}/reschedule`, { method: 'POST', body: { scheduledAt: toZonedIso(day, item.time, tz.value) } })
-    toast.add({ title: t('calendar.moved'), color: 'success' })
-  } catch (caught) {
-    planner.fail(caught)
+  if (!item || !canWrite.value) return
+  if (day < today) return haptic('warn')
+  if (item.kind === 'idea') {
+    if (item.from !== day) await planner.planIdea(item.id, day, item.from)
+    return
   }
+  if (isPastSlot(day, item.time, tz.value)) return haptic('warn')
+  const to = toZonedIso(day, item.time, tz.value)
+  if (new Date(to).getTime() !== new Date(item.scheduledAt).getTime()) await planner.movePost(item.postId, to, item.scheduledAt)
+}
+
+// Phone: long-press (or ⋯) on a post opens "Pindahkan ke…".
+const moving = ref<DayPost | null>(null)
+const moveOpen = computed({ get: () => moving.value !== null, set: (value) => {
+  if (!value) moving.value = null
+} })
+async function moveTo(value: { date: string, time: string }) {
+  const post = moving.value
+  if (!post) return
+  const to = toZonedIso(value.date, value.time, tz.value)
+  if (new Date(to).getTime() !== new Date(post.scheduledAt).getTime()) await planner.movePost(post.postId, to, post.scheduledAt)
+}
+
+const weekEmpty = computed(() => mode.value === 'week' && loaded.value && !loading.value && !days.value.some(d => posts.value.has(d) || ideas.value.has(d)))
+const nextMoment = computed(() => data.value.moments.find(m => !m.prepared && m.endsOn >= today) ?? null)
+const starting = ref(false)
+async function startContent() {
+  const moment = nextMoment.value
+  if (!moment) return newIdea()
+  starting.value = true
+  await planner.prepareMoment(moment)
+  starting.value = false
 }
 
 // "+" on a day: with ideas waiting in Bank Ide, offer them; without, go straight to the composer as before.
@@ -210,13 +254,13 @@ const tabs = computed(() => [{ value: 'calendar', label: t('calendar.tabCalendar
                 :color="mode === 'week' ? 'primary' : 'neutral'"
                 :variant="mode === 'week' ? 'solid' : 'outline'"
                 :label="t('calendar.viewWeek')"
-                @click="mode = 'week'"
+                @click="setMode('week')"
               />
               <UButton
                 :color="mode === 'month' ? 'primary' : 'neutral'"
                 :variant="mode === 'month' ? 'solid' : 'outline'"
                 :label="t('calendar.viewMonth')"
-                @click="mode = 'month'"
+                @click="setMode('month')"
               />
             </UFieldGroup>
           </div>
@@ -226,7 +270,31 @@ const tabs = computed(() => [{ value: 'calendar', label: t('calendar.tabCalendar
           v-if="mode === 'week'"
           :count="rhythm.count"
           :target="rhythm.target"
+          :monday="days[0]!"
+          :loading="loading"
         />
+
+        <div
+          v-if="weekEmpty"
+          class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 rounded-md border border-dashed border-primary/40 bg-primary/5 p-3 mb-4"
+        >
+          <p class="flex-1 text-sm text-default flex items-center gap-2">
+            <UIcon
+              name="i-lucide-sparkles"
+              class="size-4 text-primary shrink-0"
+            />
+            {{ t('calendar.weekEmpty') }}
+          </p>
+          <UButton
+            v-if="canWrite"
+            v-spark
+            size="sm"
+            :label="t('calendar.prepareContent')"
+            :loading="starting"
+            class="self-start sm:self-auto"
+            @click="startContent"
+          />
+        </div>
 
         <div class="hidden md:block">
           <CalendarWeek
@@ -270,6 +338,7 @@ const tabs = computed(() => [{ value: 'calendar', label: t('calendar.tabCalendar
           :marks="marks"
           @fill="fill"
           @open-idea="openIdeaById"
+          @move-post="moving = $event"
         />
       </div>
 
@@ -288,6 +357,15 @@ const tabs = computed(() => [{ value: 'calendar', label: t('calendar.tabCalendar
       v-model:open="editorOpen"
       :idea="editing"
       :planned-on="editorDay"
+    />
+    <CalendarMoveSheet
+      v-model:open="moveOpen"
+      mode="post"
+      :title="t('calendar.moveTitle')"
+      :date="moving ? zonedParts(new Date(moving.scheduledAt), tz).date : null"
+      :time="moving?.time"
+      :tz="tz"
+      @save="moveTo"
     />
     <IdeaPickDialog
       :day="pickDay"

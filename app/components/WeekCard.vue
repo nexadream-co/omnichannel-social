@@ -2,12 +2,13 @@
 import { daysBetween, MOMENT_KIND_META, momentName, type PlannerMoment } from '#shared/utils/planner'
 
 /** Beranda "Minggu ini": how full this week is, ideas waiting in Bank Ide and the next shopping moment. */
-interface WeekSummary { weekStart: string, today: string, count: number, target: number, unplannedIdeas: number, nextMoment: PlannerMoment | null }
+interface WeekSummary { weekStart: string, today: string, count: number, target: number, unplannedIdeas: number, nextMoment: PlannerMoment | null, streak?: number }
 
 const { t, locale } = useI18n()
 const localePath = useLocalePath()
 const auth = useCreatorAuth()
 const planner = usePlanner()
+const { spark } = useCelebrate()
 
 const canWrite = computed(() => auth.hasAbility('posts.write'))
 const week = ref<WeekSummary | null>(null)
@@ -17,18 +18,33 @@ async function load() {
 onMounted(load)
 
 const percent = computed(() => week.value ? Math.min(100, Math.round((week.value.count / Math.max(1, week.value.target)) * 100)) : 0)
+// The bar fills from empty once the numbers arrive (UProgress animates the change; reduced motion is handled by it).
+const shownPercent = ref(0)
+watch(percent, value => requestAnimationFrame(() => {
+  shownPercent.value = value
+}), { flush: 'post' })
+const streak = computed(() => week.value?.streak ?? 0)
 const reached = computed(() => Boolean(week.value && week.value.count >= week.value.target))
 const momentWhen = computed(() => {
   const w = week.value
   if (!w?.nextMoment) return ''
   return w.nextMoment.startsOn > w.today ? t('planner.moments.inDays', { n: daysBetween(w.today, w.nextMoment.startsOn) }) : t('planner.moments.ongoing')
 })
+// A moment three days away or less gets a pulsing chip so it is not missed.
+const soon = computed(() => {
+  const w = week.value
+  return Boolean(w?.nextMoment && w.nextMoment.startsOn > w.today && daysBetween(w.today, w.nextMoment.startsOn) <= 3)
+})
 
 const preparing = ref(false)
-async function prepare() {
+async function prepare(event: MouseEvent) {
   if (!week.value?.nextMoment) return
+  const button = event.currentTarget as HTMLElement
   preparing.value = true
-  if (await planner.prepareMoment(week.value.nextMoment)) await load()
+  if (await planner.prepareMoment(week.value.nextMoment)) {
+    spark(button)
+    await load()
+  }
   preparing.value = false
 }
 </script>
@@ -50,16 +66,22 @@ async function prepare() {
     </template>
     <div class="space-y-4">
       <div>
-        <p class="text-sm font-medium flex items-center gap-1.5">
+        <p
+          class="text-sm font-medium flex items-center gap-1.5"
+          :class="reached ? 'text-success animate-glow rounded-md' : ''"
+        >
           <UIcon
             :name="reached ? 'i-lucide-party-popper' : 'i-lucide-target'"
             class="size-4 shrink-0"
             :class="reached ? 'text-success' : 'text-primary'"
           />
-          {{ reached ? t('planner.rhythm.reached') : t('planner.rhythm.progress', { count: week.count, target: week.target }) }}
+          <span>
+            {{ reached ? t('home.week.reached') : t('planner.rhythm.progress', { count: week.count, target: week.target }) }}
+            <template v-if="reached && streak > 1">· {{ t('home.week.streak', { n: streak }) }}</template>
+          </span>
         </p>
         <UProgress
-          :model-value="percent"
+          :model-value="shownPercent"
           size="sm"
           :color="reached ? 'success' : 'primary'"
           class="mt-2"
@@ -84,7 +106,13 @@ async function prepare() {
             {{ momentName(week.nextMoment, locale) }}
           </p>
           <p class="text-xs text-muted">
-            {{ momentWhen }}
+            <span
+              v-if="soon"
+              class="inline-block rounded-full bg-warning/15 px-2 py-0.5 font-medium text-warning motion-safe:animate-pulse"
+            >{{ momentWhen }}</span>
+            <template v-else>
+              {{ momentWhen }}
+            </template>
           </p>
         </div>
         <UBadge

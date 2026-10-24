@@ -67,7 +67,13 @@ describe('notifications', () => {
     expect((await listNotifications(db, a, { page: 1, limit: 20, offset: 0, search: 'A3' })).meta.total).toBe(1)
     const bItem = (await listNotifications(db, { audience: 'staff', userId: 'staff-b' }, { page: 1, limit: 20, offset: 0, search: '' })).items[0]!
     await expect(markNotificationRead(db, a, bItem.id)).rejects.toMatchObject({ statusCode: 404 })
-    expect(await markAllNotificationsRead(db, a)).toBe(2)
+    // A row that arrived after the user tapped stays unread.
+    const tapped = new Date().toISOString()
+    await new Promise(resolve => setTimeout(resolve, 10))
+    await createNotification(ctx, { audience: 'staff', staffUserId: 'staff-a', title: 'A4', body: '', channels: { email: false } })
+    expect(await markAllNotificationsRead(db, a, tapped)).toBe(2)
+    expect((await listNotifications(db, a, { page: 1, limit: 20, offset: 0, search: '' })).unreadCount).toBe(1)
+    expect(await markAllNotificationsRead(db, a)).toBe(1)
     expect((await listNotifications(db, { audience: 'staff', userId: 'staff-b' }, { page: 1, limit: 20, offset: 0, search: '' })).unreadCount).toBe(1)
   })
 

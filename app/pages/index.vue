@@ -110,9 +110,11 @@ const whatsappUrl = computed(() => data.value?.company.whatsapp ? `https://wa.me
             <template v-else>
               <UButton
                 v-if="registrationOpen"
+                v-spark
                 :to="localePath('/app/auth/register')"
                 size="xl"
-                class="justify-center"
+                class="group justify-center"
+                :ui="{ trailingIcon: 'motion-safe:transition-transform motion-safe:group-hover:translate-x-1 motion-safe:group-focus-visible:translate-x-1' }"
                 :label="t('landing.ctaRegister')"
                 trailing-icon="i-lucide-arrow-right"
               />
@@ -198,7 +200,10 @@ const whatsappUrl = computed(() => data.value?.company.whatsapp ? `https://wa.me
             v-reveal
             class="flex flex-col rounded-xl border border-default bg-default p-3"
           >
-            <LandingPainArt :kind="key" />
+            <LazyLandingPainArt
+              hydrate-on-visible
+              :kind="key"
+            />
             <div class="flex flex-1 flex-col px-2 pt-4 pb-1">
               <h3 class="font-semibold text-highlighted">
                 {{ t(`landing.pain.items.${key}.title`) }}
@@ -244,7 +249,10 @@ const whatsappUrl = computed(() => data.value?.company.whatsapp ? `https://wa.me
             v-reveal
             class="grid items-center gap-4 rounded-xl border border-default p-3 sm:grid-cols-[1.1fr_1fr]"
           >
-            <LandingFeatureArt :kind="key" />
+            <LazyLandingFeatureArt
+              hydrate-on-visible
+              :kind="key"
+            />
             <div class="px-2 pb-1 sm:py-2 sm:pr-3 sm:pl-0">
               <h3 class="text-lg font-semibold text-highlighted">
                 {{ t(`landing.cards.${key}.title`) }}
@@ -277,7 +285,8 @@ const whatsappUrl = computed(() => data.value?.company.whatsapp ? `https://wa.me
             v-reveal
             class="relative flex flex-col rounded-xl border border-default bg-default p-3 text-center"
           >
-            <LandingSceneArt
+            <LazyLandingSceneArt
+              hydrate-on-visible
               :kind="step.art"
               class="rounded-lg bg-elevated/60"
             />
@@ -302,8 +311,9 @@ const whatsappUrl = computed(() => data.value?.company.whatsapp ? `https://wa.me
     <!-- Just starting out: what makes it safe to try -->
     <section class="border-t border-default py-14 sm:py-20">
       <UContainer class="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
-        <LandingSceneArt
+        <LazyLandingSceneArt
           v-reveal
+          hydrate-on-visible
           kind="guide"
           class="order-last lg:order-first"
         />
@@ -441,7 +451,8 @@ const whatsappUrl = computed(() => data.value?.company.whatsapp ? `https://wa.me
               :label="t('landing.whatsapp')"
             />
           </div>
-          <LandingSceneArt
+          <LazyLandingSceneArt
+            hydrate-on-visible
             kind="help"
             class="hidden pt-4 lg:block"
           />
@@ -458,8 +469,9 @@ const whatsappUrl = computed(() => data.value?.company.whatsapp ? `https://wa.me
       class="border-t border-default bg-muted/40 py-14 sm:py-20"
     >
       <UContainer class="text-center space-y-5">
-        <LandingSceneArt
+        <LazyLandingSceneArt
           v-reveal
+          hydrate-on-visible
           kind="relax"
         />
         <h2 class="text-2xl sm:text-3xl font-bold tracking-tight text-highlighted text-balance">

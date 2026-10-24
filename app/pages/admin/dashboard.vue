@@ -29,8 +29,14 @@ const data = ref<Dashboard | null>(null)
 onMounted(async () => {
   data.value = await apiFetch<Dashboard>('/api/admin/dashboard')
 })
-const ago = (seconds: number | null) => (seconds === null ? 'belum pernah' : seconds < 120 ? `${seconds} detik lalu` : `${Math.round(seconds / 60)} menit lalu`)
-const rate = (p: { published: number, failed: number }) => (p.published + p.failed ? Math.round((p.published / (p.published + p.failed)) * 100) : 100)
+const ago = (seconds: number | null) => (seconds === null ? 'belum pernah' : formatRelative(new Date(Date.now() - seconds * 1000), 'id'))
+// A media processor that has not reported for 30 minutes is worth a look, after a day it is down. Client-side only: /healthz `ok` feeds host health checks.
+const mediaStale = computed(() => (data.value?.health.mediaProcessorAgeSeconds ?? 0) > 1800)
+const mediaClass = computed(() => {
+  const age = data.value?.health.mediaProcessorAgeSeconds ?? 0
+  return age > 86_400 ? 'text-error font-medium' : age > 1800 ? 'text-warning font-medium' : 'text-default'
+})
+const rate = (p: { published: number, failed: number }) => (p.published + p.failed ? `${Math.round((p.published / (p.published + p.failed)) * 100)}%` : '—')
 const maxSignup = computed(() => Math.max(1, ...(data.value?.signupsByMonth ?? []).map(s => s.n)))
 const monthLabel = (m: string) => new Intl.DateTimeFormat('id-ID', { month: 'short' }).format(new Date(`${m}-15T00:00:00Z`))
 </script>
@@ -112,9 +118,9 @@ const monthLabel = (m: string) => new Intl.DateTimeFormat('id-ID', { month: 'sho
               Kesehatan platform
             </p>
             <UBadge
-              :color="data.health.ok ? 'success' : 'error'"
+              :color="!data.health.ok ? 'error' : mediaStale ? 'warning' : 'success'"
               variant="subtle"
-              :label="data.health.ok ? 'Sehat' : 'Perlu dicek'"
+              :label="data.health.ok && !mediaStale ? 'Sehat' : 'Perlu dicek'"
             />
           </div>
         </template>
@@ -128,7 +134,7 @@ const monthLabel = (m: string) => new Intl.DateTimeFormat('id-ID', { month: 'sho
               :key="p.platform"
               class="text-default"
             >
-              {{ PLATFORM_LABEL[p.platform] ?? p.platform }}: {{ p.published }} terbit · {{ p.failed }} gagal ({{ rate(p) }}%)
+              {{ PLATFORM_LABEL[p.platform] ?? p.platform }}: {{ p.published }} terbit · {{ p.failed }} gagal ({{ rate(p) }})
             </p>
             <p
               v-if="!data.health.publishing.length"
@@ -164,7 +170,7 @@ const monthLabel = (m: string) => new Intl.DateTimeFormat('id-ID', { month: 'sho
             <p class="text-muted mt-2">
               Media processor
             </p>
-            <p class="text-default">
+            <p :class="mediaClass">
               {{ ago(data.health.mediaProcessorAgeSeconds) }}
             </p>
           </div>

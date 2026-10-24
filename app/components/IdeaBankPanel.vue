@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { haptic } from '~/utils/haptics'
 import { IDEA_TITLE_MAX, IDEA_VIEWS, type IdeaDetail, type IdeaView } from '#shared/utils/planner'
 
 /** Bank Ide: capture an idea in one line, browse ideas by state, drag one onto the Kalender (desktop). */
@@ -17,19 +18,30 @@ const viewItems = computed(() => IDEA_VIEWS.map(value => ({ value, label: t(`pla
 
 const draft = ref('')
 const capturing = ref(false)
-async function capture() {
-  const title = draft.value.trim()
+const pop = useCheckPop()
+async function capture(text = draft.value) {
+  const title = text.trim()
   if (!title || capturing.value) return
   capturing.value = true
-  try {
-    await apiFetch('/api/app/planner/ideas', { method: 'POST', body: { title } })
-    draft.value = ''
-    view.value = 'unplanned'
-  } catch (caught) {
-    planner.fail(caught)
-  } finally {
-    capturing.value = false
-  }
+  const saved = await planner.captureIdea(title)
+  capturing.value = false
+  if (!saved) return
+  draft.value = ''
+  view.value = 'unplanned'
+  pop.trigger()
+  haptic('tick')
+}
+
+// Starter ideas for an empty bank: one tap saves one.
+const starters = computed(() => [t('planner.bank.starters.best'), t('planner.bank.starters.unboxing'), t('planner.bank.starters.racun')])
+
+const scheduling = ref<IdeaDetail | null>(null)
+const sheetOpen = computed({ get: () => scheduling.value !== null, set: (value) => {
+  if (!value) scheduling.value = null
+} })
+function schedule(value: { date: string }) {
+  const idea = scheduling.value
+  if (idea) void planner.planIdea(idea.id, value.date, idea.plannedOn ?? null)
 }
 </script>
 
@@ -38,7 +50,7 @@ async function capture() {
     <form
       v-if="canWrite"
       class="flex gap-2"
-      @submit.prevent="capture"
+      @submit.prevent="capture()"
     >
       <UInput
         v-model="draft"
@@ -49,7 +61,8 @@ async function capture() {
       />
       <UButton
         type="submit"
-        icon="i-lucide-plus"
+        :icon="pop.done.value ? 'i-lucide-check' : 'i-lucide-plus'"
+        :color="pop.done.value ? 'success' : 'primary'"
         :loading="capturing"
         :disabled="!draft.trim()"
         :aria-label="t('planner.bank.capture')"
@@ -71,14 +84,40 @@ async function capture() {
         class="h-16 w-full"
       />
     </div>
-    <p
-      v-else-if="!list.items.value.length"
-      class="text-sm text-muted text-center py-8 px-2"
+    <EmptyState
+      v-else-if="!list.items.value.length && view === 'unplanned'"
+      icon="i-lucide-lightbulb"
+      :title="t('planner.bank.emptyTitle')"
+      :description="t('planner.bank.emptyUnplanned')"
+      compact
     >
-      {{ view === 'unplanned' ? t('planner.bank.emptyUnplanned') : t('planner.bank.emptyOther') }}
-    </p>
-    <ul
+      <div
+        v-if="canWrite"
+        class="flex flex-wrap justify-center gap-2"
+      >
+        <UButton
+          v-for="starter in starters"
+          :key="starter"
+          size="sm"
+          color="neutral"
+          variant="outline"
+          icon="i-lucide-plus"
+          :label="starter"
+          :disabled="capturing"
+          @click="capture(starter)"
+        />
+      </div>
+    </EmptyState>
+    <EmptyState
+      v-else-if="!list.items.value.length"
+      icon="i-lucide-lightbulb"
+      :title="t('planner.bank.emptyOther')"
+      compact
+    />
+    <TransitionGroup
       v-else
+      name="list"
+      tag="ul"
       class="space-y-2"
     >
       <li
@@ -88,15 +127,24 @@ async function capture() {
         <IdeaCard
           :idea="idea"
           @open="emit('open', $event)"
+          @schedule="scheduling = $event"
         />
       </li>
-    </ul>
+    </TransitionGroup>
     <p
       v-if="canWrite && list.items.value.length && (view === 'unplanned' || view === 'planned')"
       class="text-xs text-muted hidden lg:block"
     >
       {{ t('planner.bank.dragHint') }}
     </p>
+    <CalendarMoveSheet
+      v-model:open="sheetOpen"
+      mode="idea"
+      :title="t('calendar.scheduleIdeaTitle')"
+      :date="scheduling?.plannedOn ?? null"
+      :tz="planner.tzOf()"
+      @save="schedule"
+    />
     <div
       v-if="list.pageCount.value > 1"
       class="flex justify-center"

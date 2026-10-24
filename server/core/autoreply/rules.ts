@@ -4,7 +4,7 @@ import { commentMatches, composeDm, MAX_KEYWORDS, MAX_PUBLIC_REPLIES, normalizeK
 import { getAdapter } from '../channels/registry'
 import { assertAbility, type WorkspaceContext } from '../context'
 import type { Executor } from '../db/client'
-import { dmEvents, dmRules, linkClicks, links, mediaAssets, postMedia, postTargets, posts, shortLinks, socialAccounts } from '../db/schema'
+import { dmEvents, dmRules, linkClicks, links, mediaAssets, postMedia, postTargets, posts, shortLinks, socialAccounts, workspaces } from '../db/schema'
 import { assertWithinLimit } from '../entitlements'
 import { appError } from '../errors'
 import { productLinksOfPost, shortLinkFor, shortUrl } from '../links/service'
@@ -115,8 +115,38 @@ export async function deleteRule(ctx: WorkspaceContext, id: string) {
   })
 }
 
+/** The last `days` local calendar days (oldest first) as YYYY-MM-DD in the workspace timezone. */
+export function lastLocalDays(timezone: string, now: Date, days = 7): string[] {
+  const fmt = new Intl.DateTimeFormat('en-CA', { timeZone: timezone, year: 'numeric', month: '2-digit', day: '2-digit' })
+  const out: string[] = []
+  for (let i = days - 1; i >= 0; i--) out.push(fmt.format(new Date(now.getTime() - i * 86_400_000)))
+  return out
+}
+
+/** DMs sent per local day for the last 7 days, per rule (one grouped query). */
+async function dailySent(ctx: WorkspaceContext): Promise<Map<string, number[]>> {
+  const [ws] = await ctx.db.select({ timezone: workspaces.timezone }).from(workspaces).where(eq(workspaces.id, ctx.workspaceId)).limit(1)
+  const timezone = ws?.timezone ?? 'Asia/Jakarta'
+  const days = lastLocalDays(timezone, new Date())
+  const day = sql<string>`to_char(${dmEvents.createdAt} at time zone ${timezone}, 'YYYY-MM-DD')`
+  const rows = await ctx.db.select({ ruleId: dmEvents.ruleId, day, n: sql<number>`count(*)::int` }).from(dmEvents)
+    .where(and(eq(dmEvents.workspaceId, ctx.workspaceId), eq(dmEvents.status, 'dm_sent'), sql`${dmEvents.createdAt} > now() - interval '9 days'`))
+    .groupBy(dmEvents.ruleId, sql`2`)
+  const map = new Map<string, number[]>()
+  for (const row of rows) {
+    if (!row.ruleId) continue
+    const index = days.indexOf(row.day)
+    if (index < 0) continue
+    const series = map.get(row.ruleId) ?? days.map(() => 0)
+    series[index] = row.n
+    map.set(row.ruleId, series)
+  }
+  return map
+}
+
 export async function listRules(ctx: WorkspaceContext) {
   assertAbility(ctx, 'autoreply.manage')
+  const daily = await dailySent(ctx)
   const rows = await ctx.db.select({
     rule: dmRules, linkTitle: links.title, linkImage: links.imageUrl, accountUsername: socialAccounts.username, accountStatus: socialAccounts.status,
     sent: sql<number>`(select count(*)::int from dm_events e where e.rule_id = ${dmRules.id} and e.status = 'dm_sent')`,
@@ -127,7 +157,7 @@ export async function listRules(ctx: WorkspaceContext) {
     .where(eq(dmRules.workspaceId, ctx.workspaceId)).orderBy(desc(dmRules.active), desc(dmRules.createdAt))
   return rows.map(({ rule, ...rest }) => ({
     id: rule.id, name: rule.name, scope: rule.scope, externalMediaId: rule.externalMediaId, keywords: rule.keywords, active: rule.active, pausedReason: rule.pausedReason,
-    linkId: rule.linkId, ...rest
+    linkId: rule.linkId, daily7d: daily.get(rule.id) ?? [0, 0, 0, 0, 0, 0, 0], ...rest
   }))
 }
 

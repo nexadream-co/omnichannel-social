@@ -4,6 +4,7 @@ interface Row { id: string, workspaceId: string, workspaceName: string, platform
 
 definePageMeta({ layout: 'admin' })
 useHead({ title: 'Postingan gagal' })
+const { t } = useI18n()
 const toast = useToast()
 const auth = useStaffAuth()
 const canWrite = computed(() => auth.hasPermission('publishing.write'))
@@ -14,7 +15,22 @@ const filters = computed(() => ({ platform: platform.value, range: range.value, 
 const list = useServerList<Row>('/api/admin/publish-failures', { filters, limit: 25 })
 onMounted(list.refresh)
 const groups = computed(() => (list.extra.value.groups as { code: string, n: number }[] | undefined) ?? [])
+// Raw codes become words: an error label when we have one, else the status label.
+const codeLabel = (code: string) => PUBLISH_ERROR_LABELS[code] ? t(PUBLISH_ERROR_LABELS[code]!) : TARGET_STATUS[code]?.label ?? code
+const needsReconnect = (row: Row) => row.lastErrorCode === 'auth' || row.status === 'needs_reauth'
 const retrying = ref<string | null>(null)
+const reminding = ref<string | null>(null)
+async function remind(row: Row) {
+  reminding.value = row.id
+  try {
+    await apiFetch(`/api/admin/publish-failures/${row.id}/remind`, { method: 'POST' })
+    toast.add({ title: 'Pengingat sudah dikirim ke pemilik ruang kerja.', color: 'success' })
+  } catch (caught) {
+    toast.add({ title: extractErrorMessage(caught, 'Gagal mengirim pengingat.'), color: 'error' })
+  } finally {
+    reminding.value = null
+  }
+}
 async function retry(row: Row) {
   retrying.value = row.id
   try {
@@ -70,7 +86,7 @@ async function retry(row: Row) {
         size="xs"
         :variant="errorCode === g.code ? 'solid' : 'outline'"
         color="neutral"
-        :label="`${g.code} · ${g.n}`"
+        :label="`${codeLabel(g.code)} · ${g.n}`"
         @click="errorCode = errorCode === g.code ? '' : g.code"
       />
     </div>
@@ -102,10 +118,11 @@ async function retry(row: Row) {
                 :color="statusOf(TARGET_STATUS, row.status).color"
                 :label="statusOf(TARGET_STATUS, row.status).label"
               />
-              <code
+              <span
                 v-if="row.lastErrorCode"
                 class="text-xs text-error"
-              >{{ row.lastErrorCode }}</code>
+                :title="row.lastErrorCode"
+              >{{ codeLabel(row.lastErrorCode) }}</span>
             </div>
             <p
               v-if="row.lastErrorMsg"
@@ -128,15 +145,36 @@ async function retry(row: Row) {
               </li>
             </ul>
           </div>
-          <UButton
+          <div
             v-if="canWrite && row.status !== 'publish_unknown'"
-            size="sm"
-            icon="i-lucide-rotate-ccw"
-            label="Coba lagi"
-            :loading="retrying === row.id"
-            class="self-start"
-            @click="retry(row)"
-          />
+            class="flex flex-wrap items-start gap-2 lg:flex-col lg:items-stretch"
+          >
+            <UButton
+              v-if="needsReconnect(row)"
+              size="sm"
+              icon="i-lucide-bell-ring"
+              label="Kirim pengingat hubungkan ulang"
+              :loading="reminding === row.id"
+              @click="remind(row)"
+            />
+            <UTooltip
+              :text="needsReconnect(row) ? 'Coba lagi tidak bisa memperbaiki ini. Kreator perlu menghubungkan ulang akunnya.' : ''"
+              :disabled="!needsReconnect(row)"
+            >
+              <span class="inline-flex">
+                <UButton
+                  size="sm"
+                  icon="i-lucide-rotate-ccw"
+                  label="Coba lagi"
+                  :color="needsReconnect(row) ? 'neutral' : 'primary'"
+                  :variant="needsReconnect(row) ? 'outline' : 'solid'"
+                  :disabled="needsReconnect(row)"
+                  :loading="retrying === row.id"
+                  @click="retry(row)"
+                />
+              </span>
+            </UTooltip>
+          </div>
         </li>
       </ul>
     </UCard>

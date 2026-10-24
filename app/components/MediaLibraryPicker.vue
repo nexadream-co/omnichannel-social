@@ -54,12 +54,13 @@ function confirm() {
           class="aspect-square"
         />
       </div>
-      <p
+      <EmptyState
         v-else-if="!list.items.value.length"
-        class="text-sm text-muted text-center py-8"
-      >
-        {{ t('mediaLibrary.empty') }}
-      </p>
+        compact
+        icon="i-lucide-images"
+        :title="t('mediaLibrary.emptyTitle')"
+        :description="t('mediaLibrary.emptyBody')"
+      />
       <div
         v-else
         class="grid grid-cols-3 sm:grid-cols-4 gap-2"

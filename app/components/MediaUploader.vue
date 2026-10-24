@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { usePreferredReducedMotion } from '@vueuse/core'
+import { moveArrayElement, useSortable } from '@vueuse/integrations/useSortable'
 import type { Aspect } from '#shared/media/edit-spec'
 import type { MediaView } from '#shared/media/types'
 
@@ -19,7 +21,7 @@ export interface UploadItem {
 }
 
 const items = defineModel<UploadItem[]>({ default: () => [] })
-const props = defineProps<{ max?: number }>()
+const props = defineProps<{ max?: number, card?: boolean, title?: string, paste?: boolean }>()
 const { t } = useI18n()
 const toast = useToast()
 const entitlements = useEntitlements()
@@ -27,6 +29,9 @@ const uploads = useMediaUpload()
 const editor = useMediaEditor()
 const input = useTemplateRef<HTMLInputElement>('file')
 const libraryOpen = ref(false)
+const root = useTemplateRef<HTMLElement>('root')
+const grid = useTemplateRef<HTMLElement>('grid')
+const reduced = usePreferredReducedMotion()
 
 function patch(key: string, values: Partial<UploadItem>) {
   items.value = items.value.map(item => item.key === key ? { ...item, ...values } : item)
@@ -64,13 +69,37 @@ async function upload(file: File) {
   }
 }
 
-function onFiles(event: Event) {
-  const files = [...((event.target as HTMLInputElement).files ?? [])]
+/** Starts an upload for each file that fits; the rest are dropped with one friendly note. */
+function addFiles(files: File[]) {
   const room = (props.max ?? 10) - items.value.length
   if (files.length > room) toast.add({ title: t('channel.tooManyMedia', { max: props.max ?? 10 }), color: 'warning' })
   files.slice(0, Math.max(0, room)).forEach(upload)
+}
+
+function onFiles(event: Event) {
+  addFiles([...((event.target as HTMLInputElement).files ?? [])])
   if (input.value) input.value.value = ''
 }
+
+const { isOver } = useFileDrop(root, { accept: ['image/', 'video/'], multiple: true, paste: props.paste, onFiles: addFiles })
+
+// Carousel order: hold a thumbnail (300 ms on a phone) and drag it; the first one is the cover.
+useSortable(grid, items, {
+  draggable: '.sortable-item',
+  handle: '.sort-thumb',
+  filter: 'button',
+  delay: 300,
+  delayOnTouchOnly: true,
+  animation: reduced.value === 'reduce' ? 0 : 200,
+  ghostClass: 'opacity-40',
+  onStart: () => haptic('tick'),
+  onUpdate: (event: { oldIndex?: number, newIndex?: number }) => {
+    if (event.oldIndex === undefined || event.newIndex === undefined) return
+    const next = [...items.value]
+    moveArrayElement(next, event.oldIndex, event.newIndex, event as never)
+    items.value = next
+  }
+})
 
 function remove(key: string) {
   items.value = items.value.filter(item => item.key !== key)
@@ -93,63 +122,89 @@ function addFromLibrary(picked: MediaView[]) {
   items.value = [...items.value, ...added]
 }
 
-defineExpose({ edit, addFromLibrary })
+defineExpose({ edit, addFromLibrary, addFiles })
 </script>
 
 <template>
-  <div class="space-y-2">
-    <div class="grid grid-cols-3 sm:grid-cols-4 gap-2">
+  <div
+    ref="root"
+    class="relative space-y-2"
+    :class="card ? 'rounded-lg bg-default ring ring-default p-4 sm:p-6' : ''"
+  >
+    <p
+      v-if="title"
+      class="text-sm font-medium mb-2"
+    >
+      {{ title }}
+    </p>
+    <div
+      ref="grid"
+      class="grid grid-cols-3 sm:grid-cols-4 gap-2"
+    >
       <div
-        v-for="item in items"
+        v-for="(item, index) in items"
         :key="item.key"
-        class="relative aspect-square rounded-md overflow-hidden bg-elevated border border-default"
+        class="sortable-item relative aspect-square rounded-md overflow-hidden bg-elevated border border-default"
       >
-        <img
-          v-if="item.previewUrl && item.kind === 'image'"
-          :src="item.previewUrl"
-          alt=""
-          class="size-full object-cover"
-        >
-        <img
-          v-else-if="item.posterUrl && item.kind === 'video'"
-          :src="item.posterUrl"
-          alt=""
-          class="size-full object-cover"
-        >
-        <video
-          v-else-if="item.previewUrl && item.kind === 'video'"
-          :src="item.previewUrl"
-          class="size-full object-cover"
-          muted
-          playsinline
-        />
-        <div
-          v-else
-          class="size-full flex items-center justify-center"
-        >
-          <UIcon
-            :name="item.kind === 'video' ? 'i-lucide-video' : 'i-lucide-image'"
-            class="size-8 text-muted"
+        <div class="sort-thumb absolute inset-0 touch-manipulation motion-safe:cursor-grab">
+          <SmartImage
+            v-if="item.kind === 'image' ? item.previewUrl : item.posterUrl"
+            :src="item.kind === 'image' ? item.previewUrl : item.posterUrl"
+            kind="media"
+            class="size-full"
           />
+          <video
+            v-else-if="item.previewUrl && item.kind === 'video'"
+            :src="item.previewUrl"
+            class="size-full object-cover"
+            muted
+            playsinline
+          />
+          <div
+            v-else
+            class="size-full flex items-center justify-center"
+          >
+            <UIcon
+              :name="item.kind === 'video' ? 'i-lucide-video' : 'i-lucide-image'"
+              class="size-8 text-muted"
+            />
+          </div>
         </div>
         <UIcon
           v-if="item.kind === 'video' && item.status === 'ready'"
           name="i-lucide-play"
-          class="absolute bottom-1.5 left-1.5 size-4 text-white drop-shadow"
+          class="absolute bottom-1.5 left-1.5 size-4 text-white drop-shadow pointer-events-none"
+        />
+        <UBadge
+          v-if="index === 0 && items.length > 1"
+          :label="t('composer.cover')"
+          size="sm"
+          color="neutral"
+          variant="solid"
+          class="absolute bottom-1 left-1 pointer-events-none"
         />
         <div
           v-if="item.status === 'uploading' || item.status === 'processing'"
-          class="absolute inset-0 bg-default/70 flex flex-col items-center justify-center gap-1 text-xs text-default"
+          class="absolute inset-0 bg-default/70 flex flex-col items-center justify-center gap-1 text-xs text-default pointer-events-none"
         >
-          <UIcon
-            name="i-lucide-loader-circle"
-            class="size-5 animate-spin"
+          <ProgressRing
+            v-if="item.status === 'uploading'"
+            :value="item.progress"
+            :size="32"
+            :stroke="3"
+            class="text-primary"
+            :label="t('composer.uploading', { percent: item.progress })"
           />
-          <span>{{ item.status === 'uploading' ? t('composer.uploading', { percent: item.progress }) : t('composer.processing') }}</span>
+          <UIcon
+            v-else
+            name="i-lucide-loader-circle"
+            class="size-6 text-primary motion-safe:animate-spin"
+          />
+          <span class="tabular-nums">{{ item.status === 'uploading' ? `${item.progress}%` : t('composer.processing') }}</span>
         </div>
         <div
           v-if="item.status === 'failed'"
-          class="absolute inset-0 bg-error/85 text-inverted text-xs p-2 flex items-center text-center"
+          class="absolute inset-0 bg-error/85 text-inverted text-xs p-2 flex items-center text-center pointer-events-none"
         >
           {{ item.error }}
         </div>
@@ -186,6 +241,12 @@ defineExpose({ edit, addFromLibrary })
         {{ t('composer.addMedia') }}
       </button>
     </div>
+    <p
+      v-if="paste && items.length < (max ?? 10)"
+      class="hidden lg:block text-xs text-muted"
+    >
+      {{ t('drop.pasteHint') }}
+    </p>
     <UButton
       v-if="items.length < (max ?? 10)"
       icon="i-lucide-images"
@@ -210,5 +271,19 @@ defineExpose({ edit, addFromLibrary })
       :max="(max ?? 10) - items.length"
       @pick="addFromLibrary"
     />
+    <Transition name="fade">
+      <div
+        v-if="isOver"
+        class="absolute inset-0 z-10 grid place-items-center rounded-[inherit] border-2 border-dashed border-primary bg-primary/10 backdrop-blur-[1px] pointer-events-none"
+      >
+        <span class="flex items-center gap-2 text-sm font-medium text-primary">
+          <UIcon
+            name="i-lucide-image-plus"
+            class="size-5"
+          />
+          {{ t('drop.here') }}
+        </span>
+      </div>
+    </Transition>
   </div>
 </template>

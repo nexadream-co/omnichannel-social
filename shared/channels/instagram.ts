@@ -7,6 +7,7 @@ export const instagram: ChannelCapabilities = {
   platform: 'instagram',
   formats: ['feed', 'carousel', 'reel', 'story'],
   maxChars: 2200,
+  previewCaptionCutoff: 125,
   maxHashtags: 5,
   hashtagsIncludeFirstComment: true,
   maxMentions: 20,

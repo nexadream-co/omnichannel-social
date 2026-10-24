@@ -2,6 +2,7 @@
 import { PLATFORM_META } from '#shared/channels/registry'
 import type { Platform, PostFormat } from '#shared/channels/types'
 import { PILLAR_META, type ContentPillar } from '#shared/utils/planner'
+import { isOverdue } from '#shared/utils/overdue'
 import { POST_CHANGE_LABELS, POST_STATUS_META, POST_TARGET_STATUS_META, PUBLISH_ERROR_LABELS } from '#shared/utils/status'
 
 interface Detail {
@@ -26,10 +27,24 @@ const id = String(route.params.id)
 useHead({ title: () => t('posts.detail') })
 
 const post = ref<Detail | null>(null)
+const checkPop = useCheckPop()
 async function load() {
+  const before = post.value?.status
   post.value = await apiFetch<Detail>(`/api/app/posts/${id}`)
+  // Seen going from "on its way" to out: the badge says "Terbit ✓" for a moment.
+  if (before === 'publishing' && ['published', 'partial'].includes(post.value.status)) checkPop.trigger()
 }
 onMounted(load)
+
+// A scheduled post that missed its time: same card and button as on Beranda.
+const overdue = computed(() => Boolean(post.value && isOverdue(post.value.status, post.value.scheduledAt)))
+const overduePost = computed(() => post.value && {
+  id: post.value.id,
+  caption: post.value.caption,
+  scheduledAt: post.value.scheduledAt,
+  thumbnail: null,
+  targets: post.value.targets.map(target => ({ id: target.id, platform: target.platform, status: target.status, accountStatus: target.accountStatus }))
+})
 
 // While anything is in flight, keep the page fresh without a manual reload.
 type Target = Detail['targets'][number]
@@ -87,31 +102,64 @@ const when = (iso: string) => formatDateTime(iso, { locale: locale.value, timeZo
 /** The account's caption, shown only when the platform made it differ from the post's. */
 const ownCaption = (target: Target) => target.status === 'published' && post.value && target.caption !== post.value.caption
 
+const retrying = ref<string | null>(null)
 async function retry(targetId: string) {
+  retrying.value = targetId
   try {
     await apiFetch(`/api/app/post-targets/${targetId}/retry`, { method: 'POST' })
     toast.add({ title: t('posts.retried'), color: 'success' })
     await load()
   } catch (caught) {
     toast.add({ title: extractErrorMessage(caught, t('authError.generic')), color: 'error' })
+  } finally {
+    retrying.value = null
   }
 }
 
+const undo = useUndoToast()
+const cancelling = ref(false)
 async function cancel() {
-  if (!(await confirm({ title: t('posts.cancelConfirm'), color: 'error', confirmLabel: t('posts.cancel') }))) return
-  await apiFetch(`/api/app/posts/${id}/cancel`, { method: 'POST' })
-  toast.add({ title: t('posts.cancelled'), color: 'success' })
-  await load()
+  const original = post.value?.scheduledAt
+  cancelling.value = true
+  try {
+    // Far enough ahead: cancel at once with "Urungkan". Close to its time there is no safe way back, so ask first.
+    if (original && new Date(original).getTime() - Date.now() > 120_000) {
+      await undo.run({
+        title: t('posts.cancelledUndo'),
+        commit: async () => {
+          await apiFetch(`/api/app/posts/${id}/cancel`, { method: 'POST' })
+          await load()
+        },
+        undo: async () => {
+          await apiFetch(`/api/app/posts/${id}/reschedule`, { method: 'POST', body: { scheduledAt: original } })
+          await load()
+        }
+      })
+      return
+    }
+    if (!(await confirm({ title: t('posts.cancelConfirm'), color: 'error', confirmLabel: t('posts.cancel') }))) return
+    await apiFetch(`/api/app/posts/${id}/cancel`, { method: 'POST' })
+    toast.add({ title: t('posts.cancelled'), color: 'success' })
+    await load()
+  } catch (caught) {
+    toast.add({ title: extractErrorMessage(caught, t('authError.generic')), color: 'error' })
+  } finally {
+    cancelling.value = false
+  }
 }
 
+const removing = ref(false)
 async function remove() {
   if (!(await confirm({ title: t('posts.deleteConfirm'), color: 'error', confirmLabel: t('posts.delete') }))) return
+  removing.value = true
   try {
     await apiFetch(`/api/app/posts/${id}`, { method: 'DELETE' })
     toast.add({ title: t('posts.deleted'), color: 'success' })
     await navigateTo(localePath('/app/posts'))
   } catch (caught) {
     toast.add({ title: extractErrorMessage(caught, t('authError.generic')), color: 'error' })
+  } finally {
+    removing.value = false
   }
 }
 </script>
@@ -155,10 +203,25 @@ async function remove() {
       v-else
       class="space-y-5"
     >
+      <OverduePostCard
+        v-if="overdue && overduePost"
+        :post="overduePost"
+        @changed="load"
+      />
+
       <UCard>
         <div class="flex items-center gap-2 mb-3">
+          <UBadge
+            v-if="checkPop.done.value"
+            color="success"
+            variant="subtle"
+            icon="i-lucide-check"
+            :label="t('posts.publishedDone')"
+            class="animate-nav-pop"
+          />
           <StatusBadge
-            :value="post.status"
+            v-else
+            :value="overdue ? 'overdue' : post.status"
             :meta="POST_STATUS_META"
           />
           <span
@@ -193,12 +256,12 @@ async function remove() {
             :key="m.id"
             class="aspect-square rounded-md overflow-hidden bg-elevated"
           >
-            <img
-              v-if="m.kind === 'image' && m.url"
+            <SmartImage
+              v-if="m.kind === 'image'"
               :src="m.url"
-              alt=""
-              class="size-full object-cover"
-            >
+              kind="media"
+              class="size-full"
+            />
             <video
               v-else-if="m.url"
               :src="m.url"
@@ -375,7 +438,7 @@ async function remove() {
               :title="t(PUBLISH_ERROR_LABELS[target.errorCode] ?? 'publishError.permanent')"
               :actions="target.status === 'needs_reauth'
                 ? [{ label: t('posts.reconnect'), to: localePath('/app/accounts'), color: 'warning', variant: 'outline' }]
-                : canWrite && target.status === 'failed' ? [{ label: t('posts.retry'), color: 'error', variant: 'outline', onClick: () => retry(target.id) }] : []"
+                : canWrite && target.status === 'failed' ? [{ label: retrying === target.id ? t('busy.publishing') : t('posts.retry'), color: 'error', variant: 'outline', loading: retrying === target.id, onClick: () => retry(target.id) }] : []"
             />
             <UButton
               v-if="target.permalink"
@@ -397,8 +460,10 @@ async function remove() {
       >
         <UButton
           v-if="post.status === 'scheduled'"
-          color="error"
-          variant="ghost"
+          color="neutral"
+          variant="outline"
+          icon="i-lucide-circle-x"
+          :loading="cancelling"
           :label="t('posts.cancel')"
           @click="cancel"
         />
@@ -407,6 +472,7 @@ async function remove() {
           color="error"
           variant="ghost"
           icon="i-lucide-trash-2"
+          :loading="removing"
           :label="t('posts.delete')"
           @click="remove"
         />

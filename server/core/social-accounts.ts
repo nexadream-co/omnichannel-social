@@ -1,4 +1,4 @@
-import { and, count, eq, inArray, lt, ne, sql } from 'drizzle-orm'
+import { and, count, eq, gt, inArray, lt, ne, notInArray, sql } from 'drizzle-orm'
 import { uuidv7 } from 'uuidv7'
 import { PLATFORM_META } from '../../shared/channels/registry'
 import type { Platform } from '../../shared/channels/types'
@@ -9,7 +9,7 @@ import { getAdapter } from './channels/registry'
 import { assertAbility, type WorkspaceContext } from './context'
 import { decrypt, encrypt, randomToken } from './crypto'
 import type { Executor } from './db/client'
-import { channelConnectSessions, jobs, postTargets, socialAccounts } from './db/schema'
+import { channelConnectSessions, dmRules, jobs, postTargets, socialAccounts } from './db/schema'
 import { assertWithinLimit, invalidateEntitlements } from './entitlements'
 import { env } from './env'
 import { appError } from './errors'
@@ -177,12 +177,24 @@ export async function completeConnectSession(ctx: WorkspaceContext, sessionId: s
   return { connected: result.connected.length }
 }
 
-export async function listSocialAccounts(ctx: WorkspaceContext) {
+export async function listSocialAccounts(ctx: WorkspaceContext, opts: { withUsage?: boolean } = {}) {
   assertAbility(ctx, 'posts.read')
   const rows = await ctx.db.select().from(socialAccounts)
     .where(and(eq(socialAccounts.workspaceId, ctx.workspaceId), ne(socialAccounts.status, 'revoked')))
     .orderBy(socialAccounts.createdAt)
-  return { items: rows.map(toView) }
+  if (!opts.withUsage) return { items: rows.map(toView) }
+  // What a downgrade would pause per account: upcoming targets (drafted ones count) and live Balas Otomatis rules.
+  const [upcoming, rules] = await Promise.all([
+    ctx.db.select({ id: postTargets.socialAccountId, n: count() }).from(postTargets)
+      .where(and(eq(postTargets.workspaceId, ctx.workspaceId), notInArray(postTargets.status, ['cancelled', 'published', 'failed']), gt(postTargets.scheduledAt, new Date())))
+      .groupBy(postTargets.socialAccountId),
+    ctx.db.select({ id: dmRules.socialAccountId, n: count() }).from(dmRules)
+      .where(and(eq(dmRules.workspaceId, ctx.workspaceId), eq(dmRules.active, true)))
+      .groupBy(dmRules.socialAccountId)
+  ])
+  const upcomingBy = new Map(upcoming.map(r => [r.id, r.n]))
+  const rulesBy = new Map(rules.map(r => [r.id, r.n]))
+  return { items: rows.map(r => ({ ...toView(r), upcomingPosts: upcomingBy.get(r.id) ?? 0, activeRules: rulesBy.get(r.id) ?? 0 })) }
 }
 
 /** Revokes our access: tokens deleted, history kept; scheduled posts on it go back to draft (docs/blueprint/05 §8). */

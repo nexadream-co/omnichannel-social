@@ -15,6 +15,8 @@ const schema = computed(() => z.object({
 }))
 const state = reactive({ currentPassword: '', newPassword: '', revokeOtherSessions: true })
 const saving = ref(false)
+const { done, trigger } = useCheckPop()
+const showPassword = ref(false)
 const errorKey = ref<string | null>(null)
 
 async function save() {
@@ -32,7 +34,7 @@ async function save() {
       }
     }
     Object.assign(state, { currentPassword: '', newPassword: '' })
-    toast.add({ title: t('password.saved'), color: 'success' })
+    trigger()
   } catch (caught) {
     toast.add({ title: extractErrorMessage(caught, t('authError.generic')), color: 'error' })
   } finally {
@@ -69,10 +71,22 @@ async function save() {
       >
         <UInput
           v-model="state.currentPassword"
-          type="password"
+          :type="showPassword ? 'text' : 'password'"
           autocomplete="current-password"
           class="w-full"
-        />
+        >
+          <template #trailing>
+            <UButton
+              color="neutral"
+              variant="link"
+              size="sm"
+              :icon="showPassword ? 'i-lucide-eye-off' : 'i-lucide-eye'"
+              :aria-label="showPassword ? t('password.hide') : t('password.show')"
+              :aria-pressed="showPassword"
+              @click="showPassword = !showPassword"
+            />
+          </template>
+        </UInput>
       </UFormField>
       <UFormField
         :label="t('password.new')"
@@ -81,10 +95,22 @@ async function save() {
       >
         <UInput
           v-model="state.newPassword"
-          type="password"
+          :type="showPassword ? 'text' : 'password'"
           autocomplete="new-password"
           class="w-full"
-        />
+        >
+          <template #trailing>
+            <UButton
+              color="neutral"
+              variant="link"
+              size="sm"
+              :icon="showPassword ? 'i-lucide-eye-off' : 'i-lucide-eye'"
+              :aria-label="showPassword ? t('password.hide') : t('password.show')"
+              :aria-pressed="showPassword"
+              @click="showPassword = !showPassword"
+            />
+          </template>
+        </UInput>
       </UFormField>
       <UCheckbox
         v-if="!creating"
@@ -92,10 +118,12 @@ async function save() {
         :label="t('password.revokeOthers')"
       />
       <div class="flex justify-end">
-        <UButton
+        <SaveButton
           type="submit"
           :loading="saving"
+          :done="done"
           :label="creating ? t('password.createTitle') : t('password.title')"
+          :done-label="t('password.saved')"
         />
       </div>
     </UForm>

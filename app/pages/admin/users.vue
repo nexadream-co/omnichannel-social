@@ -52,7 +52,7 @@ async function revoke(row: Row) {
       class="w-full mb-4"
     />
     <UCard :ui="{ body: 'p-0 sm:p-0' }">
-      <UTable
+      <AdminTable
         :data="list.items.value"
         :columns="columns"
         :loading="list.status.value === 'loading'"
@@ -131,7 +131,7 @@ async function revoke(row: Row) {
             />
           </div>
         </template>
-      </UTable>
+      </AdminTable>
     </UCard>
     <div
       v-if="list.pageCount.value > 1"

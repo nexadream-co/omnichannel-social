@@ -30,6 +30,7 @@ export const AUDIT_ACTION_LABELS: Record<string, string> = {
   'plan.update': 'Paket diubah',
   'post.cancel': 'Postingan dibatalkan',
   'post.retry': 'Postingan dicoba lagi',
+  'publishing.remind_reconnect': 'Pengingat hubungkan ulang dikirim (staf)',
   'publishing.retry': 'Postingan gagal dicoba lagi (staf)',
   'role.update': 'Peran staf diubah',
   'role.delete': 'Peran dihapus',

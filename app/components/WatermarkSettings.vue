@@ -7,6 +7,7 @@ const toast = useToast()
 const { watermark, load, uploadLogo, save } = useWatermark()
 const input = useTemplateRef<HTMLInputElement>('file')
 const busy = ref(false)
+const { done, trigger } = useCheckPop()
 const form = reactive<Omit<WorkspaceWatermark, 'url'>>({ position: 'bottom-right', scale: 0.18, opacity: 0.8 })
 
 onMounted(async () => {
@@ -18,7 +19,7 @@ async function persist(url: string | null) {
   busy.value = true
   try {
     await save(url ? { url, ...form } : null)
-    toast.add({ title: t('settings.saved'), color: 'success' })
+    trigger()
   } catch (caught) {
     toast.add({ title: extractErrorMessage(caught, t('authError.generic')), color: 'error' })
   } finally {
@@ -102,9 +103,9 @@ const positions = computed(() => WATERMARK_POSITIONS.map(value => ({ value, labe
           />
         </UFormField>
         <div class="flex justify-end">
-          <UButton
-            :label="t('common.save')"
+          <SaveButton
             :loading="busy"
+            :done="done"
             @click="persist(watermark.url)"
           />
         </div>

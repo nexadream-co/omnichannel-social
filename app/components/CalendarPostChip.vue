@@ -10,6 +10,7 @@ const localePath = useLocalePath()
 const auth = useCreatorAuth()
 const planner = usePlanner()
 
+const grabbed = ref(false)
 const draggable = computed(() => auth.hasAbility('posts.write') && props.post.status === 'scheduled')
 const platforms = computed(() => [...new Set(props.post.platforms)])
 const removedLabel = (p: Platform) => t('posts.removedOn', { platform: PLATFORM_META[p].name })
@@ -19,16 +20,20 @@ const removedLabel = (p: Platform) => t('posts.removedOn', { platform: PLATFORM_
   <NuxtLink
     :to="localePath(`/app/posts/${post.postId}`)"
     :draggable="draggable"
-    class="text-xs rounded px-1.5 py-1 bg-elevated hover:bg-accented/50 flex gap-1 min-w-0"
-    :class="wrap ? 'flex-wrap items-center' : 'items-center'"
-    @dragstart="planner.drag.value = { kind: 'post', postId: post.postId, time: post.time }"
-    @dragend="planner.drag.value = null"
+    class="text-xs rounded px-1.5 py-1 bg-elevated hover:bg-accented/50 flex gap-1 min-w-0 motion-safe:transition-transform"
+    :class="[wrap ? 'flex-wrap items-center' : 'items-center', grabbed ? 'motion-safe:scale-[1.03] shadow-lg cursor-grabbing' : draggable ? 'cursor-grab' : '']"
+    @dragstart="planner.drag.value = { kind: 'post', postId: post.postId, time: post.time, scheduledAt: post.scheduledAt }; grabbed = true"
+    @dragend="planner.drag.value = null; grabbed = false"
   >
     <span
       class="size-1.5 rounded-full shrink-0"
-      :class="postDot(post.status)"
+      :class="post.overdue ? 'bg-warning' : postDot(post.status)"
     />
     <span class="text-muted shrink-0">{{ post.time }}</span>
+    <span
+      v-if="post.overdue && wrap"
+      class="text-warning font-medium shrink-0"
+    >{{ t('calendar.overdue') }}</span>
     <UIcon
       v-for="p in platforms"
       :key="p"

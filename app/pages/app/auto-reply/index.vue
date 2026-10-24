@@ -14,6 +14,7 @@ interface RuleRow {
   accountStatus: string
   sent: number
   sent7d: number
+  daily7d: number[]
 }
 
 definePageMeta({ layout: 'creator' })
@@ -22,6 +23,7 @@ const localePath = useLocalePath()
 const toast = useToast()
 const { confirm } = useConfirmDialog()
 const entitlements = useEntitlements()
+const { spark, haptic } = useCelebrate()
 useHead({ title: () => t('autoReply.title') })
 
 const rules = ref<RuleRow[] | null>(null)
@@ -36,11 +38,19 @@ async function load() {
 }
 onMounted(load)
 
+const STARTER_ICON: Record<string, string> = { mau: 'i-lucide-heart', harga: 'i-lucide-tag', semua: 'i-lucide-messages-square' }
+
 async function toggle(rule: RuleRow, active: boolean) {
   const previous = rule.active
   rule.active = active
+  if (active) {
+    const el = document.getElementById(`rule-toggle-${rule.id}`)
+    if (el) spark(el)
+    haptic('success')
+  }
   try {
     await apiFetch(`/api/app/autoreply/rules/${rule.id}`, { method: 'PATCH', body: { active } })
+    if (active) toast.add({ title: t('autoReply.toggledOn', { keyword: rule.keywords[0] ?? t('autoReply.anyComment').toLowerCase() }), color: 'success' })
   } catch (caught) {
     rule.active = previous
     if (!entitlements.handlePlanError(caught)) toast.add({ title: extractErrorMessage(caught, t('authError.generic')), color: 'error' })
@@ -87,47 +97,26 @@ async function remove(rule: RuleRow) {
       />
     </div>
 
-    <UCard
+    <EmptyState
       v-else-if="!hasInstagram"
-      class="text-center"
-    >
-      <UIcon
-        name="i-simple-icons-instagram"
-        class="size-8 text-muted mx-auto"
-      />
-      <p class="mt-3 text-default">
-        {{ t('autoReply.needInstagram') }}
-      </p>
-      <UButton
-        :to="localePath('/app/accounts')"
-        icon="i-lucide-plus"
-        class="mt-4"
-        :label="t('autoReply.connect')"
-      />
-    </UCard>
+      icon="i-simple-icons-instagram"
+      :title="t('autoReply.needInstagram')"
+      :action="{ label: t('autoReply.connect'), icon: 'i-lucide-plus', to: localePath('/app/accounts') }"
+    />
 
     <template v-else>
-      <UCard v-if="!rules.length">
-        <div class="flex flex-col sm:flex-row gap-4 items-start">
-          <div class="size-12 shrink-0 rounded-full bg-primary/10 text-primary flex items-center justify-center">
-            <UIcon
-              name="i-lucide-message-circle-reply"
-              class="size-6"
-            />
-          </div>
-          <div>
-            <h2 class="font-semibold text-highlighted">
-              {{ t('autoReply.emptyTitle') }}
-            </h2>
-            <p class="text-sm text-muted mt-1">
-              {{ t('autoReply.emptyBody') }}
-            </p>
-          </div>
-        </div>
-      </UCard>
+      <EmptyState
+        v-if="!rules.length"
+        icon="i-lucide-message-circle-reply"
+        :title="t('autoReply.emptyTitle')"
+        :description="t('autoReply.emptyBody')"
+        :action="{ label: t('autoReply.create'), icon: 'i-lucide-plus', to: localePath('/app/auto-reply/new?template=mau') }"
+      />
 
-      <ul
+      <TransitionGroup
         v-else
+        name="list"
+        tag="ul"
         class="space-y-3"
       >
         <li
@@ -136,19 +125,20 @@ async function remove(rule: RuleRow) {
         >
           <UCard :ui="{ body: 'p-4 sm:p-4' }">
             <div class="flex items-start gap-3">
-              <img
-                v-if="rule.linkImage"
+              <SmartImage
+                v-if="rule.linkImage || rule.linkTitle"
                 :src="rule.linkImage"
-                alt=""
-                class="size-14 rounded-md object-cover shrink-0"
-              >
+                :title="rule.linkTitle"
+                kind="product"
+                class="size-14 rounded-md shrink-0"
+              />
               <div
                 v-else
-                class="size-14 rounded-md bg-elevated shrink-0 flex items-center justify-center"
+                class="size-14 rounded-md bg-primary/10 shrink-0 flex items-center justify-center"
               >
                 <UIcon
                   name="i-lucide-message-circle"
-                  class="size-6 text-muted"
+                  class="size-6 text-primary"
                 />
               </div>
               <div class="min-w-0 flex-1 space-y-1.5">
@@ -182,10 +172,20 @@ async function remove(rule: RuleRow) {
                     class="truncate max-w-56"
                   >· {{ rule.linkTitle }}</span>
                 </p>
-                <p class="text-xs">
-                  <span class="text-default font-medium">{{ t('autoReply.sent', { n: rule.sent }) }}</span>
-                  <span class="text-muted"> · {{ t('autoReply.sent7d', { n: rule.sent7d }) }}</span>
-                </p>
+                <div class="flex items-center gap-3 text-xs">
+                  <DailySparkline
+                    :values="rule.daily7d"
+                    :label="t('autoReply.sparkLabel', { n: rule.sent7d })"
+                  />
+                  <p>
+                    <TickNumber
+                      class="text-default font-medium"
+                      :value="rule.sent"
+                      :format="n => t('autoReply.sent', { n })"
+                    />
+                    <span class="text-muted"> · {{ t('autoReply.sent7d', { n: rule.sent7d }) }}</span>
+                  </p>
+                </div>
                 <UBadge
                   v-if="rule.pausedReason"
                   color="warning"
@@ -196,6 +196,7 @@ async function remove(rule: RuleRow) {
               </div>
               <div class="flex flex-col items-end gap-2 shrink-0">
                 <USwitch
+                  :id="`rule-toggle-${rule.id}`"
                   :model-value="rule.active"
                   :aria-label="rule.active ? t('autoReply.on') : t('autoReply.off')"
                   @update:model-value="(v: boolean) => toggle(rule, v)"
@@ -219,7 +220,7 @@ async function remove(rule: RuleRow) {
             </div>
           </UCard>
         </li>
-      </ul>
+      </TransitionGroup>
 
       <div>
         <p class="text-sm font-medium text-highlighted mb-2">
@@ -230,13 +231,22 @@ async function remove(rule: RuleRow) {
             v-for="template in RULE_TEMPLATES"
             :key="template.key"
             :to="localePath(`/app/auto-reply/new?template=${template.key}`)"
-            class="rounded-lg border border-default p-3 text-sm text-default hover:border-primary hover:bg-elevated/50 transition-colors flex items-start gap-2"
+            class="relative rounded-lg border border-default p-3 text-sm text-default hover:border-primary hover:bg-elevated/50 transition-colors flex items-start gap-3"
           >
-            <UIcon
-              name="i-lucide-sparkles"
-              class="size-4 text-primary shrink-0 mt-0.5"
+            <span class="grid size-9 shrink-0 place-items-center rounded-full bg-primary/10 text-primary">
+              <UIcon
+                :name="STARTER_ICON[template.key] ?? 'i-lucide-sparkles'"
+                class="size-5"
+              />
+            </span>
+            <span class="min-w-0 flex-1 pt-0.5">{{ t(template.titleKey) }}</span>
+            <UBadge
+              v-if="template.key === 'mau'"
+              class="absolute -top-2 right-2"
+              color="primary"
+              size="sm"
+              :label="t('autoReply.popular')"
             />
-            <span>{{ t(template.titleKey) }}</span>
           </NuxtLink>
         </div>
       </div>

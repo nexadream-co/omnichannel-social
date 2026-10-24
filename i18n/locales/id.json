@@ -19,7 +19,13 @@
     "previous": "Sebelumnya",
     "next": "Berikutnya",
     "remove": "Hapus",
-    "more": "Lainnya"
+    "more": "Lainnya",
+    "undo": "Urungkan",
+    "copied": "Tersalin!",
+    "saved": "Tersimpan",
+    "open": "Buka",
+    "copyLink": "Salin link",
+    "copyFailed": "Gagal menyalin. Salin manual ya."
   },
   "nav": {
     "home": "Beranda",
@@ -33,13 +39,16 @@
     "accounts": "Akun Sosial",
     "team": "Tim",
     "more": "Lainnya",
-    "billing": "Langganan",
+    "billing": "Paket",
     "settings": "Pengaturan",
     "activity": "Log aktivitas",
     "profile": "Profil",
     "changePassword": "Ubah kata sandi",
     "help": "Bantuan",
-    "darkMode": "Mode gelap",
+    "theme": "Tampilan",
+    "theme_system": "Ikuti perangkat",
+    "theme_light": "Terang",
+    "theme_dark": "Gelap",
     "language": "Bahasa",
     "signOut": "Keluar",
     "groupAccount": "Akun",
@@ -47,7 +56,8 @@
     "groupApp": "Aplikasi",
     "collapse": "Ciutkan menu",
     "expand": "Buka menu",
-    "media": "Galeri Media"
+    "media": "Galeri Media",
+    "create": "Buat"
   },
   "auth": {
     "email": "Email",
@@ -89,7 +99,12 @@
     "verifyResend": "Kirim ulang email verifikasi",
     "verifyResent": "Email verifikasi sudah dikirim ulang.",
     "verifyBanner": "Verifikasi email kamu dulu untuk menghubungkan akun media sosial.",
-    "continueToApp": "Lanjut ke Beranda"
+    "continueToApp": "Lanjut ke Beranda",
+    "showPassword": "Tampilkan kata sandi",
+    "hidePassword": "Sembunyikan kata sandi",
+    "strengthWeak": "Lemah",
+    "strengthFair": "Cukup",
+    "strengthStrong": "Kuat"
   },
   "authError": {
     "invalidCredentials": "Email atau kata sandi salah.",
@@ -103,7 +118,9 @@
     "acceptTerms": "Kamu perlu menyetujui syarat & ketentuan.",
     "emailInvalid": "Format email tidak valid.",
     "nameShort": "Nama minimal 2 karakter.",
-    "passwordShort": "Kata sandi minimal 8 karakter."
+    "passwordShort": "Kata sandi minimal 8 karakter.",
+    "offline": "Kamu sedang offline. Cek koneksi lalu coba lagi.",
+    "reload": "Halaman ini perlu dimuat ulang. Muat ulang lalu coba lagi."
   },
   "home": {
     "greeting": "Halo, {name}!",
@@ -138,10 +155,10 @@
     "seePlans": "Lihat paket",
     "dismissConfirm": "Sembunyikan panduan memulai? Kamu tetap bisa memakai semua fitur.",
     "upcoming": "Postingan berikutnya",
-    "noUpcoming": "Belum ada postingan terjadwal.",
+    "noUpcoming": "Belum ada postingan terjadwal",
     "failedAlert": "{count} postingan gagal terbit.",
     "failedAction": "Lihat dan perbaiki",
-    "reauthAlert": "{count} akun perlu dihubungkan ulang supaya postingan tetap terbit.",
+    "reauthAlert": "{count} akun perlu dihubungkan ulang",
     "reauthAction": "Hubungkan ulang",
     "clicksWeek": "klik link minggu ini",
     "autoRepliesWeek": "DM otomatis minggu ini",
@@ -161,7 +178,37 @@
     "week": {
       "title": "Minggu ini",
       "open": "Buka Kalender",
-      "ideasWaiting": "{n} ide menunggu di Bank Ide."
+      "ideasWaiting": "{n} ide menunggu di Bank Ide.",
+      "reached": "Target minggu ini tercapai 🎯",
+      "streak": "{n} minggu berturut-turut"
+    },
+    "noUpcomingHint": "Jadwalkan sekali, terbit sendiri.",
+    "checklistComplete": "Semua langkah beres. Kamu resmi jalan otomatis!",
+    "overdueTitle": "{count} postingan tertunda",
+    "overdueMore": "Lihat {n} lainnya",
+    "renewal": "{plan} berakhir {n} hari lagi",
+    "renewalToday": "{plan} berakhir hari ini",
+    "renewalAction": "Perpanjang",
+    "noClicks": "Belum ada klik. Bagikan link Etalase-mu.",
+    "copyEtalase": "Salin link Etalase",
+    "openEtalase": "Buka Etalase",
+    "noReplies": "Belum ada DM otomatis.",
+    "setupAutoReply": "Pasang Balas Otomatis",
+    "moments": {
+      "firstPostPublished": "Postingan pertamamu sudah tayang di {platform} 🚀",
+      "see": "Lihat",
+      "firstClick": "Ada yang klik produkmu! 🎉",
+      "seeStats": "Lihat statistik",
+      "firstAutoDm": "Balas Otomatis bekerja: {n} DM terkirim saat kamu sibuk 💬",
+      "clicksRound": "{n} klik ke produkmu. Lanjutkan!"
+    },
+    "welcome": {
+      "title": "Halo {name}! {n} langkah lagi",
+      "titleDone": "Halo {name}! Akunmu sudah siap",
+      "body": "Ikuti langkah ini, sekitar 5 menit.",
+      "start": "Mulai: Hubungkan akun",
+      "continue": "Lanjutkan",
+      "later": "Nanti saja"
     }
   },
   "role": {
@@ -206,7 +253,8 @@
       "published": "Terbit",
       "partial": "Sebagian terbit",
       "failed": "Gagal",
-      "cancelled": "Dibatalkan"
+      "cancelled": "Dibatalkan",
+      "overdue": "Tertunda"
     },
     "target": {
       "draft": "Draf",
@@ -437,12 +485,31 @@
         "comment": "Mau kak!",
         "sent": "Link terkirim ke DM",
         "etalase": "Etalase",
-        "clicks": "Klik produk hari ini"
+        "clicks": "Klik produk hari ini",
+        "dm": "Ini link produknya, kak!",
+        "link": "socialz.id/tas-ayu",
+        "click": "+1 klik"
+      }
+    },
+    "yearlyBilled": "Dibayar tahunan, {total} per tahun",
+    "fit": {
+      "title": "Cocok kalau kamu…",
+      "gratis": {
+        "name": "Gratis",
+        "text": "baru mulai dan mau coba dulu: cukup untuk beberapa akun dan postingan, tanpa kartu kredit."
+      },
+      "kreator": {
+        "name": "Kreator",
+        "text": "rutin posting dan jualan: banyak jadwal, link produk, Etalase, dan Balas Otomatis."
+      },
+      "pro": {
+        "name": "Pro",
+        "text": "mengelola banyak akun atau dibantu tim: batas lebih longgar dan akses untuk anggota tim."
       }
     }
   },
   "error": {
-    "notFoundTitle": "Halaman tidak ditemukan",
+    "notFoundTitle": "Halaman ini tidak ada",
     "notFoundBody": "Mungkin tautannya salah atau halamannya sudah dipindah.",
     "genericTitle": "Ada yang tidak beres",
     "genericBody": "Terjadi kesalahan. Coba lagi sebentar lagi.",
@@ -454,7 +521,36 @@
     "empty": "Belum ada notifikasi.",
     "seeAll": "Lihat semua notifikasi",
     "unreadOnly": "Belum dibaca saja",
-    "emptyUnread": "Semua notifikasi sudah dibaca."
+    "emptyUnread": "Semua notifikasi sudah dibaca.",
+    "actions": {
+      "welcome": "Mulai",
+      "trial_started": "Lihat paket",
+      "trial_ending_soon": "Berlangganan",
+      "renewal_reminder": "Perpanjang",
+      "payment_success": "Lihat paket",
+      "payment_failed": "Bayar sekarang",
+      "subscription_downgraded": "Pilih akun",
+      "team_invite_accepted": "Lihat tim",
+      "workspace_suspended": "Hubungi kami",
+      "workspace_deleted": "Hubungi kami",
+      "post_failed": "Perbaiki",
+      "account_reconnect_needed": "Hubungkan ulang",
+      "quota_deferred": "Lihat jadwal",
+      "autoreply_paused": "Lihat aturan",
+      "planner_week_open": "Buka Kalender",
+      "planner_idea_due": "Buka Kalender",
+      "admin_new_workspace": "Lihat ruang kerja",
+      "admin_new_message": "Baca pesan"
+    },
+    "allRead": "Semua notifikasi ditandai dibaca.",
+    "emptyTitle": "Semua beres 🎉",
+    "emptyBody": "Tidak ada yang perlu kamu urus.",
+    "noMatch": "Tidak ada notifikasi yang cocok.",
+    "bucket": {
+      "today": "Hari ini",
+      "week": "Minggu ini",
+      "older": "Lebih lama"
+    }
   },
   "profile": {
     "title": "Profil",
@@ -474,7 +570,9 @@
     "new": "Kata sandi baru",
     "revokeOthers": "Keluarkan perangkat lain",
     "saved": "Kata sandi berhasil diubah.",
-    "wrongCurrent": "Kata sandi sekarang salah."
+    "wrongCurrent": "Kata sandi sekarang salah.",
+    "show": "Tampilkan kata sandi",
+    "hide": "Sembunyikan kata sandi"
   },
   "settings": {
     "title": "Pengaturan",
@@ -546,7 +644,13 @@
     "invited": "Undangan dikirim ke {email}.",
     "revokeConfirm": "Batalkan undangan untuk {email}?",
     "deactivateConfirm": "Nonaktifkan {name}? Mereka langsung keluar dari akun ini.",
-    "saved": "Perubahan disimpan."
+    "saved": "Perubahan disimpan.",
+    "preview": {
+      "editor": "Editor bisa menjadwalkan, tidak bisa membayar",
+      "viewer": "Pemantau hanya bisa melihat"
+    },
+    "emptyTitle": "Belum ada anggota",
+    "emptyBody": "Undang asisten untuk membantu mengelola akun."
   },
   "invite": {
     "title": "Undangan tim",
@@ -628,7 +732,9 @@
       "service_unavailable": "Menghubungkan akun ini belum tersedia. Coba lagi nanti.",
       "rate_limited": "Terlalu banyak percobaan. Coba lagi beberapa menit lagi.",
       "unknown": "Akun belum berhasil dihubungkan. Coba lagi."
-    }
+    },
+    "firstConnected": "{platform} tersambung! Sekarang jadwalkan postingan pertamamu.",
+    "firstPost": "Buat postingan"
   },
   "upgrade": {
     "title": "Upgrade paket",
@@ -729,7 +835,41 @@
     "savedIdea": "Disimpan ke Bank Ide.",
     "fromIdea": "Dari ide: {title}",
     "autoReplyHint": "Mau kirim link produk ini lewat DM ke yang komen?",
-    "autoReplyAction": "Pasang Balas Otomatis"
+    "autoReplyAction": "Pasang Balas Otomatis",
+    "resume": {
+      "title": "Lanjutkan tulisan tadi?",
+      "yes": "Lanjutkan",
+      "no": "Buang"
+    },
+    "reconnect": "Hubungkan ulang",
+    "rawLink": {
+      "ask": "Jadikan link produk? Kliknya tercatat.",
+      "make": "Jadikan",
+      "keep": "Biarkan"
+    },
+    "templateLabel": {
+      "discount": "Diskon",
+      "review": "Review",
+      "unboxing": "Unboxing"
+    },
+    "templates": {
+      "discount": "🔥 DISKON hari ini!\nHarga spesial cuma sampai malam ini. Cek link-nya sebelum kehabisan ya 💖",
+      "review": "Jujur ya, ini review aku setelah memakainya beberapa hari:\n✅ Yang aku suka: \n⚠️ Yang kurang: \nCocok buat kamu yang ",
+      "unboxing": "Unboxing paket baru! 📦\nIsinya apa aja? Geser buat lihat, link produknya ada di bawah ya."
+    },
+    "previewMore": "lainnya",
+    "cover": "Sampul",
+    "scheduledAt": "Terjadwal {when} ✓",
+    "seeCalendar": "Lihat di Kalender",
+    "postingNow": "Sedang diposting…",
+    "success": {
+      "title": "Siap tayang! 🎉",
+      "body": "Postinganmu akan terbit {when}.",
+      "countdown": "Terbit dalam {h} jam {m} menit",
+      "countdownDays": "Terbit dalam {d} hari {h} jam",
+      "calendar": "Lihat di Kalender",
+      "again": "Jadwalkan lagi"
+    }
   },
   "mediaEditor": {
     "open": "Edit",
@@ -878,7 +1018,15 @@
       "doneDated": "{n} ide sudah ada di Kalender.",
       "doneBank": "{n} ide masuk Bank Ide.",
       "openCalendar": "Lihat di Kalender"
-    }
+    },
+    "emptyTitle": "Galeri masih kosong",
+    "emptyBody": "Foto dan video yang kamu unggah tersimpan di sini.",
+    "uploads": "Unggahan",
+    "deletedUndo": "Media dihapus",
+    "deletedMany": "{n} media dihapus",
+    "selectedCount": "{n} dipilih",
+    "actionsTitle": "Mau diapakan?",
+    "selectMany": "Pilih beberapa"
   },
   "posts": {
     "title": "Postingan",
@@ -944,7 +1092,40 @@
       "autoReplies": "DM otomatis",
       "pending": "Angka dari platform muncul besok pagi."
     },
-    "fromIdea": "Dari ide: {title}"
+    "fromIdea": "Dari ide: {title}",
+    "tabCount": "{label} {n}",
+    "overdueAll": "Lihat semua ({n})",
+    "needsAction": "Perlu tindakan",
+    "overdueFor": "Tertunda {n} hari",
+    "overdueForHours": "Tertunda {n} jam",
+    "overdueReconnect": "Hubungkan ulang {platform} supaya terbit.",
+    "overdueReady": "Akunmu sudah siap. Terbitkan sekarang?",
+    "reconnectPlatform": "Hubungkan ulang {platform}",
+    "publishNow": "Terbitkan sekarang",
+    "publishingNow": "Sedang diterbitkan",
+    "cancelledUndo": "Postingan dibatalkan",
+    "publishedDone": "Terbit ✓",
+    "emptyState": {
+      "scheduled": {
+        "title": "Belum ada postingan terjadwal",
+        "description": "Jadwalkan sekali, terbit sendiri."
+      },
+      "draft": {
+        "title": "Belum ada draf",
+        "description": "Simpan postingan yang belum selesai di sini."
+      },
+      "published": {
+        "title": "Belum ada postingan yang terbit",
+        "description": "Postingan yang sudah tayang muncul di sini, lengkap dengan angkanya."
+      },
+      "failed": {
+        "title": "Tidak ada yang gagal. Mantap! ✨"
+      },
+      "all": {
+        "title": "Belum ada postingan",
+        "description": "Mulai dengan menjadwalkan postingan pertamamu."
+      }
+    }
   },
   "calendar": {
     "title": "Kalender",
@@ -962,7 +1143,24 @@
     "viewMonth": "Bulan",
     "tabCalendar": "Kalender",
     "tabIdeas": "Bank Ide",
-    "emptyDay": "Kosong"
+    "emptyDay": "Kosong",
+    "overdue": "Tertunda",
+    "dropHere": "Lepas di sini",
+    "dropPast": "Tidak bisa ke tanggal lewat",
+    "movedTo": "Dipindah ke {day}",
+    "ideaMovedTo": "Ide dipindah ke {day}",
+    "pickDate": "Pilih…",
+    "moveTime": "Jam tayang",
+    "movePastTime": "Jam ini sudah lewat. Pilih jam yang akan datang.",
+    "moveSave": "Pindahkan",
+    "scheduleSave": "Jadwalkan",
+    "moveAction": "Pindahkan…",
+    "moveTitle": "Pindahkan ke…",
+    "scheduleIdea": "Jadwalkan ide ini",
+    "scheduleShort": "Jadwalkan",
+    "scheduleIdeaTitle": "Jadwalkan ide ini",
+    "weekEmpty": "Minggu ini masih kosong. Mulai dari ide atau momen belanja.",
+    "prepareContent": "Siapkan konten"
   },
   "planner": {
     "pillarLabel": "Jenis konten",
@@ -993,7 +1191,13 @@
       },
       "emptyUnplanned": "Tulis ide konten kapan saja, nanti tinggal jadikan postingan.",
       "emptyOther": "Belum ada ide di sini.",
-      "dragHint": "Seret ide ke tanggal di kalender."
+      "dragHint": "Seret ide ke tanggal di kalender.",
+      "emptyTitle": "Simpan ide kapan saja",
+      "starters": {
+        "best": "Review produk terlaris minggu ini",
+        "unboxing": "Unboxing paket gajian",
+        "racun": "Racun 11.11"
+      }
     },
     "idea": {
       "chip": "Ide",
@@ -1023,7 +1227,8 @@
       "mediaCount": "{n} media",
       "actions": "Pilihan ide",
       "repeat": "Jadikan ide lagi",
-      "repeated": "Masuk Bank Ide. Ubah sedikit, lalu jadwalkan lagi."
+      "repeated": "Masuk Bank Ide. Ubah sedikit, lalu jadwalkan lagi.",
+      "advanced": "Opsi lanjutan"
     },
     "moments": {
       "title": "Momen belanja",
@@ -1041,7 +1246,10 @@
       "target": "Target per minggu",
       "perWeek": "{n} postingan",
       "saved": "Target disimpan.",
-      "fill": "Isi"
+      "fill": "Isi",
+      "hit": "Target minggu ini tercapai 🎯",
+      "hitStreak": "Target minggu ini tercapai 🎯 · {n} minggu berturut-turut",
+      "progressNode": "{count}/{target} terisi minggu ini"
     },
     "pick": {
       "title": "Isi {date}",
@@ -1081,8 +1289,20 @@
     "edit": "Ubah",
     "insert": "Tambah link produk",
     "insertHint": "Pilih produk; link pendeknya kami taruh di caption.",
-    "insertEmpty": "Belum ada produk. Tambahkan dulu di Link Produk.",
-    "advanced": "Opsi lanjutan"
+    "insertEmpty": "Tempel link Shopee atau TikTok Shop di atas, produknya langsung masuk.",
+    "advanced": "Opsi lanjutan",
+    "pastePlaceholder": "Tempel link produk…",
+    "pasteButton": "Tempel",
+    "addShort": "Tambah",
+    "pasteInvalid": "Linknya belum terbaca. Salin link produk lengkap, mulai dari https://",
+    "pasteNothing": "Belum ada link produk di salinanmu. Salin dulu linknya dari Shopee atau TikTok Shop.",
+    "archivedToast": "Produk diarsipkan",
+    "restoredToast": "Produk dikembalikan",
+    "noResults": "Produk tidak ditemukan",
+    "emptyTitle": "Tempel link Shopee atau TikTok Shop pertamamu",
+    "emptyBody": "Judul, foto dan harga terisi sendiri.",
+    "unsavedHint": "Ada perubahan belum disimpan",
+    "insertEmptyTitle": "Belum ada produk"
   },
   "bio": {
     "title": "Etalase",
@@ -1129,7 +1349,38 @@
     "indexable": "Tampilkan di mesin pencari",
     "preview": "Pratinjau",
     "saved": "Etalase disimpan.",
-    "save": "Simpan"
+    "save": "Simpan",
+    "share": {
+      "button": "Bagikan",
+      "title": "Bagikan Etalase",
+      "body": "Kirim linknya, atau tunjukkan QR ini ke pengikutmu.",
+      "liveTitle": "Etalasemu sudah online!",
+      "liveBody": "Pasang link ini di bio Instagram.",
+      "qrAlt": "Kode QR untuk {address}",
+      "send": "Kirim lewat aplikasi lain",
+      "guideTitle": "Pasang di bio Instagram",
+      "step1": "Buka Instagram, lalu ketuk Edit profil.",
+      "step2": "Ketuk Link, lalu Tambah link, dan tempel link Etalase.",
+      "step3": "Simpan. Pengikut tinggal ketuk link di profilmu."
+    },
+    "itemTitle": "Ubah produk",
+    "itemHint": "Atur label, kategori, sematan, dan tampil atau tidaknya produk ini.",
+    "badgePlaceholder": "Contoh: Terlaris",
+    "category": "Kategori",
+    "pinHint": "Produk tersemat tampil paling atas.",
+    "hideHint": "Disembunyikan dari Etalase, tapi tidak dihapus.",
+    "avatarDrop": "atau seret foto ke sini",
+    "hidden": "Disembunyikan",
+    "editItem": "Ubah {title}",
+    "editItemShort": "Ubah",
+    "hiddenToast": "Produk disembunyikan",
+    "removedToast": "Produk dihapus dari Etalase",
+    "orderSaved": "Urutan disimpan",
+    "emptyTitle": "Pilih produk untuk Etalase",
+    "emptyBody": "Produk yang kamu tambah tampil di halaman Etalase, lengkap dengan tombol beli.",
+    "pickerEmptyTitle": "Belum ada produk lain",
+    "pickerEmpty": "Tempel link Shopee atau TikTok Shop di atas, produknya langsung masuk.",
+    "unsavedHint": "Ada perubahan belum disimpan"
   },
   "storefront": {
     "buy": "Beli",
@@ -1141,7 +1392,9 @@
     "inactive": "Etalase sedang tidak aktif",
     "inactiveBody": "Pemilik Etalase ini sedang tidak menampilkannya.",
     "madeWith": "dibuat dengan Socialz.id",
-    "noResults": "Tidak ada produk yang cocok."
+    "noResults": "Tidak ada produk yang cocok.",
+    "opening": "Membuka {merchant}…",
+    "createOwn": "Buat Etalase-mu sendiri, gratis"
   },
   "analytics": {
     "title": "Statistik",
@@ -1177,7 +1430,13 @@
     "channel": {
       "other": "Lainnya"
     },
-    "noPostClicks": "Belum ada klik dari postingan. Tambahkan link produk saat membuat postingan."
+    "noPostClicks": "Belum ada klik dari postingan. Tambahkan link produk saat membuat postingan.",
+    "sample": "contoh",
+    "barTip": "{day}: {n} klik",
+    "emptyTitle": "Belum ada klik",
+    "emptyBody": "Klik akan muncul di sini setelah link-mu dibagikan.",
+    "copyBio": "Salin link Etalase",
+    "createBio": "Buat Etalase"
   },
   "autoReply": {
     "title": "Balas Otomatis",
@@ -1242,12 +1501,12 @@
     "testMatch": "Cocok! DM yang akan dikirim:",
     "testNoMatch": "Tidak cocok. Komentar ini tidak akan dibalas.",
     "activate": "Aktifkan",
-    "saveDraft": "Simpan tanpa mengaktifkan",
+    "saveDraft": "Simpan draf",
     "saved": "Aturan disimpan.",
     "activated": "Aturan aktif. Komentar berikutnya langsung dibalas.",
     "activityTitle": "Aktivitas Balas Otomatis",
     "activitySubtitle": "Siapa yang komen, dan apakah DM-nya terkirim.",
-    "activityEmpty": "Belum ada komentar yang cocok dengan aturanmu.",
+    "activityEmpty": "Begitu ada komentar yang cocok dengan aturanmu, hasilnya muncul di sini.",
     "dmClicks": "{n} klik dari DM (30 hari)",
     "filter": {
       "all": "Semua",
@@ -1273,10 +1532,18 @@
       "rejected": "Instagram menolak mengirim DM ini.",
       "no_rule": "Aturannya sudah dimatikan atau dihapus."
     },
-    "deletedRule": "Aturan terhapus"
+    "deletedRule": "Aturan terhapus",
+    "toggledOn": "Aktif! Komen \"{keyword}\" akan dibalas DM otomatis.",
+    "sparkLabel": "DM terkirim 7 hari terakhir: {n}",
+    "popular": "Paling populer",
+    "tokenHint": "Pakai {nama} untuk nama pengikut dan {link} untuk link produk.",
+    "previewTitle": "Begini yang dilihat pengikutmu",
+    "previewKeyword": "mau",
+    "previewLink": "link produk",
+    "activityEmptyTitle": "Belum ada aktivitas"
   },
   "billing": {
-    "title": "Paket & Pembayaran",
+    "title": "Paket",
     "subtitle": "Pilih paket yang pas. Bisa ganti kapan saja.",
     "monthly": "Bulanan",
     "yearly": "Tahunan",
@@ -1324,7 +1591,7 @@
     "resume": "Lanjutkan langganan",
     "resumed": "Langganan dilanjutkan.",
     "history": "Riwayat pembayaran",
-    "historyEmpty": "Belum ada pembayaran.",
+    "historyEmpty": "Belum ada pembayaran",
     "paymentStatus": {
       "pending": "Menunggu",
       "paid": "Lunas",
@@ -1342,7 +1609,26 @@
     "selectSave": "Simpan pilihan",
     "selectUpgrade": "Upgrade supaya semua aktif",
     "selectSaved": "Pilihan akun disimpan.",
-    "testMode": "Mode uji: pembayaran disimulasikan, tidak ada uang sungguhan. Di halaman bayar, kamu memilih sendiri hasilnya."
+    "testMode": "Mode uji: pembayaran disimulasikan, tidak ada uang sungguhan. Di halaman bayar, kamu memilih sendiri hasilnya.",
+    "usage": {
+      "title": "Pemakaian paket",
+      "unlimited": "Tanpa batas"
+    },
+    "downgrade": {
+      "unpaid": "Turun ke Gratis {date} karena perpanjangan belum dibayar",
+      "trial_ended": "Masa coba berakhir {date}, sekarang paket Gratis",
+      "cancelled": "Langganan dihentikan, turun ke Gratis {date}"
+    },
+    "reactivate": "Aktifkan lagi {plan}",
+    "celebrate": {
+      "title": "Selamat datang di {plan} ✨",
+      "body": "Semua fitur sudah terbuka.",
+      "cta": "Mulai pakai"
+    },
+    "historyEmptyBody": "Pembayaranmu akan muncul di sini setelah kamu berlangganan.",
+    "selectUsage": "{posts} postingan mendatang · {rules} aturan aktif",
+    "selectLater": "Nanti saja",
+    "selectNow": "Pilih sekarang"
   },
   "impersonation": {
     "banner": "Kamu sedang menyamar sebagai {name}. Semua tindakan tercatat.",
@@ -1383,7 +1669,8 @@
     "contactTitle": "Masih bingung?",
     "contactBody": "Tim kami biasanya membalas dalam 1 hari kerja.",
     "email": "Kirim email",
-    "whatsapp": "Chat WhatsApp"
+    "whatsapp": "Chat WhatsApp",
+    "quickStart": "Mulai dalam 5 menit"
   },
   "hashtags": {
     "button": "Saran tagar",
@@ -1474,6 +1761,77 @@
       "deleted": "Set dihapus.",
       "delete": "Hapus set",
       "tags": "{count} tagar"
+    },
+    "dropTag": "Hapus #{tag}",
+    "nicheHint": "Cocok untuk niche-mu. Ketuk untuk menambah ke caption."
+  },
+  "busy": {
+    "saving": "Menyimpan…",
+    "scheduling": "Menjadwalkan…",
+    "posting": "Memposting…",
+    "publishing": "Menerbitkan…",
+    "uploading": "Mengunggah {percent}%…",
+    "uploadingPlain": "Mengunggah…",
+    "deleting": "Menghapus…",
+    "connecting": "Menghubungkan…",
+    "sending": "Mengirim…",
+    "adding": "Menambahkan…",
+    "opening": "Membuka…",
+    "processing": "Memproses…"
+  },
+  "undo": {
+    "restored": "Dikembalikan",
+    "tooLate": "Sudah terlanjur diproses.",
+    "failed": "Gagal mengurungkan. Coba lagi."
+  },
+  "notFound": {
+    "title": "Halaman ini tidak ada",
+    "body": "Mungkin tautannya salah ketik. Coba salah satu halaman ini:"
+  },
+  "unsaved": {
+    "title": "Tinggalkan halaman ini?",
+    "body": "Perubahan yang belum disimpan akan hilang.",
+    "leave": "Tinggalkan",
+    "stay": "Tetap di sini"
+  },
+  "onboarding": {
+    "progress": "{done}/{total} langkah",
+    "doneChip": "Panduan selesai 🎉",
+    "steps": {
+      "accountConnected": {
+        "title": "Hubungkan akun sosial",
+        "body": "Instagram, Threads atau Facebook Page."
+      },
+      "postScheduled": {
+        "title": "Jadwalkan postingan pertama",
+        "body": "Tulis sekali, terbit sendiri. Link produk bisa ditambah langsung."
+      },
+      "bioCreated": {
+        "title": "Buat Etalase",
+        "body": "Satu link untuk semua produkmu."
+      },
+      "autoReplyAdded": {
+        "title": "Pasang Balas Otomatis",
+        "body": "Komen 'mau' langsung dibalas DM berisi link."
+      }
     }
+  },
+  "when": {
+    "tonight": "Nanti malam {time}",
+    "tomorrowNoon": "Besok siang {time}",
+    "tomorrowEvening": "Besok malam {time}",
+    "saturday": "Sabtu {time}",
+    "custom": "Pilih sendiri…",
+    "today": "Hari ini",
+    "tomorrow": "Besok",
+    "noDate": "Tanpa tanggal",
+    "weekday": "{day} {date}"
+  },
+  "drop": {
+    "here": "Lepas foto di sini",
+    "pasteHint": "atau tempel (Ctrl/⌘+V)"
+  },
+  "shell": {
+    "mainNav": "Menu utama"
   }
 }

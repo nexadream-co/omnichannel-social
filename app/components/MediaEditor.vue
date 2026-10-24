@@ -377,7 +377,7 @@ onBeforeUnmount(() => {
           >
             <UIcon
               name="i-lucide-loader-circle"
-              class="size-6 animate-spin"
+              class="size-6 motion-safe:animate-spin"
             />
             {{ t('common.loading') }}
           </div>
@@ -479,7 +479,7 @@ onBeforeUnmount(() => {
           >
             <UIcon
               name="i-lucide-loader-circle"
-              class="size-7 animate-spin"
+              class="size-7 motion-safe:animate-spin"
             />
             {{ savingPercent === null ? t('mediaEditor.saving') : t('composer.uploading', { percent: savingPercent }) }}
           </div>

@@ -3,7 +3,7 @@ import { and, asc, count, eq, inArray, isNull, or, sql } from 'drizzle-orm'
 import { abilitiesFor, type WorkspaceRoleSlug } from '../../shared/utils/workspace-abilities'
 import type { Executor } from './db/client'
 import {
-  bioPages, links, menus, permissions, plans, postTargets, rolePermissions, roles, socialAccounts,
+  bioPages, dmRules, links, menus, permissions, plans, postTargets, rolePermissions, roles, socialAccounts,
   staffUsers, subscriptions, users, workspaceMembers, workspaces
 } from './db/schema'
 import { appError } from './errors'
@@ -81,19 +81,24 @@ export async function touchLastSeen(db: Executor, audience: 'creator' | 'staff',
   }
 }
 
-/** The four onboarding flags, computed from real data (docs/blueprint/05 §3). */
+/** The onboarding flags (linkAdded is kept for older clients), computed from real data (docs/blueprint/05 §3). */
 export async function onboardingSteps(db: Executor, workspaceId: string) {
-  const [[accounts], [bios], [productLinks], [scheduled]] = await Promise.all([
+  const [[accounts], [bios], [productLinks], [scheduled], [autoReplies], livePlatforms] = await Promise.all([
     db.select({ n: count() }).from(socialAccounts).where(and(eq(socialAccounts.workspaceId, workspaceId), eq(socialAccounts.status, 'active'))),
     db.select({ n: count() }).from(bioPages).where(and(eq(bioPages.workspaceId, workspaceId), eq(bioPages.published, true))),
     db.select({ n: count() }).from(links).where(eq(links.workspaceId, workspaceId)),
-    db.select({ n: count() }).from(postTargets).where(and(eq(postTargets.workspaceId, workspaceId), inArray(postTargets.status, ['scheduled', 'published'])))
+    db.select({ n: count() }).from(postTargets).where(and(eq(postTargets.workspaceId, workspaceId), inArray(postTargets.status, ['scheduled', 'published']))),
+    db.select({ n: count() }).from(dmRules).where(and(eq(dmRules.workspaceId, workspaceId), eq(dmRules.active, true))),
+    db.selectDistinct({ platform: socialAccounts.platform }).from(socialAccounts).where(and(eq(socialAccounts.workspaceId, workspaceId), inArray(socialAccounts.status, ['active', 'needs_reauth'])))
   ])
+  // Balas Otomatis is Instagram-only: a creator with only Threads / Facebook accounts has nothing to add, so the step counts as done.
+  const noInstagram = livePlatforms.length > 0 && !livePlatforms.some(p => p.platform === 'instagram')
   return {
     accountConnected: (accounts?.n ?? 0) > 0,
     bioCreated: (bios?.n ?? 0) > 0,
     linkAdded: (productLinks?.n ?? 0) > 0,
-    postScheduled: (scheduled?.n ?? 0) > 0
+    postScheduled: (scheduled?.n ?? 0) > 0,
+    autoReplyAdded: (autoReplies?.n ?? 0) > 0 || noInstagram
   }
 }
 
@@ -132,6 +137,7 @@ export async function creatorProfile(db: Executor, access: CreatorAccess, sessio
       currentPeriodEnd: access.subscription.currentPeriodEnd
     },
     onboarding: { ...steps, dismissed: Boolean(access.workspace.onboardingCompletedAt) },
+    milestones: access.workspace.milestones ?? {},
     displayTimezone: access.workspace.timezone,
     impersonating: Boolean(session.impersonatedBy)
   }

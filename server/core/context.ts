@@ -69,6 +69,6 @@ export function assertAbility(ctx: Pick<WorkspaceContext, 'role'>, ability: Work
 
 export function assertPermission(ctx: Pick<StaffContext, 'permissions' | 'isSuperAdmin'>, key: string): void {
   if (!ctx.isSuperAdmin && !ctx.permissions.has(key)) {
-    throw appError(403, 'Anda tidak punya akses untuk tindakan ini.', 'FORBIDDEN', { permission: key })
+    throw appError(403, 'Kamu tidak punya akses untuk tindakan ini.', 'FORBIDDEN', { permission: key })
   }
 }

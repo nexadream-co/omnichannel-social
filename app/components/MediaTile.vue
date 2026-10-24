@@ -11,29 +11,11 @@ const { t } = useI18n()
     class="relative aspect-square rounded-md overflow-hidden bg-elevated border-2"
     :class="selected ? 'border-primary' : 'border-transparent'"
   >
-    <img
-      v-if="media.kind === 'image' && media.url"
-      :src="media.url"
-      alt=""
-      loading="lazy"
-      class="size-full object-cover"
-    >
-    <img
-      v-else-if="media.posterUrl"
-      :src="media.posterUrl"
-      alt=""
-      loading="lazy"
-      class="size-full object-cover"
-    >
-    <div
-      v-else
-      class="size-full flex items-center justify-center"
-    >
-      <UIcon
-        :name="media.kind === 'video' ? 'i-lucide-video' : 'i-lucide-image'"
-        class="size-8 text-muted"
-      />
-    </div>
+    <SmartImage
+      :src="media.kind === 'image' ? media.url : media.posterUrl"
+      kind="media"
+      class="size-full"
+    />
     <span
       v-if="media.kind === 'video' && media.durationMs"
       class="absolute bottom-1 left-1 inline-flex items-center gap-1 rounded bg-black/60 px-1 text-[11px] text-white tabular-nums"
@@ -54,11 +36,11 @@ const { t } = useI18n()
     />
     <div
       v-if="media.status === 'processing'"
-      class="absolute inset-0 bg-default/70 flex flex-col items-center justify-center gap-1 text-xs text-default"
+      class="absolute inset-0 bg-default/70 flex flex-col items-center justify-center gap-1 text-xs text-default pointer-events-none"
     >
       <UIcon
         name="i-lucide-loader-circle"
-        class="size-5 animate-spin"
+        class="size-5 motion-safe:animate-spin"
       />
       {{ t('composer.processing') }}
     </div>

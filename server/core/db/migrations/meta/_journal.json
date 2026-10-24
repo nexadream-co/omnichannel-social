@@ -85,6 +85,20 @@
       "when": 1792775666395,
       "tag": "0011_planner_reminders",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1792813864877,
+      "tag": "0012_workspace_milestones",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1792814405981,
+      "tag": "0013_kamu_copy",
+      "breakpoints": true
     }
   ]
 }

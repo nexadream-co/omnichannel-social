@@ -23,6 +23,19 @@ const planner = usePlanner()
 const canPlan = computed(() => auth.hasAbility('posts.write'))
 useHead({ title: () => t('analytics.title') })
 
+// The Etalase link for the empty state's "Salin link Etalase"; null when there is no Etalase (or no access to it).
+const bioUrl = ref<string | null>(null)
+const bioChecked = ref(false)
+async function loadBio() {
+  try {
+    bioUrl.value = (await apiFetch<{ page: { url: string } | null }>('/api/app/bio')).page?.url ?? null
+  } catch {
+    bioUrl.value = null
+  } finally {
+    bioChecked.value = true
+  }
+}
+
 const days = ref<7 | 30 | 90>(7)
 const data = ref<Analytics | null>(null)
 async function load() {
@@ -30,6 +43,9 @@ async function load() {
 }
 onMounted(load)
 watch(days, load)
+watch(() => data.value?.totals.clicks === 0, (empty) => {
+  if (empty && !bioChecked.value) void loadBio()
+})
 const ranges = computed(() => ([7, 30, 90] as const).map(value => ({ value, label: t(`analytics.range.${value}`) })))
 
 const channelLabel = (channel: string) => channel in PLATFORM_META ? PLATFORM_META[channel as Platform].name : t('analytics.channel.other')
@@ -76,7 +92,11 @@ const breakdowns = computed(() => data.value
         <div class="flex gap-8 mb-4">
           <div>
             <p class="text-3xl font-semibold text-highlighted">
-              {{ formatCompact(data.totals.clicks, locale) }}
+              <TickNumber
+                :value="data.totals.clicks"
+                :format="n => formatCompact(n, locale)"
+                show-up
+              />
             </p>
             <p class="text-sm text-muted">
               {{ t('analytics.clicks') }}
@@ -84,7 +104,10 @@ const breakdowns = computed(() => data.value
           </div>
           <div>
             <p class="text-3xl font-semibold text-highlighted">
-              {{ formatCompact(data.totals.uniques, locale) }}
+              <TickNumber
+                :value="data.totals.uniques"
+                :format="n => formatCompact(n, locale)"
+              />
             </p>
             <p class="text-sm text-muted">
               {{ t('analytics.uniques') }}
@@ -95,16 +118,37 @@ const breakdowns = computed(() => data.value
           {{ t('analytics.daily') }}
         </p>
         <ClickBars
+          v-if="data.totals.clicks"
           :daily="data.daily"
           :days="data.window.days"
           :today="data.window.today"
         />
-        <p
+        <GhostChart
           v-if="!data.totals.clicks"
-          class="mt-4 text-sm text-muted text-center"
+          class="mb-2"
+        />
+        <EmptyState
+          v-if="!data.totals.clicks"
+          icon="i-lucide-mouse-pointer-click"
+          :title="t('analytics.emptyTitle')"
+          :description="t('analytics.emptyBody')"
+          compact
         >
-          {{ t('analytics.empty') }}
-        </p>
+          <CopyButton
+            v-if="bioUrl"
+            :text="bioUrl"
+            :label="t('analytics.copyBio')"
+            icon="i-lucide-copy"
+            color="primary"
+            variant="solid"
+          />
+          <UButton
+            v-else-if="bioChecked"
+            :to="localePath('/app/bio')"
+            icon="i-lucide-store"
+            :label="t('analytics.createBio')"
+          />
+        </EmptyState>
       </UCard>
 
       <div
@@ -126,15 +170,11 @@ const breakdowns = computed(() => data.value
                 :to="localePath(`/app/links/${row.linkId}`)"
                 class="flex items-center gap-3 group"
               >
-                <img
-                  v-if="row.imageUrl"
+                <SmartImage
                   :src="row.imageUrl"
-                  alt=""
-                  class="size-10 rounded object-cover shrink-0"
-                >
-                <div
-                  v-else
-                  class="size-10 rounded bg-elevated shrink-0"
+                  :title="row.title"
+                  :merchant="row.merchant"
+                  class="size-10 rounded shrink-0"
                 />
                 <div class="min-w-0 flex-1">
                   <p class="text-sm text-default truncate group-hover:text-primary">

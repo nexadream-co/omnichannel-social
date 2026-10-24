@@ -23,6 +23,7 @@ type Payload = { state: 'not_found' | 'inactive' } | Storefront
 const route = useRoute()
 const { t } = useI18n()
 const handle = String(route.params.handle)
+const siteUrl = useRuntimeConfig().public.siteUrl
 const query = computed(() => String(route.query.q ?? '').trim().toLowerCase())
 const { data } = await useFetch<Payload>(`/api/public/bio/${encodeURIComponent(handle)}`)
 const event = useRequestEvent()
@@ -44,6 +45,9 @@ const SOCIAL_ICON: Record<string, string> = { instagram: 'i-simple-icons-instagr
 // CSS-only category tabs: one radio per category, :has() hides the others. No script needed.
 const tabCss = computed(() => (page.value?.categories ?? []).map(c => `.sf:has(#cat-${c.id}:checked) .sf-item:not([data-cat="${c.id}"]){display:none}.sf:has(#cat-${c.id}:checked) label[for="cat-${c.id}"]{background:var(--accent)!important;color:var(--accent-text)}`).join('') + '.sf:has(#cat-all:checked) label[for="cat-all"]{background:var(--accent)!important;color:var(--accent-text)}')
 
+// "Beli" says where it is going while it is pressed or focused (CSS only; iOS may skip :active without a touch listener).
+const BUY_CSS = '.sf-buy-open{display:none}.sf-item a:is(:active,:focus-visible) .sf-buy-idle{display:none}.sf-item a:is(:active,:focus-visible) .sf-buy-open{display:inline}'
+
 useHead(() => ({
   title: page.value ? `${page.value.title} · Etalase` : t('storefront.notFound'),
   htmlAttrs: { lang: 'id' },
@@ -53,7 +57,7 @@ useHead(() => ({
     { property: 'og:title', content: page.value?.title ?? '' },
     { property: 'og:image', content: page.value?.avatarUrl ?? '' }
   ],
-  style: [{ innerHTML: tabCss.value }]
+  style: [{ innerHTML: BUY_CSS + tabCss.value }]
 }))
 </script>
 
@@ -180,16 +184,22 @@ useHead(() => ({
             rel="nofollow noopener"
             class="flex flex-col h-full"
           >
-            <div class="relative aspect-square bg-black/5">
+            <div class="relative aspect-square overflow-hidden">
+              <!-- No script here, so a broken photo is handled in CSS: the tinted initial sits behind the image and shows when it is missing. -->
+              <span
+                class="absolute inset-0 flex items-center justify-center text-3xl font-bold"
+                style="background: color-mix(in srgb, var(--accent) 16%, var(--card)); color: var(--accent)"
+                aria-hidden="true"
+              >{{ item.title.slice(0, 1).toUpperCase() }}</span>
               <img
                 v-if="item.imageUrl"
                 :src="item.imageUrl"
-                :alt="item.title"
+                alt=""
                 loading="lazy"
                 decoding="async"
                 width="300"
                 height="300"
-                class="size-full object-cover"
+                class="absolute inset-0 size-full object-cover"
               >
               <span
                 v-if="item.badge || item.pinned"
@@ -209,9 +219,12 @@ useHead(() => ({
               >{{ priceFormat.format(item.priceIdr).replace(/\u00A0/g, ' ') }}</span>
               <span class="mt-auto pt-1.5">
                 <span
-                  class="block text-center rounded-lg py-1.5 text-sm font-semibold"
+                  class="sf-buy block text-center rounded-lg py-1.5 text-sm font-semibold motion-safe:transition-transform motion-safe:active:scale-[0.97]"
                   style="background: var(--accent); color: var(--accent-text)"
-                >{{ t('storefront.buy') }}</span>
+                >
+                  <span class="sf-buy-idle">{{ t('storefront.buy') }}</span>
+                  <span class="sf-buy-open">{{ t('storefront.opening', { merchant: MERCHANT_META[item.merchant].label }) }}</span>
+                </span>
               </span>
             </div>
           </a>
@@ -232,15 +245,13 @@ useHead(() => ({
   </div>
   <main
     v-else
-    class="min-h-dvh flex items-center justify-center p-6 text-center bg-default"
+    class="min-h-dvh flex items-center justify-center p-6 bg-default"
   >
-    <div class="space-y-2">
-      <h1 class="text-xl font-semibold text-highlighted">
-        {{ data?.state === 'inactive' ? t('storefront.inactive') : t('storefront.notFound') }}
-      </h1>
-      <p class="text-muted">
-        {{ data?.state === 'inactive' ? t('storefront.inactiveBody') : t('storefront.notFoundBody') }}
-      </p>
-    </div>
+    <EmptyState
+      icon="i-lucide-store"
+      :title="data?.state === 'inactive' ? t('storefront.inactive') : t('storefront.notFound')"
+      :description="data?.state === 'inactive' ? t('storefront.inactiveBody') : t('storefront.notFoundBody')"
+      :action="data?.state === 'inactive' ? undefined : { label: t('storefront.createOwn'), to: `${siteUrl}/app/auth/register?ref=etalase-404`, icon: 'i-lucide-sparkles' }"
+    />
   </main>
 </template>

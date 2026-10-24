@@ -4,7 +4,8 @@ import type { Platform } from '#shared/channels/types'
 import { extractRawTags, extractTags, insertTags, keepTags, normalizeTag, removeTag } from '#shared/hashtags/parse'
 import { checkTags, tagLimitFor, type TagCheck } from '#shared/hashtags/quality'
 import { suggestFromLibrary } from '#shared/hashtags/relevance'
-import { activityLevel, type LibraryTag, type TagActivity } from '#shared/hashtags/types'
+import { activityLevel, type LibraryTag, type TagActivity, type TagNiche } from '#shared/hashtags/types'
+import { matchNiche, nicheSuggestions } from '~/utils/niche-tags'
 
 interface ResearchItem {
   tag: string
@@ -28,7 +29,7 @@ interface HashtagSet { id: string, name: string, tags: string[] }
  * list ideas (free), research (paid) and saved sets (free). Nothing here is required to post.
  */
 const caption = defineModel<string>({ required: true })
-const props = defineProps<{ platforms: Platform[] }>()
+const props = defineProps<{ platforms: Platform[], attempted?: boolean }>()
 const emit = defineEmits<{ threadsVersion: [caption: string] }>()
 const { t } = useI18n()
 const toast = useToast()
@@ -51,6 +52,20 @@ const sharing = computed(() => props.platforms.length > 1 ? props.platforms.filt
 const limit = computed(() => tagLimitFor(sharing.value))
 const limitPlatform = computed(() => sharing.value.find(p => CHANNELS[p].maxHashtags === limit.value))
 const inCaption = computed(() => new Set(extractTags(caption.value).map(normalizeTag)))
+
+/** The tag that hurts the most is the one to drop first: worst level wins, the last one written on a tie. */
+const worstTag = computed(() => {
+  const rank = { error: 2, warning: 1, good: 0 } as const
+  return quality.value.tags.reduce<typeof quality.value.tags[number] | null>((worst, check) => !worst || rank[check.level] >= rank[worst.level] ? check : worst, null)
+})
+function issueColor(issue: { code: string, level: string }) {
+  if (issue.code === 'overLimit') return props.attempted ? 'text-error' : 'text-warning'
+  return issue.level === 'error' ? 'text-error' : 'text-warning'
+}
+function dropWorst() {
+  const check = worstTag.value
+  if (check) remove(check.linked || check.tag)
+}
 
 const LEVEL_COLOR = { good: 'success', warning: 'warning', error: 'error' } as const
 function reasons(check: Pick<TagCheck, 'codes'> & { linked?: string }): string[] {
@@ -79,6 +94,16 @@ const tabs = computed(() => (['suggest', 'research', 'sets'] as const).map(value
 
 // Ideas from the list: free, computed here from the cached list.
 const suggestions = computed(() => suggestFromLibrary(settled.value, library.value ?? [], { platforms: props.platforms, limit: 15 }))
+// Before any caption, the workspace niche (Pengaturan) seeds the list so the first tap is already useful.
+const niche = ref<TagNiche | null>(null)
+let nicheLoaded = false
+watch(open, async (isOpen) => {
+  if (!isOpen || nicheLoaded) return
+  nicheLoaded = true
+  const settings = await apiFetch<{ niche: string | null }>('/api/app/settings').catch(() => null)
+  niche.value = matchNiche(settings?.niche)
+})
+const nicheTags = computed(() => niche.value ? nicheSuggestions(library.value ?? [], niche.value, props.platforms) : [])
 const own = ref('')
 const ownCheck = computed(() => {
   const tag = own.value.trim().replace(/^#+/, '')
@@ -214,9 +239,18 @@ async function deleteSet(set: HashtagSet) {
         v-for="issue in quality.issues"
         :key="issue.code"
         class="flex flex-wrap items-center gap-2"
-        :class="issue.level === 'error' ? 'text-error' : 'text-warning'"
+        :class="issueColor(issue)"
       >
         <span>{{ t(`hashtags.setCode.${issue.code}`, issue.params ?? {}) }}</span>
+        <UButton
+          v-if="issue.code === 'overLimit' && worstTag"
+          size="xs"
+          color="warning"
+          variant="solid"
+          icon="i-lucide-x"
+          :label="t('hashtags.dropTag', { tag: worstTag.tag })"
+          @click="dropWorst"
+        />
         <UButton
           v-if="issue.code === 'threadsOneTag'"
           size="xs"
@@ -253,7 +287,7 @@ async function deleteSet(set: HashtagSet) {
             <span
               v-if="limit !== undefined"
               class="text-xs"
-              :class="inCaption.size > limit ? 'text-error' : 'text-muted'"
+              :class="inCaption.size > limit ? (attempted ? 'text-error' : 'text-warning') : 'text-muted'"
             >
               {{ t('hashtags.count', { count: inCaption.size, max: limit }) }}
               <template v-if="limitPlatform">{{ t('hashtags.countFor', { platform: PLATFORM_META[limitPlatform].name }) }}</template>
@@ -292,8 +326,30 @@ async function deleteSet(set: HashtagSet) {
               </p>
             </form>
 
+            <div v-if="!caption.trim() && nicheTags.length">
+              <p class="text-xs text-muted mb-2">
+                {{ t('hashtags.nicheHint') }}
+              </p>
+              <TransitionGroup
+                name="list"
+                tag="div"
+                class="flex flex-wrap gap-2"
+              >
+                <UButton
+                  v-for="tag in nicheTags"
+                  :key="tag"
+                  size="sm"
+                  :color="inCaption.has(tag) ? 'primary' : 'neutral'"
+                  :variant="inCaption.has(tag) ? 'solid' : 'outline'"
+                  :icon="inCaption.has(tag) ? 'i-lucide-check' : 'i-lucide-plus'"
+                  :label="`#${tag}`"
+                  :aria-pressed="inCaption.has(tag)"
+                  @click="toggle(tag)"
+                />
+              </TransitionGroup>
+            </div>
             <p
-              v-if="!caption.trim()"
+              v-else-if="!caption.trim()"
               class="text-sm text-muted"
             >
               {{ t('hashtags.emptyCaption') }}
@@ -308,7 +364,11 @@ async function deleteSet(set: HashtagSet) {
               <p class="text-xs text-muted mb-2">
                 {{ t('hashtags.suggestionsHint') }}
               </p>
-              <div class="flex flex-wrap gap-2">
+              <TransitionGroup
+                name="list"
+                tag="div"
+                class="flex flex-wrap gap-2"
+              >
                 <UButton
                   v-for="s in suggestions"
                   :key="s.tag"
@@ -320,7 +380,7 @@ async function deleteSet(set: HashtagSet) {
                   :aria-pressed="inCaption.has(s.tag)"
                   @click="toggle(s.tag)"
                 />
-              </div>
+              </TransitionGroup>
             </div>
           </div>
 
@@ -367,7 +427,7 @@ async function deleteSet(set: HashtagSet) {
               >
                 <UIcon
                   name="i-lucide-loader-circle"
-                  class="size-3.5 animate-spin"
+                  class="size-3.5 motion-safe:animate-spin"
                 />
                 {{ t('hashtags.research.pending') }}
               </p>

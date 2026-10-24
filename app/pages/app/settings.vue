@@ -16,6 +16,11 @@ const state = reactive({ name: '', timezone: 'Asia/Jakarta' as IndonesianTimezon
 const deleteRequestedAt = ref<string | null>(null)
 const slaDays = ref(30)
 const saving = ref(false)
+const { done, trigger } = useCheckPop()
+const baseline = ref('')
+const snapshot = () => JSON.stringify(state)
+const dirty = computed(() => baseline.value !== '' && snapshot() !== baseline.value)
+useUnsavedChanges(dirty)
 
 onMounted(async () => {
   const [row, site] = await Promise.all([
@@ -23,6 +28,7 @@ onMounted(async () => {
     $fetch<{ privacy: { deleteRequestSlaDays: number } }>('/api/public/site').catch(() => null)
   ])
   Object.assign(state, { name: row.name, timezone: row.timezone, niche: row.niche ?? '', affiliatePrograms: row.affiliatePrograms })
+  baseline.value = snapshot()
   deleteRequestedAt.value = row.deleteRequestedAt
   if (site) slaDays.value = site.privacy.deleteRequestSlaDays
 })
@@ -35,7 +41,8 @@ async function save() {
   try {
     await apiFetch('/api/app/settings', { method: 'PATCH', body: { ...state, niche: state.niche || null } })
     await auth.fetchProfile()
-    toast.add({ title: t('settings.saved'), color: 'success' })
+    baseline.value = snapshot()
+    trigger()
   } catch (caught) {
     toast.add({ title: extractErrorMessage(caught, t('authError.generic')), color: 'error' })
   } finally {
@@ -117,10 +124,10 @@ async function requestDelete() {
           />
         </UFormField>
         <div class="flex justify-end">
-          <UButton
+          <SaveButton
             type="submit"
             :loading="saving"
-            :label="t('common.save')"
+            :done="done"
           />
         </div>
       </form>

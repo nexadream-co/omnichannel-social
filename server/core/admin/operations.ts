@@ -11,6 +11,7 @@ import { notifyWorkspaceOwners } from '../notifications'
 import { retryTarget } from '../publishing/service'
 import { getSettingJson } from '../settings'
 import { hostAllowed } from '../../../shared/utils/links'
+import { PLATFORM_META } from '../../../shared/channels/registry'
 
 const meta = (page: number, limit: number, total: number) => ({ page, limit, total, pageCount: Math.max(1, Math.ceil(total / limit)) })
 const listQuery = z.object({
@@ -59,6 +60,20 @@ export async function retryPublishFailure(ctx: StaffContext, targetId: string) {
   const { jobId } = await retryTarget(systemContext(target.workspaceId, ctx), targetId, { staff: true })
   ctx.defer(kick({ ...ctx, db: ctx.db as Database }, [jobId]))
   await audit(ctx, 'publishing.retry', { workspaceId: target.workspaceId, targetType: 'post_target', targetId })
+}
+
+/** Nudges the owners to reconnect the account behind a target (the staff-side answer to an `auth` failure, where a retry cannot help). One bell per account per UTC day, like the pipeline's own notice. */
+export async function remindReconnect(ctx: StaffContext, targetId: string) {
+  assertPermission(ctx, 'publishing.write')
+  const [row] = await ctx.db.select({ workspaceId: postTargets.workspaceId, accountId: socialAccounts.id, platform: socialAccounts.platform, username: socialAccounts.username })
+    .from(postTargets).innerJoin(socialAccounts, eq(socialAccounts.id, postTargets.socialAccountId)).where(eq(postTargets.id, targetId)).limit(1)
+  if (!row) throw appError(404, 'Postingan tidak ditemukan.', 'NOT_FOUND')
+  await notifyWorkspaceOwners(ctx, row.workspaceId, {
+    templateKey: 'account_reconnect_needed',
+    dedupeKey: `account_reconnect_needed:${row.accountId}:${new Date().toISOString().slice(0, 10)}`,
+    variables: { platformLabel: PLATFORM_META[row.platform].name, accountName: row.username ?? '', reconnectUrl: '/app/accounts' }
+  })
+  await audit(ctx, 'publishing.remind_reconnect', { workspaceId: row.workspaceId, targetType: 'post_target', targetId })
 }
 
 // ---------------------------------------------------------------- social account health

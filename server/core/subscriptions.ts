@@ -1,4 +1,5 @@
 import { and, asc, count, desc, eq, inArray, notInArray, sql } from 'drizzle-orm'
+import { downgradeReason } from '../../shared/utils/billing-history'
 import { isAwaitingPayment } from '../../shared/utils/payments'
 import { recordAudit } from './audit'
 import { assertAbility, type CoreContext, type WorkspaceContext } from './context'
@@ -160,7 +161,7 @@ export async function enforceWorkspaceLimits(ctx: Pick<CoreContext, 'db' | 'log'
         result.postsToDraft = targets.length
         if (targets.length) {
           await tx.update(jobs).set({ status: 'cancelled', finishedAt: new Date() })
-            .where(and(eq(jobs.status, 'queued'), sql`${jobs.payload}->>'postTargetId' in (${sql.join(targets.map(t => sql`${t.id}`), sql`, `)})`))
+            .where(and(eq(jobs.status, 'queued'), sql`${jobs.payload}->>'targetId' in (${sql.join(targets.map(t => sql`${t.id}`), sql`, `)})`))
         }
       }
     }
@@ -264,6 +265,19 @@ const paymentView = (p: typeof payments.$inferSelect) => ({
   paymentType: p.paymentType, redirectUrl: isAwaitingPayment(p) ? p.redirectUrl : null, paidAt: p.paidAt, expiresAt: p.expiresAt, createdAt: p.createdAt
 })
 
+/** Why the workspace sits on Gratis: the latest event that moved it there, or null while on a paid or trial plan. */
+async function lastDowngradeOf(db: Executor, workspaceId: string, status: SubscriptionStatus) {
+  if (status !== 'downgraded') return null
+  const [ev] = await db.select().from(subscriptionEvents)
+    .where(and(eq(subscriptionEvents.workspaceId, workspaceId), eq(subscriptionEvents.toStatus, 'downgraded')))
+    .orderBy(desc(subscriptionEvents.createdAt)).limit(1)
+  // Only the event that caused the current downgrade counts (an admin override or cancellation later is not a lapsed trial).
+  const reason = ev ? downgradeReason(ev.transition, ev.fromStatus) : null
+  if (!ev || !reason) return null
+  const [from] = ev.fromPlanSlug ? await db.select({ slug: plans.slug, name: plans.name }).from(plans).where(eq(plans.slug, ev.fromPlanSlug)).limit(1) : []
+  return { reason, at: ev.createdAt.toISOString(), fromPlanSlug: ev.fromPlanSlug, fromPlanName: from?.name ?? null }
+}
+
 /** GET /api/app/subscription (07 §3.2). The gateway name and credentials never leave the server. */
 export async function getSubscriptionView(ctx: WorkspaceContext) {
   assertAbility(ctx, 'billing.manage')
@@ -276,6 +290,7 @@ export async function getSubscriptionView(ctx: WorkspaceContext) {
     needsAccountSelection(ctx.db, ctx.workspaceId)
   ])
   if (!row) throw appError(404, 'Langganan tidak ditemukan.', 'NOT_FOUND')
+  const lastDowngrade = await lastDowngradeOf(ctx.db, ctx.workspaceId, row.sub.status)
   const reminderDays = Math.max(...(await getSetting('billing.renewalReminderDays', ctx.db)).split(',').map(Number).filter(Number.isFinite), 7)
   return {
     subscription: {
@@ -285,6 +300,7 @@ export async function getSubscriptionView(ctx: WorkspaceContext) {
     },
     effectivePlan: { slug: entitlements.effectivePlanSlug, name: entitlements.planName },
     renewalReminderDays: reminderDays,
+    lastDowngrade,
     plans: planRows.map(p => ({ slug: p.slug, name: p.name, description: p.description, priceMonthly: p.priceMonthly, priceYearly: p.priceYearly, limits: p.limits, features: p.features, trialDays: p.trialDays })),
     pendingPayments: pending.filter(p => isAwaitingPayment(p)).map(paymentView),
     needsAccountSelection: selection,

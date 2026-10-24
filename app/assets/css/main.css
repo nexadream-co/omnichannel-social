@@ -23,6 +23,24 @@
 }
 
 /*
+ * Light-mode status colours one step darker than the Nuxt UI default (500): white on amber-500 is 2.2:1, on green-500
+ * 2.3:1, on red-500 3.8:1, and the same colours as text on their 10% tints fail too. These reach AA (4.5:1) for solid
+ * buttons and for subtle alerts. Dark mode keeps the 400 shades, which already pass against dark surfaces.
+ */
+:root {
+  --ui-primary: var(--color-brand-600);
+  --ui-warning: var(--color-amber-700);
+  --ui-success: var(--color-green-800);
+  --ui-error: var(--color-red-700);
+}
+.dark {
+  --ui-primary: var(--color-brand-400);
+  --ui-warning: var(--color-amber-400);
+  --ui-success: var(--color-green-400);
+  --ui-error: var(--color-red-400);
+}
+
+/*
  * Media editor text fonts (shared/media/presets.ts TEXT_FONT_META). Naming them here lets @nuxt/fonts self-host
  * them; browsers download a font only when the editor asks for it (document.fonts.load).
  */
@@ -74,4 +92,78 @@
 @keyframes art-float {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-6px); }
+}
+
+/* Page transition (nuxt.config app.pageTransition): a quick cross-fade, only when motion is welcome. */
+@media (prefers-reduced-motion: no-preference) {
+  .page-enter-active { transition: opacity 120ms ease-out; }
+  .page-leave-active { transition: opacity 80ms ease-in; }
+  .page-enter-from,
+  .page-leave-to { opacity: 0; }
+
+  /* <TransitionGroup name="list">: items slide into place, fade in and out. No absolute leave, so it is safe in grids. */
+  .list-move { transition: transform 200ms ease; }
+  .list-enter-active { transition: opacity 200ms ease, transform 200ms ease; }
+  .list-leave-active { transition: opacity 150ms ease, transform 150ms ease; }
+  .list-enter-from { opacity: 0; transform: translateY(8px); }
+  .list-leave-to { opacity: 0; transform: scale(0.98); }
+
+  /* <Transition name="fade" mode="out-in">: skeleton to content. */
+  .fade-enter-active,
+  .fade-leave-active { transition: opacity 150ms ease; }
+  .fade-enter-from,
+  .fade-leave-to { opacity: 0; }
+
+  .animate-nav-pop { animation: nav-pop 180ms ease-out; }
+  .animate-shake { animation: shake-x 240ms ease-in-out; }
+  .shimmer {
+    background-image: linear-gradient(90deg, transparent, color-mix(in srgb, var(--ui-text-muted) 14%, transparent), transparent);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s linear infinite;
+  }
+}
+
+/* The two that do not move anything stay under reduced motion: a ring and a glow are the quiet "it worked". */
+.animate-ring-pulse { animation: ring-pulse 500ms ease-out; }
+.animate-glow { animation: glow 800ms ease-out; }
+
+@keyframes nav-pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+
+@keyframes shake-x {
+  0%, 100% { transform: translateX(0); }
+  16%, 50%, 83% { transform: translateX(-2px); }
+  33%, 66% { transform: translateX(2px); }
+}
+
+@keyframes ring-pulse {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--ui-primary) 55%, transparent); }
+  100% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--ui-primary) 0%, transparent); }
+}
+
+@keyframes glow {
+  0% { box-shadow: 0 0 14px 2px color-mix(in srgb, var(--ui-primary) 40%, transparent); }
+  100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--ui-primary) 0%, transparent); }
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* sparkAt (app/utils/spark.ts) draws its dots here, above everything and never in the way of a tap. */
+.spark-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 100;
+}
+
+/* Nuxt UI skeletons and spinners use animate-pulse / animate-spin: still under reduced motion, a static shape reads as loading. */
+@media (prefers-reduced-motion: reduce) {
+  .animate-pulse,
+  .animate-spin { animation: none; }
 }

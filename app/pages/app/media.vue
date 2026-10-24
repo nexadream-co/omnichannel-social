@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useMediaQuery } from '@vueuse/core'
 import type { MediaView } from '#shared/media/types'
 import { IDEA_MAX_MEDIA } from '#shared/utils/planner'
 
@@ -10,7 +11,7 @@ const toast = useToast()
 const entitlements = useEntitlements()
 const editor = useMediaEditor()
 const uploads = useMediaUpload()
-const { confirm } = useConfirmDialog()
+const undo = useUndoToast()
 const auth = useCreatorAuth()
 useHead({ title: () => t('mediaLibrary.title') })
 
@@ -23,6 +24,13 @@ const storagePercent = computed(() => {
   if (!s || s.limitMb <= 0) return 0
   return Math.min(100, Math.round((s.usedBytes / (s.limitMb * 1024 * 1024)) * 100))
 })
+// The bar fills from empty when the numbers arrive; at 90 % it glows once.
+const shownPercent = ref(0)
+watch(storagePercent, (value) => {
+  requestAnimationFrame(() => {
+    shownPercent.value = value
+  })
+}, { immediate: true })
 const canManage = computed(() => auth.hasAbility('media.manage'))
 onMounted(() => list.refresh())
 
@@ -35,39 +43,71 @@ watch(list.items, (items) => {
 onBeforeUnmount(() => clearTimeout(poll))
 
 const input = useTemplateRef<HTMLInputElement>('file')
-const uploading = ref(0)
-async function onFiles(event: Event) {
-  const files = [...((event.target as HTMLInputElement).files ?? [])]
-  if (input.value) input.value.value = ''
-  uploading.value += files.length
+const root = useTemplateRef<HTMLElement>('root')
+const desktop = useMediaQuery('(min-width: 1024px)')
+
+// Uploads in flight, one ring each (several files at once, dropped, pasted or picked).
+interface Upload { key: string, name: string, progress: number }
+const inflight = ref<Upload[]>([])
+async function uploadFiles(files: File[]) {
+  if (!canManage.value || !files.length) return
   await Promise.all(files.map(async (file) => {
+    const key = `${Date.now()}-${Math.random()}`
+    inflight.value = [...inflight.value, { key, name: file.name, progress: 0 }]
     try {
-      await uploads.upload(file, { filename: file.name })
+      await uploads.upload(file, { filename: file.name, onProgress: (progress) => {
+        inflight.value = inflight.value.map(u => u.key === key ? { ...u, progress } : u)
+      } })
     } catch (caught) {
       if (!entitlements.handlePlanError(caught)) toast.add({ title: extractErrorMessage(caught, t('authError.generic')), color: 'error' })
     } finally {
-      uploading.value--
+      inflight.value = inflight.value.filter(u => u.key !== key)
     }
   }))
   await list.refresh()
 }
+function onFiles(event: Event) {
+  const files = [...((event.target as HTMLInputElement).files ?? [])]
+  if (input.value) input.value.value = ''
+  void uploadFiles(files)
+}
+const { isOver } = useFileDrop(root, { accept: ['image/', 'video/'], multiple: true, paste: true, onFiles: uploadFiles })
 
 async function edit(media: MediaView) {
+  sheetMedia.value = null
   const mediaId = await editor.edit({ mediaId: media.id })
   if (!mediaId) return
   toast.add({ title: t('mediaLibrary.editSaved'), color: 'success' })
   await list.refresh()
 }
 
-async function remove(media: MediaView) {
-  if (!(await confirm({ title: t('mediaLibrary.deleteTitle'), description: t('mediaLibrary.deleteBody'), confirmLabel: t('common.remove'), color: 'error' }))) return
-  try {
-    await apiFetch(`/api/app/media/${media.id}`, { method: 'DELETE' })
-    toast.add({ title: t('mediaLibrary.deleted'), color: 'success' })
-    await list.refresh()
-  } catch (caught) {
-    toast.add({ title: extractErrorMessage(caught, t('authError.generic')), color: 'error' })
-  }
+// Deleting hides the tile at once and commits after the undo window; a refusal (still in a post or Etalase) brings it back.
+const hidden = ref<string[]>([])
+const visible = computed(() => list.items.value.filter(m => !hidden.value.includes(m.id)))
+function removeMany(ids: string[]) {
+  const title = ids.length > 1 ? t('mediaLibrary.deletedMany', { n: ids.length }) : t('mediaLibrary.deletedUndo')
+  void undo.run({
+    title,
+    apply: () => {
+      hidden.value = [...new Set([...hidden.value, ...ids])]
+      picked.value = picked.value.filter(id => !ids.includes(id))
+      if (!picked.value.length) selecting.value = false
+    },
+    rollback: () => {
+      hidden.value = hidden.value.filter(id => !ids.includes(id))
+    },
+    commit: async () => {
+      const results = await Promise.allSettled(ids.map(id => apiFetch(`/api/app/media/${id}`, { method: 'DELETE' })))
+      await list.refresh()
+      hidden.value = hidden.value.filter(id => !ids.includes(id))
+      const failed = results.find((r): r is PromiseRejectedResult => r.status === 'rejected')
+      if (failed) throw failed.reason
+    }
+  })
+}
+function remove(media: MediaView) {
+  sheetMedia.value = null
+  removeMany([media.id])
 }
 
 // "Jadikan ide": batch-shot photos and videos become content ideas (Rencana konten), spread over empty days.
@@ -78,7 +118,8 @@ const ideaDialog = ref(false)
 const ideaMode = ref<'each' | 'one'>('each')
 const makingIdeas = ref(false)
 function toggleSelecting() {
-  selecting.value = !selecting.value
+  ideaSelect.value = !ideaSelect.value
+  selecting.value = ideaSelect.value
   picked.value = []
 }
 function togglePick(media: MediaView) {
@@ -86,7 +127,18 @@ function togglePick(media: MediaView) {
   if (picked.value.includes(media.id)) picked.value = picked.value.filter(id => id !== media.id)
   else if (picked.value.length < IDEA_MAX_MEDIA) picked.value = [...picked.value, media.id]
   else toast.add({ title: t('mediaLibrary.toIdeas.max', { n: IDEA_MAX_MEDIA }), color: 'warning' })
+  selecting.value = picked.value.length > 0 || ideaSelect.value
 }
+// "Jadikan ide" opens select mode on purpose; a long press or a checkbox opens it too and closes it when the last pick goes.
+const ideaSelect = ref(false)
+const sheetMedia = ref<MediaView | null>(null)
+const sheetOpen = computed({
+  get: () => Boolean(sheetMedia.value),
+  set: (value) => {
+    if (!value) sheetMedia.value = null
+  }
+})
+const useInPostTo = computed(() => localePath({ path: '/app/compose', query: { media: picked.value.join(',') } }))
 const modeItems = computed(() => [
   { value: 'each', label: t('mediaLibrary.toIdeas.each'), description: t('mediaLibrary.toIdeas.eachHint') },
   { value: 'one', label: t('mediaLibrary.toIdeas.one'), description: t('mediaLibrary.toIdeas.oneHint') }
@@ -104,6 +156,7 @@ async function makeIdeas() {
       actions: [{ label: t('mediaLibrary.toIdeas.openCalendar'), to: localePath({ path: '/app/calendar', query: firstDay ? { day: firstDay } : {} }), color: 'neutral', variant: 'outline' }]
     })
     ideaDialog.value = false
+    ideaSelect.value = false
     selecting.value = false
     picked.value = []
   } catch (caught) {
@@ -112,20 +165,14 @@ async function makeIdeas() {
     makingIdeas.value = false
   }
 }
-
-function actions(media: MediaView) {
-  return [
-    [
-      { label: t('mediaEditor.open'), icon: 'i-lucide-wand-sparkles', disabled: media.status !== 'ready', onSelect: () => edit(media) },
-      { label: t('mediaLibrary.usePost'), icon: 'i-lucide-square-pen', disabled: media.status !== 'ready', to: localePath({ path: '/app/compose', query: { media: media.id } }) }
-    ],
-    [{ label: t('common.remove'), icon: 'i-lucide-trash-2', color: 'error' as const, onSelect: () => remove(media) }]
-  ]
-}
 </script>
 
 <template>
-  <div class="w-full max-w-5xl mx-auto">
+  <div
+    ref="root"
+    class="w-full max-w-5xl mx-auto"
+    :class="selecting ? 'pb-16 lg:pb-0' : ''"
+  >
     <CommandBar
       :title="t('mediaLibrary.title')"
       :description="t('mediaLibrary.subtitle')"
@@ -133,25 +180,58 @@ function actions(media: MediaView) {
       <UButton
         v-if="canPlan && list.items.value.length"
         icon="i-lucide-lightbulb"
-        :color="selecting ? 'primary' : 'neutral'"
-        :variant="selecting ? 'soft' : 'outline'"
-        :label="selecting ? t('common.cancel') : t('mediaLibrary.toIdeas.select')"
+        :color="ideaSelect ? 'primary' : 'neutral'"
+        :variant="ideaSelect ? 'soft' : 'outline'"
+        :label="ideaSelect ? t('common.cancel') : t('mediaLibrary.toIdeas.select')"
         @click="toggleSelecting"
       />
       <UButton
         v-if="canManage && !selecting"
         icon="i-lucide-upload"
         :label="t('mediaLibrary.upload')"
-        :loading="uploading > 0"
+        :loading="inflight.length > 0"
         @click="input?.click()"
       />
     </CommandBar>
-    <p
-      v-if="selecting"
-      class="text-sm text-muted mb-3"
+    <div
+      v-if="selecting && ideaSelect"
+      class="flex flex-wrap items-center gap-2 text-sm text-muted mb-3"
     >
-      {{ t('mediaLibrary.toIdeas.selectHint', { n: IDEA_MAX_MEDIA }) }}
-    </p>
+      <span>{{ t('mediaLibrary.toIdeas.selectHint', { n: IDEA_MAX_MEDIA }) }}</span>
+      <UButton
+        v-if="picked.length"
+        size="xs"
+        variant="soft"
+        icon="i-lucide-lightbulb"
+        :label="t('mediaLibrary.toIdeas.confirm', { n: picked.length })"
+        @click="ideaDialog = true"
+      />
+    </div>
+
+    <div
+      v-if="inflight.length"
+      class="mb-4 rounded-md border border-default p-3"
+    >
+      <p class="text-xs font-medium text-muted mb-2">
+        {{ t('mediaLibrary.uploads') }}
+      </p>
+      <ul class="flex flex-wrap gap-3">
+        <li
+          v-for="item in inflight"
+          :key="item.key"
+          class="flex items-center gap-2 text-sm min-w-0"
+        >
+          <ProgressRing
+            :value="item.progress"
+            :size="22"
+            :stroke="3"
+            class="text-primary"
+          />
+          <span class="max-w-40 truncate">{{ item.name }}</span>
+          <span class="text-xs text-muted tabular-nums">{{ item.progress }}%</span>
+        </li>
+      </ul>
+    </div>
 
     <div class="flex flex-wrap items-center gap-3 mb-4">
       <UTabs
@@ -172,82 +252,76 @@ function actions(media: MediaView) {
         </div>
         <UProgress
           v-if="storage.limitMb > 0"
-          :model-value="storagePercent"
+          :model-value="shownPercent"
           size="sm"
+          :class="storagePercent >= 90 ? 'animate-glow rounded-full' : ''"
+          :ui="{ indicator: 'motion-safe:transition-all motion-safe:duration-700' }"
           :color="storagePercent >= 90 ? 'error' : storagePercent >= 75 ? 'warning' : 'primary'"
         />
       </div>
     </div>
 
-    <div
-      v-if="list.status.value === 'loading' && !list.items.value.length"
-      class="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2"
+    <Transition
+      name="fade"
+      mode="out-in"
     >
-      <USkeleton
-        v-for="n in 12"
-        :key="n"
-        class="aspect-square"
-      />
-    </div>
-    <UCard
-      v-else-if="!list.items.value.length"
-      class="text-center"
-    >
-      <UIcon
-        name="i-lucide-images"
-        class="size-8 text-muted mx-auto"
-      />
-      <p class="mt-3 text-default">
-        {{ t('mediaLibrary.empty') }}
-      </p>
-      <UButton
-        v-if="canManage"
-        icon="i-lucide-upload"
-        :label="t('mediaLibrary.upload')"
-        class="mt-4"
-        @click="input?.click()"
-      />
-    </UCard>
-    <div
-      v-else
-      class="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2"
-    >
-      <MediaTile
-        v-for="media in list.items.value"
-        :key="media.id"
-        :media="media"
-        :selected="selecting && picked.includes(media.id)"
+      <div
+        v-if="list.status.value === 'loading' && !list.items.value.length"
+        key="loading"
+        class="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2"
       >
-        <button
-          v-if="selecting"
-          type="button"
-          class="absolute inset-0 flex items-start justify-end p-1"
-          :class="media.status === 'ready' ? 'cursor-pointer' : 'cursor-not-allowed bg-default/40'"
-          :aria-pressed="picked.includes(media.id)"
-          :aria-label="t('mediaLibrary.toIdeas.pick')"
-          @click="togglePick(media)"
+        <USkeleton
+          v-for="n in 12"
+          :key="n"
+          class="aspect-square"
+        />
+      </div>
+      <UCard
+        v-else-if="!visible.length"
+        key="empty"
+      >
+        <EmptyState
+          icon="i-lucide-images"
+          :title="t('mediaLibrary.emptyTitle')"
+          :description="t('mediaLibrary.emptyBody')"
+          :action="canManage ? { label: t('mediaLibrary.upload'), icon: 'i-lucide-upload', onClick: () => input?.click() } : undefined"
         >
-          <span
-            v-if="!picked.includes(media.id)"
-            class="size-6 rounded-full border-2 border-default bg-default/80"
-          />
-        </button>
-        <UDropdownMenu
-          v-else-if="canManage"
-          :items="actions(media)"
-          :content="{ align: 'end' }"
-        >
-          <UButton
-            icon="i-lucide-ellipsis-vertical"
-            size="xs"
-            color="neutral"
-            variant="solid"
-            class="absolute top-1 right-1 rounded-full"
-            :aria-label="t('common.more')"
-          />
-        </UDropdownMenu>
-      </MediaTile>
-    </div>
+          <div
+            v-if="canManage"
+            class="w-full max-w-sm rounded-lg border-2 border-dashed border-default px-4 py-5 text-center text-sm text-muted"
+          >
+            <UIcon
+              name="i-lucide-image-plus"
+              class="size-6 mx-auto mb-1"
+            />
+            {{ t('drop.here') }}
+            <span class="hidden lg:inline">· {{ t('drop.pasteHint') }}</span>
+          </div>
+        </EmptyState>
+      </UCard>
+      <TransitionGroup
+        v-else
+        key="grid"
+        name="list"
+        tag="div"
+        class="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2"
+      >
+        <MediaGalleryItem
+          v-for="media in visible"
+          :key="media.id"
+          :media="media"
+          :selecting="selecting"
+          :picked="picked.includes(media.id)"
+          :can-manage="canManage"
+          :desktop="desktop"
+          @toggle="togglePick(media)"
+          @open="sheetMedia = media"
+          @edit="edit(media)"
+          @use="navigateTo(localePath({ path: '/app/compose', query: { media: media.id } }))"
+          @remove="remove(media)"
+        />
+      </TransitionGroup>
+    </Transition>
     <div
       v-if="list.pageCount.value > 1"
       class="flex justify-center mt-4"
@@ -258,17 +332,73 @@ function actions(media: MediaView) {
         :items-per-page="list.limit.value"
       />
     </div>
-    <div
-      v-if="selecting && picked.length"
-      class="sticky bottom-20 lg:bottom-4 mt-4 flex items-center justify-between gap-3 rounded-md border border-default bg-elevated p-3 shadow-lg"
-    >
-      <span class="text-sm">{{ t('mediaLibrary.toIdeas.selected', { n: picked.length }) }}</span>
+
+    <StickyActionBar v-if="selecting && picked.length && !ideaSelect">
+      <template #leading>
+        {{ t('mediaLibrary.selectedCount', { n: picked.length }) }}
+      </template>
       <UButton
-        icon="i-lucide-lightbulb"
-        :label="t('mediaLibrary.toIdeas.confirm', { n: picked.length })"
-        @click="ideaDialog = true"
+        color="error"
+        variant="outline"
+        icon="i-lucide-trash-2"
+        :label="t('common.remove')"
+        @click="removeMany(picked)"
       />
-    </div>
+      <UButton
+        icon="i-lucide-square-pen"
+        :label="t('mediaLibrary.usePost')"
+        :to="useInPostTo"
+      />
+    </StickyActionBar>
+
+    <ResponsiveSheet
+      v-model:open="sheetOpen"
+      :title="t('mediaLibrary.actionsTitle')"
+    >
+      <template #body>
+        <div
+          v-if="sheetMedia"
+          class="flex flex-col gap-2"
+        >
+          <UButton
+            block
+            color="neutral"
+            variant="outline"
+            icon="i-lucide-wand-sparkles"
+            :disabled="sheetMedia.status !== 'ready'"
+            :label="t('mediaEditor.open')"
+            @click="edit(sheetMedia)"
+          />
+          <UButton
+            block
+            color="neutral"
+            variant="outline"
+            icon="i-lucide-square-pen"
+            :disabled="sheetMedia.status !== 'ready'"
+            :label="t('mediaLibrary.usePost')"
+            :to="localePath({ path: '/app/compose', query: { media: sheetMedia.id } })"
+          />
+          <UButton
+            block
+            color="neutral"
+            variant="outline"
+            icon="i-lucide-check-check"
+            :disabled="sheetMedia.status !== 'ready'"
+            :label="t('mediaLibrary.selectMany')"
+            @click="togglePick(sheetMedia); sheetMedia = null"
+          />
+          <UButton
+            block
+            color="error"
+            variant="soft"
+            icon="i-lucide-trash-2"
+            :label="t('common.remove')"
+            @click="remove(sheetMedia)"
+          />
+        </div>
+      </template>
+    </ResponsiveSheet>
+
     <UModal
       v-model:open="ideaDialog"
       :title="t('mediaLibrary.toIdeas.dialogTitle')"
@@ -304,5 +434,19 @@ function actions(media: MediaView) {
       class="hidden"
       @change="onFiles"
     >
+    <Transition name="fade">
+      <div
+        v-if="isOver && canManage"
+        class="fixed inset-0 z-50 grid place-items-center bg-primary/10 backdrop-blur-[1px] pointer-events-none"
+      >
+        <span class="flex items-center gap-2 rounded-full bg-default px-5 py-3 text-sm font-medium text-primary shadow-lg">
+          <UIcon
+            name="i-lucide-image-plus"
+            class="size-5"
+          />
+          {{ t('drop.here') }}
+        </span>
+      </div>
+    </Transition>
   </div>
 </template>

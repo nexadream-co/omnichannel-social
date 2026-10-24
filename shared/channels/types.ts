@@ -14,6 +14,7 @@ export interface ChannelCapabilities {
   platform: Platform
   formats: PostFormat[]
   maxChars: number
+  previewCaptionCutoff?: number // characters shown before "… lainnya" in the feed; absent = shown in full
   maxHashtags?: number
   hashtagsIncludeFirstComment?: boolean // Instagram counts tags in comments toward the same limit
   maxMentions?: number

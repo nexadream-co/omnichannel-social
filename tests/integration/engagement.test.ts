@@ -155,7 +155,7 @@ describe('home summary', () => {
     await connectAccounts(ws, 'threads', [{ externalId: 'th-h', username: 'r', avatarUrl: null, accessToken: 't', refreshToken: null, tokenExpiresAt: null, scopes: [], meta: {} }])
     const { socialAccounts } = await import('../../server/core/db/schema')
     await getDb().update(socialAccounts).set({ status: 'needs_reauth' })
-    expect(await homeSummary(ws)).toEqual({ clicks7d: 0, autoReplies7d: 0, topProducts: [], needsReauth: 1 })
+    expect(await homeSummary(ws)).toEqual({ clicks7d: 0, clicksTotal: 0, autoReplies7d: 0, topProducts: [], needsReauth: 1, overdueCount: 0, firstPublished: null, bioUrl: null })
   })
 })
 

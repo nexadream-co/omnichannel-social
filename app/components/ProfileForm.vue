@@ -25,6 +25,15 @@ const schema = computed(() => z.object({
   phone: z.string().trim().refine(value => !value || isValidIndonesianPhone(value), 'Nomor HP tidak valid.')
 }))
 
+// Unsaved work: anything that differs from what the server last gave us.
+const dirty = computed(() => {
+  const u = user.value as { name: string, phone: string | null, image: string | null, locale?: 'id' | 'en' } | undefined
+  if (!u) return false
+  return state.name !== u.name || state.phone !== formatIndonesianPhone(u.phone) || state.image !== u.image || state.locale !== (u.locale ?? 'id')
+})
+useUnsavedChanges(dirty)
+const { done, trigger } = useCheckPop()
+
 const saving = ref(false)
 const uploading = ref(false)
 const fileInput = useTemplateRef<HTMLInputElement>('file')
@@ -55,7 +64,7 @@ async function save() {
     await apiFetch(endpoint, { method: 'PATCH', body })
     await auth.fetchProfile()
     if (props.audience === 'creator') await setLocale(state.locale)
-    toast.add({ title: t('profile.saved'), color: 'success' })
+    trigger()
   } catch (caught) {
     toast.add({ title: extractErrorMessage(caught, t('authError.generic')), color: 'error' })
   } finally {
@@ -146,10 +155,10 @@ async function save() {
         />
       </UFormField>
       <div class="flex justify-end">
-        <UButton
+        <SaveButton
           type="submit"
           :loading="saving"
-          :label="t('common.save')"
+          :done="done"
         />
       </div>
     </UForm>

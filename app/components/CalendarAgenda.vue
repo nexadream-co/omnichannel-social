@@ -1,33 +1,29 @@
 <script setup lang="ts">
-import { PLATFORM_META } from '#shared/channels/registry'
-import type { Platform } from '#shared/channels/types'
 import { momentName, PILLAR_META, type PlannerIdea } from '#shared/utils/planner'
 import type { DayPost, MomentMark } from '~/utils/calendar'
 
 /**
- * Phone: a list of days. The week shows every day from today on, so empty ones can be filled; past days and
- * the month show only days with something on them.
+ * Phone: a list of days; long-press a scheduled post to move it. The week shows every day from today on, so empty
+ * ones can be filled; past days and the month show only days with something on them.
  */
 const props = defineProps<{ days: string[], showEmpty: boolean, today: string, loading: boolean, posts: Map<string, DayPost[]>, ideas: Map<string, PlannerIdea[]>, marks: Map<string, MomentMark[]> }>()
-const emit = defineEmits<{ fill: [day: string], openIdea: [id: string] }>()
+const emit = defineEmits<{ fill: [day: string], openIdea: [id: string], movePost: [post: DayPost] }>()
 const { t, locale } = useI18n()
-const localePath = useLocalePath()
 const auth = useCreatorAuth()
 const planner = usePlanner()
 const canWrite = computed(() => auth.hasAbility('posts.write'))
 
 const listed = computed(() => props.days.filter(day => (props.showEmpty && day >= props.today) || props.posts.has(day) || props.ideas.has(day) || props.marks.has(day)))
-const removedLabel = (p: Platform) => t('posts.removedOn', { platform: PLATFORM_META[p].name })
 </script>
 
 <template>
   <div class="space-y-4">
-    <p
+    <EmptyState
       v-if="!loading && !listed.length"
-      class="text-center text-muted py-10"
-    >
-      {{ t('calendar.empty') }}
-    </p>
+      icon="i-lucide-calendar-days"
+      :title="t('calendar.empty')"
+      compact
+    />
     <section
       v-for="day in listed"
       :key="day"
@@ -52,38 +48,10 @@ const removedLabel = (p: Platform) => t('posts.removedOn', { platform: PLATFORM_
           v-for="post in posts.get(day) ?? []"
           :key="post.postId"
         >
-          <NuxtLink
-            :to="localePath(`/app/posts/${post.postId}`)"
-            class="flex items-center gap-3 rounded-md border border-default bg-default p-3"
-          >
-            <span
-              class="size-2 rounded-full shrink-0"
-              :class="postDot(post.status)"
-            />
-            <span class="text-sm text-muted w-12 shrink-0">{{ post.time }}</span>
-            <span class="flex gap-1 shrink-0">
-              <UIcon
-                v-for="p in [...new Set(post.platforms)]"
-                :key="p"
-                :name="PLATFORM_META[p].icon"
-                class="size-4"
-                :class="post.removed.includes(p) ? 'opacity-40' : ''"
-              />
-            </span>
-            <span
-              class="text-sm truncate flex-1"
-              :class="allRemoved(post) ? 'line-through text-muted' : ''"
-            >{{ post.caption || t('posts.noCaption') }}</span>
-            <UBadge
-              v-for="p in [...new Set(post.removed)]"
-              :key="p"
-              color="neutral"
-              variant="subtle"
-              size="sm"
-              :label="removedLabel(p)"
-              class="shrink-0"
-            />
-          </NuxtLink>
+          <CalendarAgendaPost
+            :post="post"
+            @move="emit('movePost', $event)"
+          />
         </li>
         <li
           v-for="idea in ideas.get(day) ?? []"

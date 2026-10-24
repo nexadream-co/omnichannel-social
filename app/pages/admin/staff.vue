@@ -116,7 +116,7 @@ const columns: TableColumn<Row>[] = [
       </ul>
     </UCard>
     <UCard :ui="{ body: 'p-0 sm:p-0' }">
-      <UTable
+      <AdminTable
         :data="list.items.value"
         :columns="columns"
         :loading="list.status.value === 'loading'"
@@ -178,7 +178,7 @@ const columns: TableColumn<Row>[] = [
             />
           </div>
         </template>
-      </UTable>
+      </AdminTable>
     </UCard>
 
     <FormSlideover

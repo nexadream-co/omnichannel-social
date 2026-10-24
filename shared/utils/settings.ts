@@ -73,7 +73,7 @@ export const SETTINGS_CATALOG: SettingDef[] = [
   { key: 'display.timezone', group: 'app', type: 'select', label: 'Zona waktu back-office', default: 'Asia/Jakarta', options: TIMEZONE_OPTIONS },
   // channels
   { key: 'channels.publishing.paused', group: 'channels', type: 'boolean', label: 'Jeda semua publikasi', hint: 'Postingan tetap terjadwal dan terbit setelah jeda dicabut.', default: 'false' },
-  { key: 'channels.publishing.pausedMessage', group: 'channels', type: 'text', label: 'Pesan saat publikasi dijeda', default: 'Publikasi sedang dijeda sementara karena gangguan dari platform. Postingan Anda tetap terjadwal.' },
+  { key: 'channels.publishing.pausedMessage', group: 'channels', type: 'text', label: 'Pesan saat publikasi dijeda', default: 'Publikasi sedang dijeda sementara karena gangguan dari platform. Postingan kamu tetap terjadwal.' },
   { key: 'channels.autoReply.enabled', group: 'channels', type: 'boolean', label: 'Balas Otomatis aktif', hint: 'Matikan untuk menghentikan semua DM otomatis.', default: 'true' },
   { key: 'channels.autoReply.maxDmsPerAccountPerHour', group: 'channels', type: 'number', label: 'Maks DM per akun per jam', default: '60' },
   { key: 'channels.links.affiliateAllowlist', group: 'channels', type: 'json', label: 'Domain afiliasi yang diizinkan', default: JSON.stringify(AFFILIATE_ALLOWLIST) },

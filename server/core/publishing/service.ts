@@ -1,9 +1,10 @@
-import { and, asc, count, desc, eq, gte, inArray, lt, sql } from 'drizzle-orm'
+import { and, asc, count, desc, eq, gte, inArray, isNull, lt, or, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import { CHANNELS, PLATFORM_META } from '../../../shared/channels/registry'
 import { defaultFormat } from '../../../shared/channels/formats'
 import type { MediaMeta, PostFormat } from '../../../shared/channels/types'
 import { hasBlockingIssues, validateTarget } from '../../../shared/channels/validate'
+import { OVERDUE_GRACE_MS, isOverdue } from '../../../shared/utils/overdue'
 import { CONTENT_PILLARS } from '../../../shared/utils/planner'
 import { recordAudit } from '../audit'
 import { assertAbility, type WorkspaceContext } from '../context'
@@ -199,20 +200,30 @@ export async function cancelPost(ctx: WorkspaceContext, postId: string) {
 /** "Coba lagi": a failed target goes back to scheduled now, resuming from its stored step (never a blind republish). */
 export async function retryTarget(ctx: WorkspaceContext, targetId: string, options: { staff?: boolean } = {}) {
   if (!options.staff) assertAbility(ctx, 'posts.write')
-  const [target] = await ctx.db.select().from(postTargets).where(and(eq(postTargets.id, targetId), eq(postTargets.workspaceId, ctx.workspaceId))).limit(1)
-  if (!target) throw appError(404, 'Postingan tidak ditemukan.', 'NOT_FOUND')
-  if (!['failed', 'needs_reauth', 'quota_deferred'].includes(target.status)) throw appError(409, 'Postingan ini tidak perlu dicoba lagi.', 'CONFLICT')
-  const [post] = await ctx.db.select({ version: posts.version }).from(posts).where(eq(posts.id, target.postId))
-  const jobId = await ctx.db.transaction(async (tx) => {
+  const { jobId, postId } = await ctx.db.transaction(async (tx) => {
+    // The target row is the lock: concurrent retries (two devices, creator + staff) queue up here and re-check on the fresh row.
+    const [target] = await tx.select().from(postTargets).where(and(eq(postTargets.id, targetId), eq(postTargets.workspaceId, ctx.workspaceId))).limit(1).for('update')
+    if (!target) throw appError(404, 'Postingan tidak ditemukan.', 'NOT_FOUND')
+    // "Terbitkan sekarang": a target left `scheduled` long past its time (a reconnect re-arms it without a job).
+    const stale = target.status === 'scheduled' && isOverdue('scheduled', target.scheduledAt)
+    if (!stale && !['failed', 'needs_reauth', 'quota_deferred'].includes(target.status)) throw appError(409, 'Postingan ini tidak perlu dicoba lagi.', 'CONFLICT')
+    // Never two live jobs for one target: a running one means it is being handled, a queued retry means another retry just won.
+    const live = await tx.select({ id: jobs.id, status: jobs.status, singletonKey: jobs.singletonKey }).from(jobs)
+      .where(and(inArray(jobs.queue, ['publish.target', 'publish.reconcile']), inArray(jobs.status, ['queued', 'running']), sql`${jobs.payload}->>'targetId' = ${targetId}`))
+      .for('update')
+    if (live.some(j => j.status === 'running' || j.singletonKey?.includes(':retry:'))) throw appError(409, 'Postingan ini sedang diproses.', 'CONFLICT')
+    const queued = live.map(j => j.id)
+    if (queued.length) await tx.update(jobs).set({ status: 'cancelled', finishedAt: new Date() }).where(and(inArray(jobs.id, queued), eq(jobs.status, 'queued')))
+    const [post] = await tx.select({ version: posts.version }).from(posts).where(eq(posts.id, target.postId))
     // A step-less retry restarts from prepare; a target that reached publishing is reconciled first.
     const resumeUnknown = target.step === 'publishing'
     await tx.update(postTargets).set({ status: resumeUnknown ? 'publish_unknown' : 'scheduled', step: resumeUnknown ? 'publishing' : null, containerIds: resumeUnknown ? target.containerIds : [], lastErrorCode: null, lastErrorMsg: null, scheduledAt: target.scheduledAt ?? new Date(), updatedAt: new Date() })
-      .where(eq(postTargets.id, targetId))
+      .where(and(eq(postTargets.id, targetId), eq(postTargets.status, target.status)))
     const id = await enqueue(tx, resumeUnknown ? 'publish.reconcile' : 'publish.target', { targetId, workspaceId: ctx.workspaceId, version: post!.version }, { singletonKey: `${targetId}:retry:${Date.now()}` })
     await tx.update(postTargets).set({ jobId: id }).where(eq(postTargets.id, targetId))
-    return id
+    return { jobId: id, postId: target.postId }
   })
-  await refreshPostStatus(ctx.db, target.postId)
+  await refreshPostStatus(ctx.db, postId)
   await recordAudit(ctx, { audience: options.staff ? 'staff' : 'creator', action: 'post.retry', workspaceId: ctx.workspaceId, targetType: 'post_target', targetId, metadata: { userId: ctx.userId } })
   return { jobId }
 }
@@ -287,7 +298,9 @@ export async function getPost(ctx: WorkspaceContext, postId: string) {
 
 export const postListQuerySchema = z.object({
   tab: z.enum(['scheduled', 'draft', 'published', 'failed', 'all']).default('all'),
-  platform: z.enum(['instagram', 'threads', 'facebook']).optional()
+  platform: z.enum(['instagram', 'threads', 'facebook']).optional(),
+  // Only for tab=scheduled: what still waits for its time, or what missed it (reconnect or a stuck run).
+  due: z.enum(['upcoming', 'overdue']).optional()
 })
 
 const TAB_STATUSES: Record<string, string[]> = {
@@ -297,11 +310,35 @@ const TAB_STATUSES: Record<string, string[]> = {
   failed: ['failed', 'partial']
 }
 
+const dueCutoff = () => new Date(Date.now() - OVERDUE_GRACE_MS)
+
+function dueFilter(due: 'upcoming' | 'overdue') {
+  const cutoff = dueCutoff()
+  return due === 'overdue'
+    ? and(eq(posts.status, 'scheduled'), lt(posts.scheduledAt, cutoff))
+    : or(eq(posts.status, 'publishing'), and(eq(posts.status, 'scheduled'), or(isNull(posts.scheduledAt), gte(posts.scheduledAt, cutoff))))
+}
+
+/** Numbers for the tab labels and the Beranda: one query, same status groups as the tabs. */
+export async function postTabCounts(ctx: WorkspaceContext) {
+  assertAbility(ctx, 'posts.read')
+  const cutoff = dueCutoff()
+  const [row] = await ctx.db.select({
+    scheduled: sql<number>`count(*) filter (where ${inArray(posts.status, TAB_STATUSES.scheduled as ('scheduled')[])})::int`,
+    overdue: sql<number>`count(*) filter (where ${posts.status} = 'scheduled' and ${posts.scheduledAt} < ${cutoff})::int`,
+    draft: sql<number>`count(*) filter (where ${inArray(posts.status, TAB_STATUSES.draft as ('draft')[])})::int`,
+    published: sql<number>`count(*) filter (where ${inArray(posts.status, TAB_STATUSES.published as ('published')[])})::int`,
+    failed: sql<number>`count(*) filter (where ${inArray(posts.status, TAB_STATUSES.failed as ('failed')[])})::int`
+  }).from(posts).where(eq(posts.workspaceId, ctx.workspaceId))
+  return row ?? { scheduled: 0, overdue: 0, draft: 0, published: 0, failed: 0 }
+}
+
 export async function listPosts(ctx: WorkspaceContext, query: { page: number, limit: number, offset: number, search: string } & z.infer<typeof postListQuerySchema>) {
   assertAbility(ctx, 'posts.read')
   const filters = and(
     eq(posts.workspaceId, ctx.workspaceId),
     query.tab !== 'all' ? inArray(posts.status, TAB_STATUSES[query.tab] as ('scheduled')[]) : undefined,
+    query.tab === 'scheduled' && query.due ? dueFilter(query.due) : undefined,
     query.search ? sql`${posts.baseCaption} ilike ${`%${query.search}%`}` : undefined,
     query.platform ? sql`exists (select 1 from post_targets pt where pt.post_id = ${posts.id} and pt.platform = ${query.platform})` : undefined
   )
@@ -313,7 +350,7 @@ export async function listPosts(ctx: WorkspaceContext, query: { page: number, li
   const ids = rows.map(r => r.id)
   const [targets, thumbs] = ids.length
     ? await Promise.all([
-        ctx.db.select({ id: postTargets.id, postId: postTargets.postId, platform: postTargets.platform, status: postTargets.status, removedAt: postTargets.removedAt, username: socialAccounts.username, errorCode: postTargets.lastErrorCode })
+        ctx.db.select({ id: postTargets.id, postId: postTargets.postId, platform: postTargets.platform, status: postTargets.status, removedAt: postTargets.removedAt, username: socialAccounts.username, errorCode: postTargets.lastErrorCode, socialAccountId: postTargets.socialAccountId, accountStatus: socialAccounts.status })
           .from(postTargets).innerJoin(socialAccounts, eq(socialAccounts.id, postTargets.socialAccountId)).where(inArray(postTargets.postId, ids)),
         ctx.db.select({ postId: postMedia.postId, url: mediaAssets.publicUrl, kind: mediaAssets.kind }).from(postMedia)
           .innerJoin(mediaAssets, eq(mediaAssets.id, postMedia.mediaId)).where(and(inArray(postMedia.postId, ids), eq(postMedia.position, 0)))
@@ -328,6 +365,7 @@ export async function listPosts(ctx: WorkspaceContext, query: { page: number, li
   return {
     items: rows.map(p => ({
       id: p.id, caption: p.baseCaption, status: p.status, scheduledAt: p.scheduledAt, createdAt: p.createdAt,
+      overdue: isOverdue(p.status, p.scheduledAt),
       thumbnail: thumbs.find(t => t.postId === p.id) ?? null,
       targets: targets.filter(t => t.postId === p.id).map(t => ({ ...t, editedAt: edits.find(e => e.postTargetId === t.id)?.at ?? null }))
     })),

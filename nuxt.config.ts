@@ -13,6 +13,8 @@ export default defineNuxtConfig({
   ssr: true,
   devtools: { enabled: true },
   app: {
+    // Quick fade between pages. No experimental.viewTransition: it wraps every navigation and fights this.
+    pageTransition: { name: 'page', mode: 'out-in' },
     head: {
       link: [
         { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
@@ -22,7 +24,9 @@ export default defineNuxtConfig({
     }
   },
   css: ['~/assets/css/main.css'],
-  colorMode: { preference: 'light', fallback: 'light' },
+  colorMode: { preference: 'system', fallback: 'light' },
+  // /app and /admin are SPA routes: this shows before the app has loaded (public pages are server-rendered).
+  spaLoadingTemplate: 'spa-loading-template.html',
   runtimeConfig: {
     // Server-only values are read from process.env by server/core/env.ts (zod-validated).
     public: {

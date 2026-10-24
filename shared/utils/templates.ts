@@ -57,7 +57,7 @@ export const EMAIL_TEMPLATES: EmailTemplateDef[] = [
   {
     key: 'staff_invitation', name: 'Undangan staf', description: 'Undangan ke back-office.',
     subject: 'Undangan staf {{appName}}',
-    body: '<p>Hai {{name}},</p><p>{{inviterName}} mengundang Anda sebagai staf {{appName}} dengan peran <strong>{{roleName}}</strong>.</p>' + button('inviteUrl', 'Terima undangan') + '<p>Undangan berlaku sampai {{expiresAt}}.</p>',
+    body: '<p>Hai {{name}},</p><p>{{inviterName}} mengundang kamu sebagai staf {{appName}} dengan peran <strong>{{roleName}}</strong>.</p>' + button('inviteUrl', 'Terima undangan') + '<p>Undangan berlaku sampai {{expiresAt}}.</p>',
     variables: [NAME, v('inviterName', 'Nama pengundang', 'Admin'), v('roleName', 'Peran', 'Support'), v('inviteUrl', 'Tautan undangan', 'https://socialz.id/admin/auth/accept-invite?token=abc'), v('expiresAt', 'Berlaku sampai', '18 Oktober 2026')]
   },
   {
@@ -74,8 +74,8 @@ export const EMAIL_TEMPLATES: EmailTemplateDef[] = [
   },
   {
     key: 'renewal_reminder', name: 'Pengingat perpanjangan', description: 'Dari billing.renewal-reminders.',
-    subject: 'Paket {{planName}} Anda berakhir {{daysLeft}} hari lagi',
-    body: '<p>Halo {{name}},</p><p>Paket <strong>{{planName}}</strong> untuk {{workspaceName}} berakhir pada {{periodEnd}}. Perpanjang sekarang ({{amount}}) agar postingan terjadwal tetap jalan. Membayar lebih awal tidak mengurangi sisa waktu Anda.</p>' + button('billingUrl', 'Perpanjang paket'),
+    subject: 'Paket {{planName}} kamu berakhir {{daysLeft}} hari lagi',
+    body: '<p>Halo {{name}},</p><p>Paket <strong>{{planName}}</strong> untuk {{workspaceName}} berakhir pada {{periodEnd}}. Perpanjang sekarang ({{amount}}) agar postingan terjadwal tetap jalan. Membayar lebih awal tidak mengurangi sisa waktu kamu.</p>' + button('billingUrl', 'Perpanjang paket'),
     variables: [NAME, v('daysLeft', 'Sisa hari', '7'), PLAN, WORKSPACE, v('periodEnd', 'Akhir periode', '22 Oktober 2026'), v('amount', 'Jumlah', 'Rp49.000'), BILLING_URL]
   },
   {
@@ -87,13 +87,13 @@ export const EMAIL_TEMPLATES: EmailTemplateDef[] = [
   {
     key: 'payment_failed', name: 'Pembayaran gagal', description: 'Pembayaran gagal atau kedaluwarsa saat jatuh tempo.',
     subject: 'Pembayaran paket {{planName}} belum berhasil',
-    body: '<p>Halo {{name}},</p><p>Pembayaran {{amount}} untuk paket <strong>{{planName}}</strong> ({{workspaceName}}) belum berhasil. Selesaikan sebelum {{graceEndsAt}} agar paket Anda tidak turun ke Gratis.</p>' + button('billingUrl', 'Bayar sekarang'),
+    body: '<p>Halo {{name}},</p><p>Pembayaran {{amount}} untuk paket <strong>{{planName}}</strong> ({{workspaceName}}) belum berhasil. Selesaikan sebelum {{graceEndsAt}} agar paket kamu tidak turun ke Gratis.</p>' + button('billingUrl', 'Bayar sekarang'),
     variables: [NAME, v('amount', 'Jumlah', 'Rp49.000'), PLAN, WORKSPACE, v('graceEndsAt', 'Batas masa tenggang', '18 Oktober 2026'), BILLING_URL]
   },
   {
     key: 'subscription_downgraded', name: 'Paket turun', description: 'Penurunan paket diterapkan.',
     subject: 'Akun {{workspaceName}} sekarang memakai paket {{planName}}',
-    body: '<p>Halo {{name}},</p><p>Akun {{workspaceName}} sekarang memakai paket <strong>{{planName}}</strong>. Data Anda tidak dihapus. {{#disabledAccounts}}Akun sosial yang dinonaktifkan sementara: {{disabledAccounts}}. {{/disabledAccounts}}{{#pausedRules}}Aturan Balas Otomatis yang dijeda: {{pausedRules}}. {{/pausedRules}}Semua aktif lagi saat Anda upgrade.</p>' + button('accountSelectionUrl', 'Pilih akun yang tetap aktif'),
+    body: '<p>Halo {{name}},</p><p>Akun {{workspaceName}} sekarang memakai paket <strong>{{planName}}</strong>. Data kamu tidak dihapus. {{#disabledAccounts}}Akun sosial yang dinonaktifkan sementara: {{disabledAccounts}}. {{/disabledAccounts}}{{#pausedRules}}Aturan Balas Otomatis yang dijeda: {{pausedRules}}. {{/pausedRules}}Semua aktif lagi saat kamu upgrade.</p>' + button('accountSelectionUrl', 'Pilih akun yang tetap aktif'),
     variables: [NAME, WORKSPACE, PLAN, v('accountSelectionUrl', 'Tautan pilih akun', 'https://socialz.id/app/accounts'), v('disabledAccounts', 'Akun yang dinonaktifkan', '@rina.shop'), v('pausedRules', 'Aturan yang dijeda', 'Komentar "mau"')]
   },
   {
@@ -147,7 +147,7 @@ export const NOTIFICATION_TEMPLATES: NotificationTemplateDef[] = [
   { key: 'renewal_reminder', name: 'Pengingat perpanjangan', title: 'Paket {{planName}} berakhir {{daysLeft}} hari lagi', body: 'Perpanjang agar postingan terjadwal tetap jalan.', actionUrl: '/app/billing', icon: 'i-lucide-calendar-clock', level: 'warning', variables: [PLAN, v('daysLeft', 'Sisa hari', '7')] },
   { key: 'payment_success', name: 'Pembayaran berhasil', title: 'Pembayaran diterima', body: 'Paket {{planName}} aktif sampai {{periodEnd}}.', actionUrl: '/app/billing', icon: 'i-lucide-circle-check', level: 'success', variables: [PLAN, v('periodEnd', 'Akhir periode', '15 November 2026')] },
   { key: 'payment_failed', name: 'Pembayaran gagal', title: 'Pembayaran gagal', body: 'Selesaikan sebelum {{graceEndsAt}} agar paket tidak turun.', actionUrl: '/app/billing', icon: 'i-lucide-circle-x', level: 'error', variables: [v('graceEndsAt', 'Batas masa tenggang', '18 Oktober 2026')] },
-  { key: 'subscription_downgraded', name: 'Paket turun', title: 'Akun turun ke paket Gratis', body: 'Pilih akun sosial yang tetap aktif. Data Anda tidak dihapus.', actionUrl: '/app/accounts', icon: 'i-lucide-arrow-down-circle', level: 'warning', variables: [] },
+  { key: 'subscription_downgraded', name: 'Paket turun', title: 'Akun turun ke paket Gratis', body: 'Pilih akun sosial yang tetap aktif. Data kamu tidak dihapus.', actionUrl: '/app/accounts', icon: 'i-lucide-arrow-down-circle', level: 'warning', variables: [] },
   { key: 'team_invite_accepted', name: 'Anggota tim bergabung', title: '{{memberName}} bergabung ke tim', body: '{{memberName}} sekarang {{roleName}} di {{workspaceName}}.', actionUrl: '/app/team', icon: 'i-lucide-user-plus', level: 'success', variables: [v('memberName', 'Nama anggota', 'Budi'), v('roleName', 'Peran', 'Editor'), WORKSPACE] },
   { key: 'workspace_suspended', name: 'Akun ditangguhkan', title: 'Akun ditangguhkan', body: 'Hubungi kami untuk informasi lebih lanjut.', actionUrl: '/kontak', icon: 'i-lucide-ban', level: 'error', variables: [] },
   { key: 'workspace_deleted', name: 'Akun dihapus', title: 'Akun dihapus', body: 'Terima kasih sudah memakai {{appName}}.', actionUrl: '/kontak', icon: 'i-lucide-trash-2', level: 'error', variables: [] },

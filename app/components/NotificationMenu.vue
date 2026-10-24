@@ -4,13 +4,23 @@ const { t, locale } = useI18n()
 const localePath = useLocalePath()
 const notifications = useNotifications(props.audience)
 notifications.startPolling()
+const { actionLabel, open } = useNotificationActions(props.audience)
+const undo = useUndoToast()
+const groups = computed(() => collapseNotifications(notifications.items.value))
 
 const LEVEL_COLOR = { info: 'text-info', success: 'text-success', warning: 'text-warning', error: 'text-error' } as const
 const allPath = computed(() => props.audience === 'creator' ? localePath('/app/notifications') : '/admin/notifications')
 
-async function open(item: NotificationItem) {
-  await notifications.markRead(item.id)
-  if (item.actionUrl) await navigateTo(props.audience === 'creator' && item.actionUrl.startsWith('/app') ? localePath(item.actionUrl) : item.actionUrl)
+function markAll() {
+  let restore = () => {}
+  return undo.run({
+    title: t('notifications.allRead'),
+    apply: () => {
+      restore = notifications.readAllLocally()
+    },
+    rollback: () => restore(),
+    commit: () => notifications.commitReadAll()
+  })
 }
 </script>
 
@@ -42,7 +52,7 @@ async function open(item: NotificationItem) {
             size="xs"
             variant="link"
             :label="t('notifications.markAllRead')"
-            @click="notifications.markAllRead()"
+            @click="markAll"
           />
         </div>
         <ul
@@ -50,35 +60,60 @@ async function open(item: NotificationItem) {
           class="max-h-96 overflow-y-auto divide-y divide-default"
         >
           <li
-            v-for="item in notifications.items.value"
-            :key="item.id"
+            v-for="group in groups"
+            :key="group.key"
           >
-            <button
-              type="button"
-              class="w-full text-left px-4 py-3 flex gap-3 hover:bg-elevated/50"
-              @click="open(item)"
+            <div
+              role="button"
+              tabindex="0"
+              class="w-full text-left px-4 py-3 flex gap-3 cursor-pointer hover:bg-elevated/50 focus-visible:outline-2 focus-visible:outline-primary"
+              @click="open(group)"
+              @keydown.enter="open(group)"
             >
               <UIcon
-                :name="item.icon || 'i-lucide-bell'"
+                :name="group.item.icon || 'i-lucide-bell'"
                 class="size-5 shrink-0 mt-0.5"
-                :class="LEVEL_COLOR[item.level] ?? 'text-muted'"
+                :class="LEVEL_COLOR[group.item.level] ?? 'text-muted'"
               />
               <span class="min-w-0 flex-1">
                 <span
-                  class="block text-sm"
-                  :class="item.readAt ? 'text-muted' : 'text-highlighted font-medium'"
-                >{{ item.title }}</span>
+                  class="flex items-center gap-1.5 text-sm"
+                  :class="group.unreadIds.length ? 'text-highlighted font-medium' : 'text-muted'"
+                >
+                  <span class="min-w-0">{{ group.item.title }}</span>
+                  <UBadge
+                    v-if="group.count > 1"
+                    color="neutral"
+                    variant="subtle"
+                    size="sm"
+                    :label="`${group.count}×`"
+                  />
+                </span>
                 <span
-                  v-if="item.body"
+                  v-if="group.item.body"
                   class="block text-xs text-muted line-clamp-2"
-                >{{ item.body }}</span>
-                <span class="block text-xs text-dimmed mt-1">{{ formatRelative(item.createdAt, locale) }}</span>
+                >{{ group.item.body }}</span>
+                <span class="block text-xs text-dimmed mt-1">{{ formatRelative(group.item.createdAt, locale) }}</span>
+                <UButton
+                  v-if="group.item.actionUrl"
+                  size="xs"
+                  color="neutral"
+                  variant="outline"
+                  class="mt-2"
+                  :label="actionLabel(group.item)"
+                  @click.stop="open(group)"
+                />
               </span>
-              <span
-                v-if="!item.readAt"
-                class="size-2 rounded-full bg-primary mt-2 shrink-0"
-              />
-            </button>
+              <Transition
+                leave-active-class="motion-safe:transition-transform motion-safe:duration-200"
+                leave-to-class="scale-0"
+              >
+                <span
+                  v-if="group.unreadIds.length"
+                  class="size-2 rounded-full bg-primary mt-2 shrink-0"
+                />
+              </Transition>
+            </div>
           </li>
         </ul>
         <p

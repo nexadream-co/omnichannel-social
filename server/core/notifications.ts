@@ -1,4 +1,5 @@
-import { and, count, desc, eq, ilike, inArray, isNull, or, sql } from 'drizzle-orm'
+import { and, count, desc, eq, ilike, inArray, isNull, lte, or, sql } from 'drizzle-orm'
+import { z } from 'zod'
 import { NOTIFICATION_TEMPLATES, renderTemplateString } from '../../shared/utils/templates'
 import type { CoreContext } from './context'
 import type { Executor } from './db/client'
@@ -142,7 +143,7 @@ export async function listNotifications(db: Executor, recipient: NotificationRec
   const [items, [total], [unread]] = await Promise.all([
     db.select({
       id: notifications.id, title: notifications.title, body: notifications.body, actionUrl: notifications.actionUrl,
-      icon: notifications.icon, level: notifications.level, readAt: notifications.readAt, createdAt: notifications.createdAt
+      icon: notifications.icon, level: notifications.level, templateKey: notifications.templateKey, readAt: notifications.readAt, createdAt: notifications.createdAt
     }).from(notifications).where(filters).orderBy(desc(notifications.createdAt)).limit(query.limit).offset(query.offset),
     db.select({ n: count() }).from(notifications).where(filters),
     db.select({ n: count() }).from(notifications).where(and(base, isNull(notifications.readAt)))
@@ -163,9 +164,12 @@ export async function markNotificationRead(db: Executor, recipient: Notification
   if (!rows.length) throw appError(404, 'Notifikasi tidak ditemukan.', 'NOT_FOUND')
 }
 
-export async function markAllNotificationsRead(db: Executor, recipient: NotificationRecipient): Promise<number> {
+/** `before` is the instant the user tapped: rows that arrived afterwards stay unread (optional for older clients). */
+export const readAllSchema = z.object({ before: z.iso.datetime({ offset: true, message: 'Waktu tidak valid.' }).optional() })
+
+export async function markAllNotificationsRead(db: Executor, recipient: NotificationRecipient, before?: string): Promise<number> {
   const rows = await db.update(notifications).set({ readAt: new Date() })
-    .where(and(recipientFilter(recipient), isNull(notifications.readAt)))
+    .where(and(recipientFilter(recipient), isNull(notifications.readAt), before ? lte(notifications.createdAt, new Date(before)) : undefined))
     .returning({ id: notifications.id })
   return rows.length
 }

@@ -1,4 +1,4 @@
-import { and, asc, count, countDistinct, eq, gte, lt, ne } from 'drizzle-orm'
+import { and, asc, count, countDistinct, eq, gte, lt, ne, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import { addDays, IDEA_MAX_LINKS, IDEA_MAX_MEDIA, IDEA_NOTE_MAX, IDEA_TITLE_MAX, spreadOverEmptyDays, SPREAD_HORIZON_DAYS, weekStart } from '../../../shared/utils/planner'
 import { recordAudit } from '../audit'
@@ -112,6 +112,28 @@ export async function countWeekFill(db: Executor, workspaceId: string, tz: strin
   return (postCount?.n ?? 0) + (ideaCount?.n ?? 0)
 }
 
+export const STREAK_LOOKBACK_WEEKS = 12
+
+/**
+ * Consecutive local weeks, newest first, in which distinct non-cancelled posts reached `target`. The current week
+ * counts when it already reached the target (`currentFilled`, ideas included, as the Kalender shows it); otherwise
+ * the streak ends last week. Past weeks count posts only. One grouped query, at most 12 weeks back.
+ */
+export async function weekStreak(db: Executor, workspaceId: string, tz: string, monday: string, target: number, currentFilled: number): Promise<number> {
+  const from = addDays(monday, -7 * STREAK_LOOKBACK_WEEKS)
+  const week = sql<string>`to_char(date_trunc('week', ${postTargets.scheduledAt} AT TIME ZONE ${tz}), 'YYYY-MM-DD')`
+  const rows = await db.select({ week, n: countDistinct(postTargets.postId) }).from(postTargets)
+    .where(and(eq(postTargets.workspaceId, workspaceId), ne(postTargets.status, 'cancelled'), gte(postTargets.scheduledAt, startOfZonedDay(from, tz)), lt(postTargets.scheduledAt, startOfZonedDay(monday, tz))))
+    .groupBy(sql`1`)
+  const counts = new Map(rows.map(r => [r.week, r.n]))
+  let streak = currentFilled >= target ? 1 : 0
+  for (let i = 1; i <= STREAK_LOOKBACK_WEEKS; i++) {
+    if ((counts.get(addDays(monday, -7 * i)) ?? 0) < target) break
+    streak++
+  }
+  return streak
+}
+
 /** Beranda "Minggu ini": this week's fill, ideas waiting and the next shopping moment. */
 export async function weekSummary(ctx: WorkspaceContext) {
   assertAbility(ctx, 'posts.read')
@@ -122,6 +144,7 @@ export async function weekSummary(ctx: WorkspaceContext) {
     countWeekFill(ctx.db, ctx.workspaceId, tz, monday),
     plannerWindow(ctx, monday, addDays(monday, 7), today)
   ])
+  const streak = await weekStreak(ctx.db, ctx.workspaceId, tz, monday, window.postsPerWeek, filled)
   const nextMoment = window.moments.filter(m => m.endsOn >= today).sort((a, b) => a.startsOn.localeCompare(b.startsOn))[0] ?? null
-  return { weekStart: monday, today, count: filled, target: window.postsPerWeek, unplannedIdeas: window.unplannedIdeas, nextMoment }
+  return { weekStart: monday, today, count: filled, target: window.postsPerWeek, unplannedIdeas: window.unplannedIdeas, streak, nextMoment }
 }

@@ -15,6 +15,7 @@ function when(moment: PlannerMoment) {
   if (moment.startsOn > props.today) return t('planner.moments.inDays', { n: daysBetween(props.today, moment.startsOn) })
   return moment.startsOn === props.today ? t('planner.moments.today') : t('planner.moments.ongoing')
 }
+const soon = (moment: PlannerMoment) => moment.startsOn > props.today && daysBetween(props.today, moment.startsOn) <= 3
 function range(moment: PlannerMoment) {
   const start = planner.dayLabel(moment.startsOn)
   return moment.endsOn === moment.startsOn ? start : `${start} – ${planner.dayLabel(moment.endsOn)}`
@@ -56,10 +57,19 @@ async function prepare(moment: PlannerMoment) {
               {{ momentName(moment, locale) }}
             </p>
             <p class="text-xs text-muted truncate">
-              {{ range(moment) }} · {{ when(moment) }}
+              {{ range(moment) }}
             </p>
           </div>
         </div>
+        <UBadge
+          size="sm"
+          variant="subtle"
+          :color="soon(moment) || moment.startsOn <= today ? 'primary' : 'neutral'"
+          :icon="moment.startsOn > today ? 'i-lucide-hourglass' : 'i-lucide-flame'"
+          :label="when(moment)"
+          class="self-start"
+          :class="soon(moment) ? 'motion-safe:animate-pulse' : ''"
+        />
         <UBadge
           v-if="moment.prepared"
           color="success"
@@ -70,6 +80,7 @@ async function prepare(moment: PlannerMoment) {
         />
         <UButton
           v-else-if="canWrite"
+          v-spark
           size="xs"
           variant="soft"
           icon="i-lucide-sparkles"

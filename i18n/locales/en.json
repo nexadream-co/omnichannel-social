@@ -19,7 +19,13 @@
     "previous": "Previous",
     "next": "Next",
     "remove": "Remove",
-    "more": "More"
+    "more": "More",
+    "undo": "Undo",
+    "copied": "Copied!",
+    "saved": "Saved",
+    "open": "Open",
+    "copyLink": "Copy link",
+    "copyFailed": "Couldn't copy. Please copy it by hand."
   },
   "nav": {
     "home": "Home",
@@ -33,13 +39,16 @@
     "accounts": "Social accounts",
     "team": "Team",
     "more": "More",
-    "billing": "Subscription",
+    "billing": "Plan",
     "settings": "Settings",
     "activity": "Activity log",
     "profile": "Profile",
     "changePassword": "Change password",
     "help": "Help",
-    "darkMode": "Dark mode",
+    "theme": "Appearance",
+    "theme_system": "Match device",
+    "theme_light": "Light",
+    "theme_dark": "Dark",
     "language": "Language",
     "signOut": "Sign out",
     "groupAccount": "Account",
@@ -47,7 +56,8 @@
     "groupApp": "App",
     "collapse": "Collapse menu",
     "expand": "Expand menu",
-    "media": "Media Gallery"
+    "media": "Media Gallery",
+    "create": "Create"
   },
   "auth": {
     "email": "Email",
@@ -89,7 +99,12 @@
     "verifyResend": "Resend verification email",
     "verifyResent": "Verification email sent again.",
     "verifyBanner": "Verify your email first to connect social accounts.",
-    "continueToApp": "Continue to Home"
+    "continueToApp": "Continue to Home",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "strengthWeak": "Weak",
+    "strengthFair": "Fair",
+    "strengthStrong": "Strong"
   },
   "authError": {
     "invalidCredentials": "Wrong email or password.",
@@ -103,7 +118,9 @@
     "acceptTerms": "You need to accept the terms.",
     "emailInvalid": "Invalid email format.",
     "nameShort": "Name must be at least 2 characters.",
-    "passwordShort": "Password must be at least 8 characters."
+    "passwordShort": "Password must be at least 8 characters.",
+    "offline": "You are offline. Check your connection and try again.",
+    "reload": "This page needs a reload. Reload it and try again."
   },
   "home": {
     "greeting": "Hi, {name}!",
@@ -138,10 +155,10 @@
     "seePlans": "See plans",
     "dismissConfirm": "Hide the getting-started guide? You can still use every feature.",
     "upcoming": "Coming up",
-    "noUpcoming": "No scheduled posts yet.",
+    "noUpcoming": "No scheduled posts yet",
     "failedAlert": "{count} post(s) failed to publish.",
     "failedAction": "View and fix",
-    "reauthAlert": "{count} account(s) need reconnecting so posts keep publishing.",
+    "reauthAlert": "{count} account needs to be reconnected",
     "reauthAction": "Reconnect",
     "clicksWeek": "link clicks this week",
     "autoRepliesWeek": "auto DMs this week",
@@ -161,7 +178,37 @@
     "week": {
       "title": "This week",
       "open": "Open calendar",
-      "ideasWaiting": "{n} ideas waiting in the idea bank."
+      "ideasWaiting": "{n} ideas waiting in the idea bank.",
+      "reached": "This week's target reached 🎯",
+      "streak": "{n} weeks in a row"
+    },
+    "noUpcomingHint": "Schedule once, it posts itself.",
+    "checklistComplete": "All steps done. You're officially on autopilot!",
+    "overdueTitle": "{count} overdue posts",
+    "overdueMore": "See {n} more",
+    "renewal": "{plan} ends in {n} days",
+    "renewalToday": "{plan} ends today",
+    "renewalAction": "Renew",
+    "noClicks": "No clicks yet. Share your Etalase link.",
+    "copyEtalase": "Copy Etalase link",
+    "openEtalase": "Open Etalase",
+    "noReplies": "No automatic DMs yet.",
+    "setupAutoReply": "Set up Auto Reply",
+    "moments": {
+      "firstPostPublished": "Your first post is live on {platform} 🚀",
+      "see": "View",
+      "firstClick": "Someone clicked your product! 🎉",
+      "seeStats": "See stats",
+      "firstAutoDm": "Auto Reply is working: {n} DMs sent while you were busy 💬",
+      "clicksRound": "{n} clicks to your products. Keep going!"
+    },
+    "welcome": {
+      "title": "Hi {name}! {n} steps to go",
+      "titleDone": "Hi {name}! Your account is ready",
+      "body": "Follow these steps, about 5 minutes.",
+      "start": "Start: Connect an account",
+      "continue": "Continue",
+      "later": "Maybe later"
     }
   },
   "role": {
@@ -206,7 +253,8 @@
       "published": "Published",
       "partial": "Partly published",
       "failed": "Failed",
-      "cancelled": "Cancelled"
+      "cancelled": "Cancelled",
+      "overdue": "Overdue"
     },
     "target": {
       "draft": "Draft",
@@ -437,12 +485,31 @@
         "comment": "Want!",
         "sent": "Link sent to DMs",
         "etalase": "Storefront",
-        "clicks": "Product clicks today"
+        "clicks": "Product clicks today",
+        "dm": "Here is the product link!",
+        "link": "socialz.id/ayu-bag",
+        "click": "+1 click"
+      }
+    },
+    "yearlyBilled": "Billed yearly, {total} per year",
+    "fit": {
+      "title": "A good fit if you…",
+      "gratis": {
+        "name": "Free",
+        "text": "are just starting and want to try it first: enough for a few accounts and posts, no credit card."
+      },
+      "kreator": {
+        "name": "Creator",
+        "text": "post and sell regularly: plenty of schedules, product links, a storefront and auto replies."
+      },
+      "pro": {
+        "name": "Pro",
+        "text": "run several accounts or work with a team: higher limits and access for team members."
       }
     }
   },
   "error": {
-    "notFoundTitle": "Page not found",
+    "notFoundTitle": "This page doesn't exist",
     "notFoundBody": "The link may be wrong or the page has moved.",
     "genericTitle": "Something went wrong",
     "genericBody": "Something went wrong. Please try again shortly.",
@@ -454,7 +521,36 @@
     "empty": "No notifications yet.",
     "seeAll": "See all notifications",
     "unreadOnly": "Unread only",
-    "emptyUnread": "All caught up."
+    "emptyUnread": "All caught up.",
+    "actions": {
+      "welcome": "Get started",
+      "trial_started": "See plans",
+      "trial_ending_soon": "Subscribe",
+      "renewal_reminder": "Renew",
+      "payment_success": "See plan",
+      "payment_failed": "Pay now",
+      "subscription_downgraded": "Choose accounts",
+      "team_invite_accepted": "See team",
+      "workspace_suspended": "Contact us",
+      "workspace_deleted": "Contact us",
+      "post_failed": "Fix it",
+      "account_reconnect_needed": "Reconnect",
+      "quota_deferred": "See schedule",
+      "autoreply_paused": "See rules",
+      "planner_week_open": "Open Calendar",
+      "planner_idea_due": "Open Calendar",
+      "admin_new_workspace": "See workspace",
+      "admin_new_message": "Read message"
+    },
+    "allRead": "All notifications marked as read.",
+    "emptyTitle": "All clear 🎉",
+    "emptyBody": "Nothing needs your attention.",
+    "noMatch": "No matching notifications.",
+    "bucket": {
+      "today": "Today",
+      "week": "This week",
+      "older": "Earlier"
+    }
   },
   "profile": {
     "title": "Profile",
@@ -474,7 +570,9 @@
     "new": "New password",
     "revokeOthers": "Sign out other devices",
     "saved": "Password changed.",
-    "wrongCurrent": "Your current password is wrong."
+    "wrongCurrent": "Your current password is wrong.",
+    "show": "Show password",
+    "hide": "Hide password"
   },
   "settings": {
     "title": "Settings",
@@ -546,7 +644,13 @@
     "invited": "Invitation sent to {email}.",
     "revokeConfirm": "Revoke the invitation for {email}?",
     "deactivateConfirm": "Deactivate {name}? They are signed out of this account right away.",
-    "saved": "Changes saved."
+    "saved": "Changes saved.",
+    "preview": {
+      "editor": "Editors can schedule posts but cannot pay",
+      "viewer": "Viewers can only look"
+    },
+    "emptyTitle": "No members yet",
+    "emptyBody": "Invite an assistant to help manage the account."
   },
   "invite": {
     "title": "Team invitation",
@@ -628,7 +732,9 @@
       "service_unavailable": "Connecting this account isn't available yet. Try again later.",
       "rate_limited": "Too many attempts. Try again in a few minutes.",
       "unknown": "The account wasn't connected. Try again."
-    }
+    },
+    "firstConnected": "{platform} is connected! Now schedule your first post.",
+    "firstPost": "Create a post"
   },
   "upgrade": {
     "title": "Upgrade your plan",
@@ -729,7 +835,41 @@
     "savedIdea": "Saved to the idea bank.",
     "fromIdea": "From idea: {title}",
     "autoReplyHint": "Send this product link by DM to people who comment?",
-    "autoReplyAction": "Set up Balas Otomatis"
+    "autoReplyAction": "Set up Balas Otomatis",
+    "resume": {
+      "title": "Continue what you were writing?",
+      "yes": "Continue",
+      "no": "Discard"
+    },
+    "reconnect": "Reconnect",
+    "rawLink": {
+      "ask": "Make this a product link? Its clicks get counted.",
+      "make": "Make link",
+      "keep": "Leave it"
+    },
+    "templateLabel": {
+      "discount": "Sale",
+      "review": "Review",
+      "unboxing": "Unboxing"
+    },
+    "templates": {
+      "discount": "🔥 SALE today!\nSpecial price only until tonight. Check the link before it sells out 💖",
+      "review": "Honest review after using it for a few days:\n✅ What I like: \n⚠️ What could be better: \nGreat for you if ",
+      "unboxing": "Unboxing a new package! 📦\nWhat's inside? Swipe to see, the product link is below."
+    },
+    "previewMore": "more",
+    "cover": "Cover",
+    "scheduledAt": "Scheduled {when} ✓",
+    "seeCalendar": "See in Calendar",
+    "postingNow": "Posting now…",
+    "success": {
+      "title": "Ready to go live! 🎉",
+      "body": "Your post will go out {when}.",
+      "countdown": "Goes live in {h} h {m} min",
+      "countdownDays": "Goes live in {d} d {h} h",
+      "calendar": "See in Calendar",
+      "again": "Schedule another"
+    }
   },
   "mediaEditor": {
     "open": "Edit",
@@ -878,7 +1018,15 @@
       "doneDated": "{n} ideas are on your calendar.",
       "doneBank": "{n} ideas added to the idea bank.",
       "openCalendar": "View in calendar"
-    }
+    },
+    "emptyTitle": "Your gallery is empty",
+    "emptyBody": "Photos and videos you upload are kept here.",
+    "uploads": "Uploads",
+    "deletedUndo": "Media deleted",
+    "deletedMany": "{n} media deleted",
+    "selectedCount": "{n} selected",
+    "actionsTitle": "What would you like to do?",
+    "selectMany": "Select several"
   },
   "posts": {
     "title": "Posts",
@@ -944,7 +1092,40 @@
       "autoReplies": "Auto DMs",
       "pending": "Platform numbers appear tomorrow morning."
     },
-    "fromIdea": "From idea: {title}"
+    "fromIdea": "From idea: {title}",
+    "tabCount": "{label} {n}",
+    "overdueAll": "See all ({n})",
+    "needsAction": "Needs attention",
+    "overdueFor": "Overdue by {n} days",
+    "overdueForHours": "Overdue by {n} hours",
+    "overdueReconnect": "Reconnect {platform} so it can go out.",
+    "overdueReady": "Your account is ready. Publish it now?",
+    "reconnectPlatform": "Reconnect {platform}",
+    "publishNow": "Publish now",
+    "publishingNow": "Publishing now",
+    "cancelledUndo": "Post cancelled",
+    "publishedDone": "Published ✓",
+    "emptyState": {
+      "scheduled": {
+        "title": "No scheduled posts yet",
+        "description": "Schedule once, it posts itself."
+      },
+      "draft": {
+        "title": "No drafts yet",
+        "description": "Keep unfinished posts here."
+      },
+      "published": {
+        "title": "No published posts yet",
+        "description": "Posts that went live show up here, with their numbers."
+      },
+      "failed": {
+        "title": "Nothing failed. Nice! ✨"
+      },
+      "all": {
+        "title": "No posts yet",
+        "description": "Start by scheduling your first post."
+      }
+    }
   },
   "calendar": {
     "title": "Calendar",
@@ -962,7 +1143,24 @@
     "viewMonth": "Month",
     "tabCalendar": "Calendar",
     "tabIdeas": "Idea bank",
-    "emptyDay": "Empty"
+    "emptyDay": "Empty",
+    "overdue": "Overdue",
+    "dropHere": "Drop here",
+    "dropPast": "Can't move to a past date",
+    "movedTo": "Moved to {day}",
+    "ideaMovedTo": "Idea moved to {day}",
+    "pickDate": "Pick…",
+    "moveTime": "Time",
+    "movePastTime": "That time has already passed. Pick a later time.",
+    "moveSave": "Move",
+    "scheduleSave": "Schedule",
+    "moveAction": "Move…",
+    "moveTitle": "Move to…",
+    "scheduleIdea": "Schedule this idea",
+    "scheduleShort": "Schedule",
+    "scheduleIdeaTitle": "Schedule this idea",
+    "weekEmpty": "This week is still empty. Start from an idea or a shopping moment.",
+    "prepareContent": "Prepare content"
   },
   "planner": {
     "pillarLabel": "Content type",
@@ -993,7 +1191,13 @@
       },
       "emptyUnplanned": "Write content ideas any time, then turn them into posts later.",
       "emptyOther": "No ideas here yet.",
-      "dragHint": "Drag an idea onto a day in the calendar."
+      "dragHint": "Drag an idea onto a day in the calendar.",
+      "emptyTitle": "Save ideas any time",
+      "starters": {
+        "best": "Review this week's best-selling product",
+        "unboxing": "Payday unboxing",
+        "racun": "11.11 must-buys"
+      }
     },
     "idea": {
       "chip": "Idea",
@@ -1023,7 +1227,8 @@
       "mediaCount": "{n} media",
       "actions": "Idea options",
       "repeat": "Make it an idea again",
-      "repeated": "Added to the idea bank. Tweak it, then schedule it again."
+      "repeated": "Added to the idea bank. Tweak it, then schedule it again.",
+      "advanced": "More options"
     },
     "moments": {
       "title": "Shopping moments",
@@ -1041,7 +1246,10 @@
       "target": "Weekly target",
       "perWeek": "{n} posts",
       "saved": "Target saved.",
-      "fill": "Fill"
+      "fill": "Fill",
+      "hit": "This week's target reached 🎯",
+      "hitStreak": "This week's target reached 🎯 · {n} weeks in a row",
+      "progressNode": "{count}/{target} filled this week"
     },
     "pick": {
       "title": "Fill {date}",
@@ -1081,8 +1289,20 @@
     "edit": "Edit",
     "insert": "Add product link",
     "insertHint": "Pick a product; we'll put its short link in the caption.",
-    "insertEmpty": "No products yet. Add one in Product links first.",
-    "advanced": "Advanced options"
+    "insertEmpty": "Paste a Shopee or TikTok Shop link above and the product is added right away.",
+    "advanced": "Advanced options",
+    "pastePlaceholder": "Paste a product link…",
+    "pasteButton": "Paste",
+    "addShort": "Add",
+    "pasteInvalid": "We could not read that link. Copy the full product link, starting with https://",
+    "pasteNothing": "There is no product link in your clipboard yet. Copy it from Shopee or TikTok Shop first.",
+    "archivedToast": "Product archived",
+    "restoredToast": "Product restored",
+    "noResults": "No products found",
+    "emptyTitle": "Paste your first Shopee or TikTok Shop link",
+    "emptyBody": "The title, photo and price fill in by themselves.",
+    "unsavedHint": "You have unsaved changes",
+    "insertEmptyTitle": "No products yet"
   },
   "bio": {
     "title": "Storefront",
@@ -1129,7 +1349,38 @@
     "indexable": "Show in search engines",
     "preview": "Preview",
     "saved": "Storefront saved.",
-    "save": "Save"
+    "save": "Save",
+    "share": {
+      "button": "Share",
+      "title": "Share your Etalase",
+      "body": "Send the link, or show this QR code to your followers.",
+      "liveTitle": "Your Etalase is online!",
+      "liveBody": "Put this link in your Instagram bio.",
+      "qrAlt": "QR code for {address}",
+      "send": "Send with another app",
+      "guideTitle": "Put it in your Instagram bio",
+      "step1": "Open Instagram and tap Edit profile.",
+      "step2": "Tap Links, then Add link, and paste your Etalase link.",
+      "step3": "Save. Followers just tap the link on your profile."
+    },
+    "itemTitle": "Edit product",
+    "itemHint": "Set the label, category, pin, and whether this product is shown.",
+    "badgePlaceholder": "Example: Best seller",
+    "category": "Category",
+    "pinHint": "Pinned products appear first.",
+    "hideHint": "Hidden from your Etalase, but not deleted.",
+    "avatarDrop": "or drag a photo here",
+    "hidden": "Hidden",
+    "editItem": "Edit {title}",
+    "editItemShort": "Edit",
+    "hiddenToast": "Product hidden",
+    "removedToast": "Product removed from your Etalase",
+    "orderSaved": "Order saved",
+    "emptyTitle": "Choose products for your Etalase",
+    "emptyBody": "Products you add show up on your Etalase page, with a buy button.",
+    "pickerEmptyTitle": "No other products yet",
+    "pickerEmpty": "Paste a Shopee or TikTok Shop link above and the product is added right away.",
+    "unsavedHint": "You have unsaved changes"
   },
   "storefront": {
     "buy": "Buy",
@@ -1141,7 +1392,9 @@
     "inactive": "Storefront unavailable",
     "inactiveBody": "The owner isn't showing this storefront right now.",
     "madeWith": "made with Socialz.id",
-    "noResults": "No matching products."
+    "noResults": "No matching products.",
+    "opening": "Opening {merchant}…",
+    "createOwn": "Make your own storefront, free"
   },
   "analytics": {
     "title": "Statistics",
@@ -1177,7 +1430,13 @@
     "channel": {
       "other": "Other"
     },
-    "noPostClicks": "No clicks from posts yet. Add a product link when you create a post."
+    "noPostClicks": "No clicks from posts yet. Add a product link when you create a post.",
+    "sample": "sample",
+    "barTip": "{day}: {n} clicks",
+    "emptyTitle": "No clicks yet",
+    "emptyBody": "Clicks will show up here once your link is shared.",
+    "copyBio": "Copy Etalase link",
+    "createBio": "Create Etalase"
   },
   "autoReply": {
     "title": "Auto Reply",
@@ -1242,12 +1501,12 @@
     "testMatch": "Match! The DM would be:",
     "testNoMatch": "No match. This comment would not get a reply.",
     "activate": "Activate",
-    "saveDraft": "Save without activating",
+    "saveDraft": "Save draft",
     "saved": "Rule saved.",
     "activated": "Rule is on. The next comments get a reply right away.",
     "activityTitle": "Auto Reply activity",
     "activitySubtitle": "Who commented, and whether the DM went out.",
-    "activityEmpty": "No comments have matched your rules yet.",
+    "activityEmpty": "As soon as a comment matches your rule, the result shows up here.",
     "dmClicks": "{n} clicks from DMs (30 days)",
     "filter": {
       "all": "All",
@@ -1273,10 +1532,18 @@
       "rejected": "Instagram refused to send this DM.",
       "no_rule": "The rule was turned off or deleted."
     },
-    "deletedRule": "Deleted rule"
+    "deletedRule": "Deleted rule",
+    "toggledOn": "On! Comments with \"{keyword}\" get an automatic DM.",
+    "sparkLabel": "DMs sent in the last 7 days: {n}",
+    "popular": "Most popular",
+    "tokenHint": "Use {nama} for the follower's name and {link} for the product link.",
+    "previewTitle": "This is what your follower sees",
+    "previewKeyword": "want",
+    "previewLink": "product link",
+    "activityEmptyTitle": "No activity yet"
   },
   "billing": {
-    "title": "Plan & Billing",
+    "title": "Plan",
     "subtitle": "Pick the plan that fits. Change any time.",
     "monthly": "Monthly",
     "yearly": "Yearly",
@@ -1324,7 +1591,7 @@
     "resume": "Resume subscription",
     "resumed": "Subscription resumed.",
     "history": "Payment history",
-    "historyEmpty": "No payments yet.",
+    "historyEmpty": "No payments yet",
     "paymentStatus": {
       "pending": "Pending",
       "paid": "Paid",
@@ -1342,7 +1609,26 @@
     "selectSave": "Save choice",
     "selectUpgrade": "Upgrade to keep them all",
     "selectSaved": "Account choice saved.",
-    "testMode": "Test mode: payments are simulated and no real money moves. On the payment page you choose the outcome."
+    "testMode": "Test mode: payments are simulated and no real money moves. On the payment page you choose the outcome.",
+    "usage": {
+      "title": "Plan usage",
+      "unlimited": "Unlimited"
+    },
+    "downgrade": {
+      "unpaid": "Moved to Free on {date} because the renewal was not paid",
+      "trial_ended": "Trial ended on {date}, now on the Free plan",
+      "cancelled": "Subscription ended, moved to Free on {date}"
+    },
+    "reactivate": "Reactivate {plan}",
+    "celebrate": {
+      "title": "Welcome to {plan} ✨",
+      "body": "Every feature is unlocked.",
+      "cta": "Start using it"
+    },
+    "historyEmptyBody": "Your payments will show up here once you subscribe.",
+    "selectUsage": "{posts} upcoming posts · {rules} active rules",
+    "selectLater": "Not now",
+    "selectNow": "Choose now"
   },
   "impersonation": {
     "banner": "You are impersonating {name}. Every action is recorded.",
@@ -1383,7 +1669,8 @@
     "contactTitle": "Still stuck?",
     "contactBody": "Our team usually replies within one business day.",
     "email": "Send an email",
-    "whatsapp": "Chat on WhatsApp"
+    "whatsapp": "Chat on WhatsApp",
+    "quickStart": "Get started in 5 minutes"
   },
   "hashtags": {
     "button": "Hashtag ideas",
@@ -1474,6 +1761,77 @@
       "deleted": "Set deleted.",
       "delete": "Delete set",
       "tags": "{count} hashtags"
+    },
+    "dropTag": "Remove #{tag}",
+    "nicheHint": "Fits your niche. Tap to add to the caption."
+  },
+  "busy": {
+    "saving": "Saving…",
+    "scheduling": "Scheduling…",
+    "posting": "Posting…",
+    "publishing": "Publishing…",
+    "uploading": "Uploading {percent}%…",
+    "uploadingPlain": "Uploading…",
+    "deleting": "Deleting…",
+    "connecting": "Connecting…",
+    "sending": "Sending…",
+    "adding": "Adding…",
+    "opening": "Opening…",
+    "processing": "Processing…"
+  },
+  "undo": {
+    "restored": "Restored",
+    "tooLate": "Already done.",
+    "failed": "Couldn't undo. Please try again."
+  },
+  "notFound": {
+    "title": "This page doesn't exist",
+    "body": "The link may have a typo. Try one of these pages:"
+  },
+  "unsaved": {
+    "title": "Leave this page?",
+    "body": "Changes you haven't saved will be lost.",
+    "leave": "Leave",
+    "stay": "Stay here"
+  },
+  "onboarding": {
+    "progress": "{done}/{total} steps",
+    "doneChip": "Guide complete 🎉",
+    "steps": {
+      "accountConnected": {
+        "title": "Connect a social account",
+        "body": "Instagram, Threads or a Facebook Page."
+      },
+      "postScheduled": {
+        "title": "Schedule your first post",
+        "body": "Write once, it posts by itself. You can add product links right there."
+      },
+      "bioCreated": {
+        "title": "Build your Etalase",
+        "body": "One link for all your products."
+      },
+      "autoReplyAdded": {
+        "title": "Set up Auto Reply",
+        "body": "Someone comments 'mau' and gets a DM with your link."
+      }
     }
+  },
+  "when": {
+    "tonight": "Tonight {time}",
+    "tomorrowNoon": "Tomorrow noon {time}",
+    "tomorrowEvening": "Tomorrow evening {time}",
+    "saturday": "Saturday {time}",
+    "custom": "Pick a time…",
+    "today": "Today",
+    "tomorrow": "Tomorrow",
+    "noDate": "No date",
+    "weekday": "{day} {date}"
+  },
+  "drop": {
+    "here": "Drop photos here",
+    "pasteHint": "or paste (Ctrl/⌘+V)"
+  },
+  "shell": {
+    "mainNav": "Main menu"
   }
 }

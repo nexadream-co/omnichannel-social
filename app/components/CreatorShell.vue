@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { NavigationMenuItem } from '@nuxt/ui'
-import { CREATOR_NAV } from '#shared/utils/menus'
+import { CREATOR_NAV, type CreatorNavItem } from '#shared/utils/menus'
 
 const { t } = useI18n()
 const localePath = useLocalePath()
@@ -11,7 +11,30 @@ onMounted(() => entitlements.load())
 // Hidden when the plan already has every feature, or when this role can't buy (docs/blueprint/06 §6).
 const showUpgrade = computed(() => Boolean(entitlements.data.value) && !entitlements.hasEveryFeature.value && auth.hasAbility('billing.manage'))
 
+const canCompose = computed(() => auth.hasAbility('posts.write'))
+
 const visibleNav = computed(() => CREATOR_NAV.filter(item => !item.ability || auth.hasAbility(item.ability)))
+
+// A feature that just flipped to unlocked (after paying) shows an open lock for a moment instead of the closed one.
+const justUnlocked = ref(new Set<string>())
+watch(() => entitlements.data.value?.features, (next, prev) => {
+  if (!next || !prev) return
+  for (const item of CREATOR_NAV) {
+    if (!item.feature || prev[item.feature] || !next[item.feature]) continue
+    justUnlocked.value = new Set(justUnlocked.value).add(item.key)
+    setTimeout(() => {
+      const rest = new Set(justUnlocked.value)
+      rest.delete(item.key)
+      justUnlocked.value = rest
+    }, 1200)
+  }
+})
+
+// Plan-gated entries never hide: they show a lock and the page explains the upgrade (docs/blueprint/04 §2.2).
+function lockIcon(item: CreatorNavItem): string | undefined {
+  if (justUnlocked.value.has(item.key)) return 'i-lucide-lock-open'
+  return item.feature && entitlements.data.value && !entitlements.has(item.feature) ? 'i-lucide-lock' : undefined
+}
 
 const railItems = computed<NavigationMenuItem[]>(() => visibleNav.value
   .filter(item => item.key !== 'compose')
@@ -20,12 +43,24 @@ const railItems = computed<NavigationMenuItem[]>(() => visibleNav.value
     icon: item.icon,
     to: localePath(item.to),
     exact: item.to === '/app',
-    // Plan-gated entries never hide: they show a lock and the page explains the upgrade (docs/blueprint/04 §2.2).
-    trailingIcon: item.feature && entitlements.data.value && !entitlements.has(item.feature) ? 'i-lucide-lock' : undefined
+    trailingIcon: lockIcon(item)
   })))
 
 const bottomItems = computed(() => visibleNav.value.filter(item => item.bottomNav))
-const moreItems = computed(() => visibleNav.value.filter(item => !item.bottomNav && item.key !== 'compose'))
+const bottomLeft = computed(() => bottomItems.value.slice(0, 2))
+const bottomRight = computed(() => bottomItems.value.slice(2))
+// "Lainnya": the product tools first (Link Produk, Etalase), then the rest in rail order.
+const MORE_FIRST = ['links', 'bio']
+const moreItems = computed(() => {
+  const rest = visibleNav.value.filter(item => !item.bottomNav && !item.bottomNavCenter)
+  return [...MORE_FIRST.map(key => rest.find(item => item.key === key)).filter(item => item !== undefined), ...rest.filter(item => !MORE_FIRST.includes(item.key))]
+})
+const navColumns = computed(() => bottomItems.value.length + 1 + (canCompose.value ? 1 : 0))
+
+// Focus mode: a page with a sticky action bar hides the phone bottom nav (StickyActionBar counts itself in).
+const actionBars = useState<number>('shell:actionBars', () => 0)
+// Phone navbar shows the page title once the page's own heading has scrolled away (CommandBar sets it).
+const pageTitle = useState<{ title: string, visible: boolean }>('shell:pageTitle', () => ({ title: '', visible: true }))
 const moreOpen = ref(false)
 watch(() => route.fullPath, () => {
   moreOpen.value = false
@@ -35,8 +70,6 @@ function isActive(to: string) {
   const target = localePath(to)
   return to === '/app' ? route.path === target : route.path.startsWith(target)
 }
-
-const canCompose = computed(() => auth.hasAbility('posts.write'))
 </script>
 
 <template>
@@ -80,26 +113,40 @@ const canCompose = computed(() => auth.hasAbility('posts.write'))
       </template>
 
       <template #footer="{ collapsed }">
-        <UButton
+        <UTooltip
           v-if="showUpgrade"
-          :to="localePath('/app/billing')"
-          icon="i-lucide-sparkles"
-          :label="collapsed ? undefined : t('upgrade.rail')"
-          variant="soft"
-          :square="collapsed"
-          block
-          class="justify-start"
-        />
-        <UButton
-          :to="localePath('/app/help')"
-          icon="i-lucide-life-buoy"
-          :label="collapsed ? undefined : t('nav.help')"
-          color="neutral"
-          variant="ghost"
-          :square="collapsed"
-          block
-          class="justify-start"
-        />
+          :text="t('upgrade.rail')"
+          :disabled="!collapsed"
+          :content="{ side: 'right' }"
+        >
+          <UButton
+            :to="localePath('/app/billing')"
+            icon="i-lucide-sparkles"
+            :label="collapsed ? undefined : t('upgrade.rail')"
+            :aria-label="t('upgrade.rail')"
+            variant="soft"
+            :square="collapsed"
+            block
+            class="justify-start"
+          />
+        </UTooltip>
+        <UTooltip
+          :text="t('nav.help')"
+          :disabled="!collapsed"
+          :content="{ side: 'right' }"
+        >
+          <UButton
+            :to="localePath('/app/help')"
+            icon="i-lucide-life-buoy"
+            :label="collapsed ? undefined : t('nav.help')"
+            :aria-label="t('nav.help')"
+            color="neutral"
+            variant="ghost"
+            :square="collapsed"
+            block
+            class="justify-start"
+          />
+        </UTooltip>
         <UDashboardSidebarCollapse />
       </template>
     </UDashboardSidebar>
@@ -114,12 +161,20 @@ const canCompose = computed(() => auth.hasAbility('posts.write'))
           :ui="{ right: 'gap-1' }"
         >
           <template #left>
-            <NuxtLink
-              :to="localePath('/app')"
-              class="font-bold text-primary lg:hidden"
-            >
-              {{ t('app.name') }}
-            </NuxtLink>
+            <div class="flex min-w-0 items-center gap-2 lg:hidden">
+              <NuxtLink
+                :to="localePath('/app')"
+                class="font-bold text-primary shrink-0"
+              >
+                {{ t('app.name') }}
+              </NuxtLink>
+              <Transition name="fade">
+                <span
+                  v-if="pageTitle.title && !pageTitle.visible"
+                  class="truncate border-l border-default pl-2 text-sm font-semibold text-highlighted"
+                >{{ pageTitle.title }}</span>
+              </Transition>
+            </div>
           </template>
           <template #right>
             <NotificationMenu audience="creator" />
@@ -135,11 +190,18 @@ const canCompose = computed(() => auth.hasAbility('posts.write'))
       </template>
     </UDashboardPanel>
 
-    <!-- Phone: bottom nav + floating compose button (docs/blueprint/13 §5) -->
-    <nav class="lg:hidden fixed inset-x-0 bottom-0 z-40 border-t border-default bg-default/95 backdrop-blur pb-[env(safe-area-inset-bottom)]">
-      <ul class="grid grid-cols-5">
+    <!-- Phone: bottom nav with a raised "Buat" in the centre (docs/blueprint/13 §5) -->
+    <nav
+      v-show="actionBars === 0"
+      class="lg:hidden fixed inset-x-0 bottom-0 z-40 border-t border-default bg-default/95 backdrop-blur pb-[env(safe-area-inset-bottom)]"
+      :aria-label="t('shell.mainNav')"
+    >
+      <ul
+        class="grid"
+        :style="{ gridTemplateColumns: `repeat(${navColumns}, minmax(0, 1fr))` }"
+      >
         <li
-          v-for="item in bottomItems"
+          v-for="item in bottomLeft"
           :key="item.key"
         >
           <NuxtLink
@@ -150,6 +212,41 @@ const canCompose = computed(() => auth.hasAbility('posts.write'))
             <UIcon
               :name="item.icon"
               class="size-5"
+              :class="isActive(item.to) ? 'motion-safe:animate-nav-pop' : ''"
+            />
+            <span class="truncate max-w-full px-1">{{ t(item.labelKey) }}</span>
+          </NuxtLink>
+        </li>
+        <li v-if="canCompose">
+          <NuxtLink
+            :to="localePath('/app/compose')"
+            class="flex flex-col items-center gap-0.5 pb-2 text-xs"
+            :class="isActive('/app/compose') ? 'text-primary' : 'text-muted'"
+            :aria-label="t('nav.compose')"
+          >
+            <span class="-mt-5 grid size-14 place-items-center rounded-full bg-primary text-inverted shadow-lg ring-4 ring-(--ui-bg)">
+              <UIcon
+                name="i-lucide-plus"
+                class="size-6"
+                :class="isActive('/app/compose') ? 'motion-safe:animate-nav-pop' : ''"
+              />
+            </span>
+            <span class="font-medium">{{ t('nav.create') }}</span>
+          </NuxtLink>
+        </li>
+        <li
+          v-for="item in bottomRight"
+          :key="item.key"
+        >
+          <NuxtLink
+            :to="localePath(item.to)"
+            class="flex flex-col items-center gap-0.5 py-2 text-xs"
+            :class="isActive(item.to) ? 'text-primary' : 'text-muted'"
+          >
+            <UIcon
+              :name="item.icon"
+              class="size-5"
+              :class="isActive(item.to) ? 'motion-safe:animate-nav-pop' : ''"
             />
             <span class="truncate max-w-full px-1">{{ t(item.labelKey) }}</span>
           </NuxtLink>
@@ -169,34 +266,33 @@ const canCompose = computed(() => auth.hasAbility('posts.write'))
         </li>
       </ul>
     </nav>
-    <UButton
-      v-if="canCompose && !isActive('/app/compose')"
-      :to="localePath('/app/compose')"
-      icon="i-lucide-plus"
-      size="xl"
-      class="lg:hidden fixed right-4 bottom-20 z-40 rounded-full shadow-lg"
-      :aria-label="t('nav.compose')"
-    />
     <UDrawer
       v-model:open="moreOpen"
       :title="t('nav.more')"
     >
       <template #body>
-        <ul class="space-y-1">
+        <ul class="grid grid-cols-3 gap-2">
           <li
             v-for="item in moreItems"
             :key="item.key"
           >
-            <UButton
+            <NuxtLink
               :to="localePath(item.to)"
-              :icon="item.icon"
-              :label="t(item.labelKey)"
-              color="neutral"
-              variant="ghost"
-              block
-              class="justify-start"
-              size="lg"
-            />
+              class="relative flex min-h-16 flex-col items-center justify-center gap-1.5 rounded-lg border border-default p-2 text-center text-xs text-highlighted motion-safe:transition-colors hover:bg-elevated/60 active:bg-elevated"
+            >
+              <UIcon
+                :name="item.icon"
+                class="size-6 text-primary"
+              />
+              <span class="max-w-full break-words">{{ t(item.labelKey) }}</span>
+              <Transition name="fade">
+                <UIcon
+                  v-if="lockIcon(item)"
+                  :name="lockIcon(item)!"
+                  class="absolute right-1.5 top-1.5 size-3.5 text-muted"
+                />
+              </Transition>
+            </NuxtLink>
           </li>
         </ul>
       </template>

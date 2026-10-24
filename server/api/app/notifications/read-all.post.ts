@@ -1,6 +1,7 @@
-import { markAllNotificationsRead } from '../../../core/notifications'
+import { markAllNotificationsRead, readAllSchema } from '../../../core/notifications'
 
 export default defineEventHandler(async (event) => {
   const ctx = await requireWorkspaceContext(event)
-  return { updated: await markAllNotificationsRead(ctx.db, { audience: 'creator', userId: ctx.access.user.id, workspaceId: ctx.workspaceId }) }
+  const { before } = parseOrThrow(readAllSchema, await readBody(event).catch(() => undefined) ?? {})
+  return { updated: await markAllNotificationsRead(ctx.db, { audience: 'creator', userId: ctx.access.user.id, workspaceId: ctx.workspaceId }, before) }
 })

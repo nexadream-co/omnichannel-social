@@ -85,18 +85,13 @@ function reason(row: ActivityRow) {
         class="h-16 w-full"
       />
     </div>
-    <UCard
+    <EmptyState
       v-else-if="!data.items.length"
-      class="text-center"
-    >
-      <UIcon
-        name="i-lucide-inbox"
-        class="size-8 text-muted mx-auto"
-      />
-      <p class="mt-3 text-muted">
-        {{ t('autoReply.activityEmpty') }}
-      </p>
-    </UCard>
+      icon="i-lucide-inbox"
+      :title="t('autoReply.activityEmptyTitle')"
+      :description="t('autoReply.activityEmpty')"
+      :action="{ label: t('autoReply.title'), icon: 'i-lucide-message-circle-reply', to: localePath('/app/auto-reply') }"
+    />
     <UCard
       v-else
       :ui="{ body: 'p-0 sm:p-0' }"

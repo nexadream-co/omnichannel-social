@@ -6,6 +6,7 @@ export const facebook: ChannelCapabilities = {
   platform: 'facebook',
   formats: ['text', 'feed', 'carousel', 'reel'],
   maxChars: 63206,
+  previewCaptionCutoff: 480,
   linkMode: 'clickable',
   media: {
     text: { kinds: [], minItems: 0, maxItems: 0 },

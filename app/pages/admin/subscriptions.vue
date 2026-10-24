@@ -55,7 +55,7 @@ const dates = (row: Row) => [
       />
     </div>
     <UCard :ui="{ body: 'p-0 sm:p-0' }">
-      <UTable
+      <AdminTable
         :data="list.items.value"
         :columns="columns"
         :loading="list.status.value === 'loading'"
@@ -87,7 +87,7 @@ const dates = (row: Row) => [
         <template #updatedAt-cell="{ row }">
           <span class="whitespace-nowrap">{{ formatDateTime(row.original.updatedAt) }}</span>
         </template>
-      </UTable>
+      </AdminTable>
     </UCard>
     <div
       v-if="list.pageCount.value > 1"

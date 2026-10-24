@@ -2,6 +2,7 @@ import Konva from 'konva'
 import type { Crop, Layer } from '#shared/media/edit-spec'
 import { stickerById, TEXT_FONT_META } from '#shared/media/presets'
 import type { Size } from './layout'
+import { haptic } from '../haptics'
 import { loadImage } from './render'
 
 export interface OverlayCallbacks {
@@ -14,6 +15,14 @@ export interface OverlayCallbacks {
 
 const CORNERS = ['top-left', 'top-right', 'bottom-left', 'bottom-right']
 const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v))
+const SNAP_PX = 6
+
+/** The guide (centre or a third of the frame) within reach of a position, if any. */
+export function snapTo(value: number, size: number, threshold = SNAP_PX): number | null {
+  const guides = [size / 3, size / 2, (size * 2) / 3]
+  const hit = guides.find(g => Math.abs(value - g) <= threshold)
+  return hit ?? null
+}
 
 function isLight(hex: string) {
   const n = Number.parseInt(hex.slice(1), 16)
@@ -153,6 +162,11 @@ export class EditorOverlay {
     if (layer.type === 'watermark') group.opacity(layer.opacity)
     group.dragBoundFunc(pos => ({ x: clamp(pos.x, 0, F.width), y: clamp(pos.y, 0, F.height) }))
     group.on('pointerdown', () => this.select(layer.id))
+    group.on('dragmove', () => this.snap(group))
+    group.on('dragend', () => {
+      this.clearGuides()
+      this.snapKey = ''
+    })
     group.on('dbltap dblclick', () => layer.type === 'text' && this.cb.onEditText(layer.id))
     group.on('dragend transformend', () => {
       this.cb.onLayerChange({
@@ -164,6 +178,34 @@ export class EditorOverlay {
       })
     })
     return group
+  }
+
+  private guides: Konva.Line[] = []
+  private snapKey = ''
+
+  /** Pulls the layer's centre onto the frame's centre and thirds when it comes within a few pixels, and shows the line. */
+  private snap(group: Konva.Group) {
+    const F = this.frame
+    const x = snapTo(group.x(), F.width)
+    const y = snapTo(group.y(), F.height)
+    if (x !== null) group.x(x)
+    if (y !== null) group.y(y)
+    this.clearGuides()
+    const line = (points: number[]) => {
+      const guide = new Konva.Line({ points, stroke: '#e6114f', strokeWidth: 1, dash: [4, 4], listening: false })
+      this.ui.add(guide)
+      this.guides.push(guide)
+    }
+    if (x !== null) line([x, 0, x, F.height])
+    if (y !== null) line([0, y, F.width, y])
+    const key = `${x ?? ''}|${y ?? ''}`
+    if (key !== this.snapKey && key !== '|') haptic('tick')
+    this.snapKey = key
+  }
+
+  private clearGuides() {
+    for (const guide of this.guides) guide.destroy()
+    this.guides = []
   }
 
   private textBody(layer: Extract<Layer, { type: 'text' }>) {

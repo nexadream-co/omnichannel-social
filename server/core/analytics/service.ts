@@ -1,9 +1,11 @@
-import { and, desc, eq, gte, lt, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, gte, lt, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import { assertAbility, type WorkspaceContext } from '../context'
-import { dmEvents, linkClicks, links, posts, postTargets, shortLinks, socialAccounts, workspaces } from '../db/schema'
+import { bioPages, dmEvents, linkClicks, links, posts, postTargets, shortLinks, socialAccounts, workspaces } from '../db/schema'
 import { getEntitlements } from '../entitlements'
 import { appError } from '../errors'
+import { bioUrl } from '../links/service'
+import { OVERDUE_GRACE_MS } from '../../../shared/utils/overdue'
 
 export const analyticsQuerySchema = z.object({ days: z.coerce.number().int().refine(v => [7, 30, 90].includes(v)).default(7) })
 
@@ -69,18 +71,33 @@ export async function linkAnalytics(ctx: WorkspaceContext, linkId: string, query
   return { window: { days: window.days, requestedDays: window.requestedDays, clamped: window.clamped, today: window.today }, totals: totals ?? { clicks: 0, uniques: 0 }, daily, bySource, devices, cities }
 }
 
-/** Beranda numbers (docs/SCREENS.md #12): last 7 days, plus accounts that need a reconnect. */
+/** Beranda numbers (docs/SCREENS.md #12): last 7 days, all-time clicks for round numbers, the first published post, and what needs a fix. */
 export async function homeSummary(ctx: WorkspaceContext) {
   assertAbility(ctx, 'analytics.read')
   const since = new Date(Date.now() - 7 * 86_400_000)
   const where = human(ctx, since, new Date())
-  const [[clicks], topProducts, [dms], [reauth]] = await Promise.all([
+  const overdueBefore = new Date(Date.now() - OVERDUE_GRACE_MS)
+  const [[clicks], [clicksAll], topProducts, [dms], [reauth], [first], [bio], [overdue]] = await Promise.all([
     ctx.db.select({ n: sql<number>`count(*)::int` }).from(linkClicks).where(where),
+    ctx.db.select({ n: sql<number>`count(*)::int` }).from(linkClicks).where(and(eq(linkClicks.workspaceId, ctx.workspaceId), eq(linkClicks.isBot, false))),
     ctx.db.select({ linkId: links.id, title: links.title, imageUrl: links.imageUrl, clicks: sql<number>`count(*)::int` })
       .from(linkClicks).innerJoin(shortLinks, eq(shortLinks.id, linkClicks.shortLinkId)).innerJoin(links, eq(links.id, shortLinks.linkId))
       .where(where).groupBy(links.id).orderBy(desc(sql`count(*)`)).limit(3),
     ctx.db.select({ n: sql<number>`count(*)::int` }).from(dmEvents).where(and(eq(dmEvents.workspaceId, ctx.workspaceId), eq(dmEvents.status, 'dm_sent'), gte(dmEvents.updatedAt, since))),
-    ctx.db.select({ n: sql<number>`count(*)::int` }).from(socialAccounts).where(and(eq(socialAccounts.workspaceId, ctx.workspaceId), eq(socialAccounts.status, 'needs_reauth')))
+    ctx.db.select({ n: sql<number>`count(*)::int` }).from(socialAccounts).where(and(eq(socialAccounts.workspaceId, ctx.workspaceId), eq(socialAccounts.status, 'needs_reauth'))),
+    ctx.db.select({ postId: postTargets.postId, platform: postTargets.platform, permalink: postTargets.permalink, publishedAt: postTargets.publishedAt }).from(postTargets)
+      .where(and(eq(postTargets.workspaceId, ctx.workspaceId), eq(postTargets.status, 'published'), sql`${postTargets.publishedAt} is not null`)).orderBy(asc(postTargets.publishedAt)).limit(1),
+    ctx.db.select({ handle: bioPages.handle }).from(bioPages).where(and(eq(bioPages.workspaceId, ctx.workspaceId), eq(bioPages.published, true))).limit(1),
+    ctx.db.select({ n: sql<number>`count(*)::int` }).from(posts).where(and(eq(posts.workspaceId, ctx.workspaceId), eq(posts.status, 'scheduled'), lt(posts.scheduledAt, overdueBefore)))
   ])
-  return { clicks7d: clicks?.n ?? 0, autoReplies7d: dms?.n ?? 0, topProducts, needsReauth: reauth?.n ?? 0 }
+  return {
+    clicks7d: clicks?.n ?? 0,
+    clicksTotal: clicksAll?.n ?? 0,
+    autoReplies7d: dms?.n ?? 0,
+    topProducts,
+    needsReauth: reauth?.n ?? 0,
+    firstPublished: first ? { postId: first.postId, platform: first.platform, permalink: first.permalink, publishedAt: first.publishedAt } : null,
+    bioUrl: bio ? bioUrl(bio.handle) : null,
+    overdueCount: overdue?.n ?? 0
+  }
 }

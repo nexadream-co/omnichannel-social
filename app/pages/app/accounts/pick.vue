@@ -34,8 +34,8 @@ async function save() {
   saving.value = true
   try {
     const result = await apiFetch<{ connected: number }>(`/api/app/channels/sessions/${encodeURIComponent(sessionId)}`, { method: 'POST', body: { externalIds: selected.value } })
-    toast.add({ title: t('accounts.connected', { count: result.connected, platform: PLATFORM_META[session.value!.platform].name }), color: 'success' })
-    await navigateTo(localePath('/app/accounts'))
+    // The accounts page shows the success toast and the first-account celebration from these params.
+    await navigateTo({ path: localePath('/app/accounts'), query: { connected: String(result.connected), platform: session.value!.platform } })
   } catch (caught) {
     toast.add({ title: extractErrorMessage(caught, t('accounts.error.unknown')), color: 'error' })
   } finally {

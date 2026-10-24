@@ -54,7 +54,7 @@ const detail = ref<Row | null>(null)
       />
     </div>
     <UCard :ui="{ body: 'p-0 sm:p-0' }">
-      <UTable
+      <AdminTable
         :data="list.items.value"
         :columns="columns"
         :loading="list.status.value === 'loading'"
@@ -103,7 +103,7 @@ const detail = ref<Row | null>(null)
             @click="detail = row.original"
           />
         </template>
-      </UTable>
+      </AdminTable>
     </UCard>
     <div
       v-if="list.pageCount.value > 1"

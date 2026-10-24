@@ -25,6 +25,9 @@ const stats = ref<Stats | null>(null)
 const days = ref<7 | 30 | 90>(7)
 const form = reactive({ title: '', priceIdr: null as number | null })
 const saving = ref(false)
+const pop = useCheckPop()
+const dirty = computed(() => Boolean(link.value) && (form.title !== (link.value!.title ?? '') || (form.priceIdr ?? null) !== (link.value!.priceIdr ?? null)))
+useUnsavedChanges(dirty)
 
 async function loadStats() {
   stats.value = await apiFetch<Stats>(`/api/app/links/${id}/stats`, { query: { days: days.value } })
@@ -40,16 +43,12 @@ async function save() {
   saving.value = true
   try {
     link.value = await apiFetch<LinkRow>(`/api/app/links/${id}`, { method: 'PATCH', body: { title: form.title || null, priceIdr: form.priceIdr || null } })
-    toast.add({ title: t('links.saved'), color: 'success' })
+    pop.trigger()
   } catch (caught) {
     toast.add({ title: extractErrorMessage(caught, t('authError.generic')), color: 'error' })
   } finally {
     saving.value = false
   }
-}
-
-async function copy() {
-  if (link.value?.shortUrl && await copyText(link.value.shortUrl)) toast.add({ title: t('links.copied'), color: 'success' })
 }
 
 function sourceLabel(row: { source: string, channel: string | null }) {
@@ -60,18 +59,18 @@ const ranges = computed(() => ([7, 30, 90] as const).map(value => ({ value, labe
 </script>
 
 <template>
-  <div class="w-full max-w-3xl mx-auto space-y-5">
+  <div class="w-full max-w-3xl mx-auto space-y-5 pb-20 lg:pb-0">
     <CommandBar :title="t('links.stats')" />
     <UCard v-if="link">
       <div class="flex gap-4">
-        <div class="size-20 shrink-0 rounded-md overflow-hidden bg-elevated">
-          <img
-            v-if="link.imageUrl"
-            :src="link.imageUrl"
-            alt=""
-            class="size-full object-cover"
-          >
-        </div>
+        <SmartImage
+          :src="link.imageUrl"
+          :title="link.title"
+          :alt="link.title ?? ''"
+          :merchant="link.merchant"
+          kind="product"
+          class="size-20 shrink-0 rounded-md"
+        />
         <div class="min-w-0 flex-1 space-y-1">
           <span
             class="text-xs font-medium px-1.5 py-0.5 rounded text-white"
@@ -86,10 +85,12 @@ const ranges = computed(() => ([7, 30, 90] as const).map(value => ({ value, labe
         </div>
       </div>
       <div class="flex flex-wrap gap-2 mt-4">
-        <UButton
-          icon="i-lucide-copy"
+        <CopyButton
+          v-if="link.shortUrl"
+          :text="link.shortUrl"
           :label="t('links.copy')"
-          @click="copy"
+          color="primary"
+          variant="solid"
         />
         <UButton
           icon="i-lucide-qr-code"
@@ -100,7 +101,7 @@ const ranges = computed(() => ([7, 30, 90] as const).map(value => ({ value, labe
       </div>
       <USeparator class="my-4" />
       <form
-        class="grid sm:grid-cols-[1fr_12rem_auto] gap-3 items-end"
+        class="grid sm:grid-cols-[1fr_12rem] gap-3"
         @submit.prevent="save"
       >
         <UFormField :label="t('links.productTitle')">
@@ -110,18 +111,15 @@ const ranges = computed(() => ([7, 30, 90] as const).map(value => ({ value, labe
           />
         </UFormField>
         <UFormField :label="t('links.price')">
-          <UInputNumber
-            v-model="form.priceIdr"
-            :min="0"
-            :step="1000"
-            class="w-full"
-          />
+          <LinkPriceInput v-model="form.priceIdr" />
         </UFormField>
-        <UButton
+        <button
           type="submit"
-          :loading="saving"
-          :label="t('bio.save')"
-        />
+          class="sr-only"
+          tabindex="-1"
+        >
+          {{ t('common.save') }}
+        </button>
       </form>
     </UCard>
 
@@ -202,5 +200,17 @@ const ranges = computed(() => ([7, 30, 90] as const).map(value => ({ value, labe
         </div>
       </div>
     </UCard>
+
+    <StickyActionBar v-if="link && (dirty || pop.done.value)">
+      <template #leading>
+        {{ dirty ? t('links.unsavedHint') : '' }}
+      </template>
+      <SaveButton
+        :loading="saving"
+        :done="pop.done.value"
+        :busy-label="t('busy.saving')"
+        @click="save"
+      />
+    </StickyActionBar>
   </div>
 </template>

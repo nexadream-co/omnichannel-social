@@ -66,12 +66,10 @@ async function onSubmit() {
           name="password"
           :hint="t('auth.passwordHint')"
         >
-          <UInput
+          <AuthPasswordInput
             v-model="state.password"
-            type="password"
             autocomplete="new-password"
-            class="w-full"
-            size="lg"
+            meter
           />
         </UFormField>
         <UButton

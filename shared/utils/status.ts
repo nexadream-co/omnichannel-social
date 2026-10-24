@@ -44,7 +44,9 @@ export const POST_STATUS_META: Record<string, StatusMeta> = {
   published: { labelKey: 'status.post.published', color: 'success' },
   partial: { labelKey: 'status.post.partial', color: 'warning' },
   failed: { labelKey: 'status.post.failed', color: 'error' },
-  cancelled: { labelKey: 'status.post.cancelled', color: 'neutral' }
+  cancelled: { labelKey: 'status.post.cancelled', color: 'neutral' },
+  // Not a stored status: a scheduled post that missed its time (shared/utils/overdue.ts).
+  overdue: { labelKey: 'status.post.overdue', color: 'warning' }
 }
 
 /** Creators see five words: Draf, Terjadwal, Diproses, Terbit, Gagal (docs/SCREENS.md §I). */

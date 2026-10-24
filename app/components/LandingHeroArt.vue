@@ -99,16 +99,28 @@ const BARS = [35, 55, 45, 70, 100]
       </div>
     </div>
 
-    <!-- A buyer's comment, answered by itself -->
+    <!-- A buyer's comment, answered by itself: comment, then the DM with the link, then a click (loops every 6 s) -->
     <div
-      class="art-float absolute top-[42%] right-0 w-[46%] rounded-xl border border-default bg-default p-2.5 shadow-lg"
+      class="art-float absolute top-[38%] right-0 w-[48%] rounded-xl border border-default bg-default p-2.5 shadow-lg"
       style="animation-delay: -2.5s"
     >
       <div class="flex items-center gap-1.5">
         <span class="size-4 shrink-0 rounded-full bg-sky-300" />
-        <span class="rounded-xl rounded-tl-sm bg-elevated px-2 py-0.5 text-[10px] text-default">{{ t('landing.art.hero.comment') }}</span>
+        <span class="hero-step hero-step-1 rounded-xl rounded-tl-sm bg-elevated px-2 py-0.5 text-[10px] text-default">{{ t('landing.art.hero.comment') }}</span>
       </div>
-      <p class="mt-1.5 flex items-center gap-1 text-[10px] font-semibold art-ok">
+      <div class="hero-step hero-step-2 mt-1.5 ml-auto w-[88%] rounded-xl rounded-tr-sm bg-primary/10 px-2 py-1">
+        <p class="text-[10px] text-default">
+          {{ t('landing.art.hero.dm') }}
+        </p>
+        <p class="mt-0.5 flex items-center gap-1 text-[10px] font-semibold art-ink">
+          <UIcon
+            name="i-lucide-link"
+            class="size-3 shrink-0"
+          />
+          {{ t('landing.art.hero.link') }}
+        </p>
+      </div>
+      <p class="hero-step hero-step-2 mt-1.5 flex items-center gap-1 text-[10px] font-semibold art-ok">
         <UIcon
           name="i-lucide-check-check"
           class="size-3.5 shrink-0"
@@ -128,6 +140,7 @@ const BARS = [35, 55, 45, 70, 100]
           class="size-3.5 art-ink"
         />
         <span class="text-[11px] font-semibold text-highlighted">{{ t('landing.art.hero.etalase') }}</span>
+        <span class="hero-step hero-step-3 ml-auto rounded-full art-chip px-1.5 py-0.5 text-[9px] font-bold">{{ t('landing.art.hero.click') }}</span>
       </div>
       <div class="mt-1.5 flex items-end gap-2">
         <div class="flex h-6 flex-1 items-end gap-0.5">
@@ -146,3 +159,37 @@ const BARS = [35, 55, 45, 70, 100]
     </div>
   </div>
 </template>
+
+<style scoped>
+/* Without motion every step simply sits in its final frame. */
+@media (prefers-reduced-motion: no-preference) {
+  .hero-step { animation-duration: 6s; animation-timing-function: ease-out; animation-iteration-count: infinite; animation-fill-mode: both; }
+  .hero-step-1 { animation-name: hero-step-1; transform-origin: left center; }
+  .hero-step-2 { animation-name: hero-step-2; transform-origin: right center; }
+  .hero-step-3 { animation-name: hero-step-3; transform-origin: right center; }
+}
+
+@keyframes hero-step-1 {
+  0%, 4% { opacity: 0; transform: translateY(6px) scale(0.85); }
+  10% { opacity: 1; transform: translateY(0) scale(1.06); }
+  14% { opacity: 1; transform: translateY(0) scale(1); }
+  92% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes hero-step-2 {
+  0%, 26% { opacity: 0; transform: translateY(6px) scale(0.85); }
+  32% { opacity: 1; transform: translateY(0) scale(1.06); }
+  36% { opacity: 1; transform: translateY(0) scale(1); }
+  92% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes hero-step-3 {
+  0%, 50% { opacity: 0; transform: translateY(6px) scale(0.85); }
+  56% { opacity: 1; transform: translateY(0) scale(1.06); }
+  60% { opacity: 1; transform: translateY(0) scale(1); }
+  92% { opacity: 1; }
+  100% { opacity: 0; }
+}
+</style>
