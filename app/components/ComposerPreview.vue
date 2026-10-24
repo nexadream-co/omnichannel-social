@@ -81,11 +81,14 @@ const dots = computed(() => current.value && current.value.format === 'carousel'
         class="relative bg-elevated mx-auto max-h-[28rem]"
         :style="{ aspectRatio: String(ratio) }"
       >
-        <SmartImage
-          :src="cover!.previewUrl ?? cover!.posterUrl"
-          kind="media"
-          class="absolute inset-0"
-        />
+        <!-- SmartImage's root is `relative` with size containment, so it gets its size from this wrapper. -->
+        <div class="absolute inset-0">
+          <SmartImage
+            :src="cover!.previewUrl ?? cover!.posterUrl"
+            kind="media"
+            class="size-full"
+          />
+        </div>
         <UIcon
           v-if="cover!.kind === 'video'"
           name="i-lucide-play"
