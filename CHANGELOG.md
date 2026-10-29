@@ -2,6 +2,7 @@
 
 ## 0.1.0 (Draft)
 
+- `vercel.json` no longer declares the per-minute tick cron, which Vercel Hobby rejects (daily crons only): on Vercel the tick comes from an external pinger (`GET /api/internal/tick` with `Authorization: Bearer $CRON_SECRET`).
 - Vercel deploys no longer fail with `unused_function`: the 60 s function time limit moves from `vercel.json` to `nuxt.config.ts` (`nitro.vercel.functions.maxDuration`), where Nitro's Vercel output picks it up.
 - Media can live in a public Vercel Blob store instead of R2: setting `BLOB_READ_WRITE_TOKEN` (and `BLOB_STORE_ID`) switches storage over, and `STORAGE_DRIVER` forces one. Direct uploads from the browser and the media processor now receive the headers to send along with the upload URL (`uploadHeaders`, `overlayUploadHeaders`, `putHeaders`); R2 sends none. The Etalase image policy follows the active store's host.
 - `npm run build` now migrates the database after `nuxt build` (`npm run db:deploy`) and runs the seed by itself on a fresh database (no staff user yet); a live database is never re-seeded. `SKIP_DB_DEPLOY=1` builds without a database (CI preset builds, Docker images). `vercel.json` moves to the repo root with the per-minute tick cron, and only the `main` and `staging` branches deploy on Vercel.

@@ -8,8 +8,5 @@
       "main": true,
       "staging": true
     }
-  },
-  "crons": [
-    { "path": "/api/internal/tick", "schedule": "* * * * *" }
-  ]
+  }
 }

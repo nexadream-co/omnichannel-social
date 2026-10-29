@@ -207,7 +207,7 @@ Environment variables: `.env.production.example` (generate secrets with `openssl
 | Any VPS / Docker host | `node-server` | `tick` service in `deploy/docker/compose.yml` + external pinger | Same compose |
 | Google Cloud Run | `node-server` (container) | Cloud Scheduler | Cloud Run service |
 | AWS Lambda | `aws-lambda` | EventBridge Scheduler | Lambda container image or Fargate |
-| Vercel (Pro: per-minute cron) | `vercel` | Vercel Cron from `vercel.json` at the repo root (only `main` and `staging` deploy) | External container host |
+| Vercel | `vercel` | External pinger (Hobby allows only daily crons; on Pro, Vercel Cron in `vercel.json` also works) | External container host |
 
 ### Release order
 
