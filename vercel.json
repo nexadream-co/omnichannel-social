@@ -11,8 +11,5 @@
   },
   "crons": [
     { "path": "/api/internal/tick", "schedule": "* * * * *" }
-  ],
-  "functions": {
-    "api/**": { "maxDuration": 60 }
-  }
+  ]
 }

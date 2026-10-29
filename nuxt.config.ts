@@ -49,7 +49,9 @@ export default defineNuxtConfig({
   compatibilityDate: '2026-10-01',
   nitro: {
     // The host is chosen at build time with NITRO_PRESET (docs/blueprint/19 §4).
-    experimental: { asyncContext: false }
+    experimental: { asyncContext: false },
+    // Read only by the vercel preset: one tick may work for JOBS_TIME_BUDGET_MS (45 s), so allow 60 s.
+    vercel: { functions: { maxDuration: 60 } }
   },
   vite: {
     // Dev only: lets an https tunnel set as NUXT_PUBLIC_SITE_URL reach the dev server (Meta login needs https callbacks).
