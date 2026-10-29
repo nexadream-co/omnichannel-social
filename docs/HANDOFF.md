@@ -94,7 +94,7 @@ The original generic blueprint the platform docs were adapted from is at `~/Down
 ## 6. Next steps
 
 1. User provides §5 items → create Neon branches, R2, Resend, Cloudflare zones (transform rule from `deploy/README.md`).
-2. Deploy staging with the chosen `deploy/<target>/` (the media processor **before** the app; give the R2 media domain a CORS rule allowing `GET` from the app origin, which the photo editor needs to draw on a canvas); run `npm run db:migrate` (direct URL) and `npm run db:seed` once; set the per-minute tick + a backup pinger; check `/healthz`.
+2. Deploy staging with the chosen `deploy/<target>/` (the media processor **before** the app; give the R2 media domain a CORS rule allowing `GET` from the app origin, which the photo editor needs to draw on a canvas); give the build `DATABASE_URL_DIRECT` and `SEED_SUPERADMIN_*` (`npm run build` migrates and seeds the fresh database itself); set the per-minute tick + a backup pinger; check `/healthz`.
 3. Configure `/admin`: settings, payment gateway, legal pages, staff. Run the hub end-to-end test from `blueprint/17` Phase 11 against the real hub with a low-price plan.
 4. Meta App Review submissions with the staging build (screencasts of connect → publish → comment-to-DM). Include `threads_keyword_search` (tag research); after approval turn on `channels.hashtags.threadsSearchEnabled` in `/admin/settings` and ask Threads users to reconnect.
 5. Content planner, remaining ideas (`ARCHITECTURE` §8.8 "Later"): plan with the user before building.

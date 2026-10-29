@@ -41,7 +41,7 @@ Every target, whatever the host, provides the same six things:
 
 | # | Requirement | Notes |
 |---|---|---|
-| 1 | Build with `NITRO_PRESET=<preset> npm run build` | Preset per §4. The build never runs migrations |
+| 1 | Build with `NITRO_PRESET=<preset> npm run build` | Preset per §4. The build then runs `db:deploy`: migrations, plus the seed on a fresh database |
 | 2 | Env vars from `01` §5 | Secrets in the host's secret store |
 | 3 | Custom domains: `socialz.id` and `SHORT_DOMAIN` attached to the app | Cloudflare proxies both (§7) |
 | 4 | **One cron entry**: every minute → `GET https://socialz.id/api/internal/tick` with `Authorization: Bearer $CRON_SECRET` | From the host's cron or an external pinger (§4) |
@@ -51,8 +51,8 @@ Every target, whatever the host, provides the same six things:
 **Release order** (CI, host-independent):
 
 1. `npm run lint && npm run typecheck && npm test`.
-2. `npm run db:migrate` against `DATABASE_URL_DIRECT` (CI secret; the direct URL is never given to the functions).
-3. Reference data travels **inside migrations** (`02` §5), so a release never needs the seed. The seed (`npm run db:seed`) runs only once, to bootstrap a fresh environment, because re-running it would overwrite admin edits.
+2. `npm run build` migrates against `DATABASE_URL_DIRECT` after `nuxt build` (a build-time secret; the direct URL is never given to the functions). A session advisory lock serialises concurrent builds on one database.
+3. Reference data travels **inside migrations** (`02` §5), so a release never needs the seed. The build runs the seed only on a fresh environment (no staff user yet), because re-running it would overwrite admin edits.
 4. Deploy the functions with the host's CLI or Git integration.
 5. Smoke check `/healthz`.
 
@@ -74,7 +74,7 @@ Tier 1 = verified in CI or staging. Tier 2 = expected to work, verified in a spi
 
 **External pinger** (works with every target): any HTTP cron service that runs every minute and sends a custom header (for example cron-job.org or an uptime monitor with headers). Keep a second pinger as a backup: ticks are idempotent, so two sources are harmless.
 
-**What lives in the repo for each target:** only deploy config (`vercel.json`, `netlify.toml`, `wrangler.toml`, `deploy/cloudrun.yaml`, `deploy/compose.yml`…) under `deploy/<target>/`, generated or copied at deploy time. No target's file is imported by app code.
+**What lives in the repo for each target:** only deploy config (`vercel.json`, `netlify.toml`, `wrangler.toml`, `deploy/cloudrun.yaml`, `deploy/compose.yml`…) under `deploy/<target>/`, generated or copied at deploy time. Exception: `vercel.json` lives at the repo root, because Vercel reads it only there (build command, cron, branch tracking for `main` and `staging`). No target's file is imported by app code.
 
 ## 5. Media processor
 

@@ -37,7 +37,7 @@ export function r2Driver(config: R2Config): StorageDriver {
       const url = new URL(objectUrl(key))
       url.searchParams.set('X-Amz-Expires', String(ttlSeconds))
       const signed = await client.sign(new Request(url, { method: 'PUT', headers: { 'content-type': contentType } }), { aws: { signQuery: true } })
-      return signed.url
+      return { url: signed.url, headers: {} }
     },
     async presignGet({ key, ttlSeconds }) {
       const url = new URL(objectUrl(key))

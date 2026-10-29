@@ -130,7 +130,8 @@ export interface ProcessRequest {
   sourceUrl: string
   callbackUrl: string
   /** `main` is always first; edited videos also ask for a `poster` JPEG. */
-  outputs: { variant: string, putUrl: string, contentType: string }[]
+  /** `putHeaders` go with the PUT (some storage needs more than the URL); optional while an older app is live. */
+  outputs: { variant: string, putUrl: string, putHeaders?: Record<string, string>, contentType: string }[]
   edit?: VideoEditRequest
 }
 

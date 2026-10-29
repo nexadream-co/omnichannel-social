@@ -107,8 +107,8 @@ export async function presignMediaUpload(ctx: WorkspaceContext, input: z.infer<t
   const id = uuidv7()
   const key = newKey(ctx, id, EXT[input.mime]!)
   await ctx.db.insert(mediaAssets).values({ id, workspaceId: ctx.workspaceId, r2Key: key, mime: input.mime, kind: input.mime.startsWith('video/') ? 'video' : 'image', bytes: input.bytes, status: 'uploading', ...edit })
-  const uploadUrl = await storage().presignPut({ key, contentType: input.mime, contentLength: input.bytes, ttlSeconds: 15 * 60 })
-  return { mediaId: id, uploadUrl }
+  const upload = await storage().presignPut({ key, contentType: input.mime, contentLength: input.bytes, ttlSeconds: 15 * 60 })
+  return { mediaId: id, uploadUrl: upload.url, uploadHeaders: upload.headers }
 }
 
 export const videoEditSchema = z.object({
@@ -147,10 +147,10 @@ export async function createVideoEdit(ctx: WorkspaceContext, sourceId: string, i
     })
     return overlayKey ? null : enqueue(tx, 'media.process', { mediaId: id, workspaceId: ctx.workspaceId }, { singletonKey: id })
   })
-  const overlayUploadUrl = overlayKey
+  const overlayUpload = overlayKey
     ? await storage().presignPut({ key: overlayKey, contentType: 'image/png', contentLength: OVERLAY_MAX_BYTES, ttlSeconds: 15 * 60 })
     : null
-  return { mediaId: id, overlayUploadUrl, jobId }
+  return { mediaId: id, overlayUploadUrl: overlayUpload?.url ?? null, overlayUploadHeaders: overlayUpload?.headers ?? {}, jobId }
 }
 
 /** POST /api/app/media/:id/complete → enqueue media.process (kicked by the handler). Idempotent. */
@@ -258,8 +258,12 @@ async function submit(db: Database, row: MediaRow) {
   const contentType = isVideo ? 'video/mp4' : 'image/jpeg'
   const overlay = variantsOf(row).overlay
   await db.update(mediaAssets).set({ processorRef: ref, processorSubmittedAt: new Date(), variants: { ...variantsOf(row), pendingKey: outKey, posterKey }, updatedAt: new Date() }).where(eq(mediaAssets.id, row.id))
-  const outputs: ProcessRequest['outputs'] = [{ variant: 'main', putUrl: await storage().presignPut({ key: outKey, contentType, contentLength: 0, ttlSeconds: 3600 }), contentType }]
-  if (posterKey) outputs.push({ variant: 'poster', putUrl: await storage().presignPut({ key: posterKey, contentType: 'image/jpeg', contentLength: 0, ttlSeconds: 3600 }), contentType: 'image/jpeg' })
+  const output = async (variant: string, key: string, type: string) => {
+    const put = await storage().presignPut({ key, contentType: type, contentLength: 0, ttlSeconds: 3600 })
+    return { variant, putUrl: put.url, putHeaders: put.headers, contentType: type }
+  }
+  const outputs: ProcessRequest['outputs'] = [await output('main', outKey, contentType)]
+  if (posterKey) outputs.push(await output('poster', posterKey, 'image/jpeg'))
   await mediaProcessor().submit({
     assetId: row.id, ref, kind: row.kind,
     sourceUrl: await storage().presignGet({ key: sourceKey, ttlSeconds: 3600 }),

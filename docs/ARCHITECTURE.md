@@ -113,7 +113,7 @@ SHORT_DOMAIN/{slug}      → /r/{slug}
 anything else on SHORT_DOMAIN → 404 (server/middleware/00.host-guard.ts)
 ```
 
-Release: CI runs lint, types and tests, then `npm run db:migrate` (direct URL, expand / contract), then the seed, then deploys the functions with `NITRO_PRESET=<target> npm run build` (`blueprint/19` §3).
+Release: CI runs lint, types and tests, then the host builds with `NITRO_PRESET=<target> npm run build`, which migrates (direct URL, expand / contract) and seeds a fresh database once (`blueprint/19` §3).
 
 ---
 

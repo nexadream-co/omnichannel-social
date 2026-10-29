@@ -2,10 +2,11 @@ import type { EditSpec } from '#shared/media/edit-spec'
 import type { MediaView } from '#shared/media/types'
 
 /** PUT straight to storage with real progress (XHR: fetch has no upload progress). */
-function put(url: string, body: Blob, contentType: string, onProgress?: (p: number) => void) {
+function put(url: string, headers: Record<string, string>, body: Blob, contentType: string, onProgress?: (p: number) => void) {
   return new Promise<void>((resolve, reject) => {
     const xhr = new XMLHttpRequest()
     xhr.open('PUT', url)
+    for (const [name, value] of Object.entries(headers)) xhr.setRequestHeader(name, value)
     xhr.setRequestHeader('content-type', contentType)
     xhr.upload.onprogress = event => event.lengthComputable && onProgress?.(Math.round((event.loaded / event.total) * 100))
     xhr.onload = () => (xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(new Error(`upload ${xhr.status}`)))
@@ -22,24 +23,24 @@ export function useMediaUpload() {
   /** Returns the new media id once the file is uploaded; processing continues on the server. */
   async function upload(file: Blob, options: { filename: string, mime?: string, sourceMediaId?: string, editSpec?: EditSpec, onUploaded?: (mediaId: string) => void, onProgress?: (p: number) => void }) {
     const mime = options.mime || file.type || (options.filename.toLowerCase().endsWith('.heic') ? 'image/heic' : '')
-    const { mediaId, uploadUrl } = await apiFetch<{ mediaId: string, uploadUrl: string }>('/api/app/media/presign', {
+    const { mediaId, uploadUrl, uploadHeaders } = await apiFetch<{ mediaId: string, uploadUrl: string, uploadHeaders?: Record<string, string> }>('/api/app/media/presign', {
       method: 'POST',
       body: { filename: options.filename, mime, bytes: file.size, sourceMediaId: options.sourceMediaId, editSpec: options.editSpec }
     })
     options.onUploaded?.(mediaId)
-    await put(uploadUrl, file, mime, options.onProgress)
+    await put(uploadUrl, uploadHeaders ?? {}, file, mime, options.onProgress)
     await apiFetch(`/api/app/media/${mediaId}/complete`, { method: 'POST' })
     return mediaId
   }
 
   /** A video edit is rendered on the server; the browser only sends the recipe and the drawn overlay. */
   async function renderVideoEdit(sourceMediaId: string, spec: EditSpec, overlay: Blob | null) {
-    const { mediaId, overlayUploadUrl } = await apiFetch<{ mediaId: string, overlayUploadUrl: string | null }>(`/api/app/media/${sourceMediaId}/edits`, {
+    const { mediaId, overlayUploadUrl, overlayUploadHeaders } = await apiFetch<{ mediaId: string, overlayUploadUrl: string | null, overlayUploadHeaders?: Record<string, string> }>(`/api/app/media/${sourceMediaId}/edits`, {
       method: 'POST',
       body: { spec, hasOverlay: Boolean(overlay) }
     })
     if (overlay && overlayUploadUrl) {
-      await put(overlayUploadUrl, overlay, 'image/png')
+      await put(overlayUploadUrl, overlayUploadHeaders ?? {}, overlay, 'image/png')
       await apiFetch(`/api/app/media/${mediaId}/complete`, { method: 'POST' })
     }
     return mediaId

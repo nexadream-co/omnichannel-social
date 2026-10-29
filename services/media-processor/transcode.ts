@@ -39,9 +39,9 @@ async function download(url: string, path: string) {
   await pipeline(Readable.fromWeb(response.body as never), createWriteStream(path))
 }
 
-async function upload(url: string, path: string, contentType: string) {
+async function upload(url: string, headers: Record<string, string>, path: string, contentType: string) {
   const body = await readFile(path)
-  const response = await fetch(url, { method: 'PUT', body, headers: { 'content-type': contentType }, signal: AbortSignal.timeout(10 * 60_000) })
+  const response = await fetch(url, { method: 'PUT', body, headers: { ...headers, 'content-type': contentType }, signal: AbortSignal.timeout(10 * 60_000) })
   if (!response.ok) throw new Error(`upload failed (${response.status})`)
   return body.length
 }
@@ -97,7 +97,7 @@ export async function transcodeJob(job: ProcessRequest, secret: string): Promise
         await run(FFMPEG, isVideo ? videoToMp4Args(input, file, probe.hasAudio) : imageToJpegArgs(input, file), 30 * 60_000)
       }
       const result = parseProbe(await run(FFPROBE, ffprobeArgs(file), 60_000))
-      const bytes = await upload(output.putUrl, file, output.contentType)
+      const bytes = await upload(output.putUrl, output.putHeaders ?? {}, file, output.contentType)
       outputs.push({ variant: output.variant, bytes: bytes || (await stat(file)).size, width: result.width, height: result.height, durationMs: poster ? null : result.durationMs, codec: result.codec })
     }
     log('media-processor.done', { kind: probe.kind })

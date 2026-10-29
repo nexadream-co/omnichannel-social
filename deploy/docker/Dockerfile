@@ -5,13 +5,14 @@ WORKDIR /src
 COPY package.json package-lock.json .nvmrc ./
 RUN npm ci
 COPY . .
-ENV NITRO_PRESET=node-server
+# An image build has no database: CI runs `npm run db:deploy` before rolling the image out.
+ENV NITRO_PRESET=node-server SKIP_DB_DEPLOY=1
 RUN npm run build
 
 FROM node:24-slim
 WORKDIR /app
 COPY --from=build /src/.output ./.output
-# Migrations run from CI or the one-off "migrate" service below, never on app start.
+# Migrations run from CI (`npm run db:deploy`), never on app start.
 COPY --from=build /src/server/core/db/migrations ./migrations
 USER node
 ENV NODE_ENV=production PORT=3000 HOST=0.0.0.0

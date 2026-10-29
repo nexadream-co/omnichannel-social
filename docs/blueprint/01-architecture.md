@@ -44,7 +44,7 @@
 }
 ```
 
-`NITRO_PRESET` selects the target at build time (`19` §4); the scripts are the same for every host. Migrations are **not** run inside `build`. They run as a CI step before each deploy (`npm run db:migrate`), using the **direct** database URL, and follow the expand / contract rule (`19` §3).
+`NITRO_PRESET` selects the target at build time (`19` §4); the scripts are the same for every host. `build` runs `nuxt build`, then `db:deploy` (`scripts/db-deploy.ts`): migrations on the **direct** database URL, following the expand / contract rule (`19` §3), and the seed once on a fresh database. `SKIP_DB_DEPLOY=1` skips both.
 
 `version` in `package.json` is surfaced as `runtimeConfig.public.appVersion` (shown in the `/admin` sidebar footer).
 
@@ -178,7 +178,7 @@ services/media-processor/{Dockerfile,server.ts,transcode.ts}   ffmpeg container 
 scripts/{migrate,seed,reset,rotate-keys,dev-tick}.ts
 i18n/locales/{id,en}.json
 docker/compose.dev.yml             local Postgres 17 + Mailpit + media processor
-deploy/<target>/                   host config only (vercel.json, netlify.toml, wrangler.toml, cloudrun.yaml …)
+deploy/<target>/                   host config only (netlify.toml, wrangler.toml, cloudrun.yaml …); vercel.json sits at the root
 docs/
 ```
 

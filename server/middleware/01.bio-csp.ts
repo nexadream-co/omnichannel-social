@@ -1,14 +1,14 @@
-import { env } from '../core/env'
+import { storage } from '../core/services/storage'
 
 /**
  * Strict CSP on the public Etalase (docs/blueprint/14 §4). The page ships no JavaScript (routeRules noScripts),
- * so script-src 'self' holds. Images only from our media domain. Set per request so the media host comes from env.
+ * so script-src 'self' holds. Images only from our media domain. Set per request so the media host comes from the storage driver (R2 media domain or Vercel Blob store).
  */
 export default defineEventHandler((event) => {
   if (!event.path.startsWith('/bio/')) return
   const media = (() => {
     try {
-      return new URL(env().NUXT_PUBLIC_MEDIA_URL).origin
+      return new URL(storage().publicUrl('')).origin
     } catch {
       return ''
     }

@@ -3,7 +3,7 @@
 The app is one Nitro build that runs on any host (docs/blueprint/19). Pick a target below; every target
 provides the same six things:
 
-1. `NITRO_PRESET=<preset> npm run build` (the build never migrates).
+1. `NITRO_PRESET=<preset> npm run build` (builds, then migrates; seeds a fresh database once).
 2. Environment variables (see `.env.example`); secrets in the host's secret store.
 3. Two domains on the app: the site (`socialz.id`) and the short domain, both behind Cloudflare.
 4. **One cron entry**: every minute `GET https://<site>/api/internal/tick` with `Authorization: Bearer $CRON_SECRET`, plus a second external pinger as backup (ticks are idempotent).
@@ -15,22 +15,21 @@ provides the same six things:
 | Any VPS / Docker host | `node-server` | `docker/` | `tick` service in compose + external pinger | Same compose |
 | Google Cloud Run | `node-server` (container) | `cloudrun/` | Cloud Scheduler | Cloud Run service (scales to zero) |
 | AWS Lambda | `aws-lambda` | `aws-lambda/` | EventBridge Scheduler → API destination | Lambda container image or Fargate |
-| Vercel (Pro) | `vercel` | `vercel/` | Vercel Cron (sends `Bearer $CRON_SECRET` itself) | External container host |
+| Vercel (Pro) | `vercel` | `/vercel.json` (repo root) | Vercel Cron (sends `Bearer $CRON_SECRET` itself) | External container host |
 
-Host config files stay in their folder and are copied (or linked in the host's project settings) at deploy time, e.g. `cp deploy/vercel/vercel.json .` in the Vercel build. App code never imports them.
+Host config files stay in their folder and are copied (or linked in the host's project settings) at deploy time. The exception is Vercel, which only reads `vercel.json` from the repo root: it holds the build command, region, `maxDuration`, the per-minute cron and branch tracking (only `main` and `staging` deploy; every other branch is ignored), so the Vercel dashboard needs no extra setup. Vercel Cron only calls the **production** deployment, so a `staging` branch deployed as a preview of the same project gets no tick: give staging its own Vercel project (production branch `staging`) or an external pinger. App code never imports these files.
 
 ## Release order (any target)
 
 ```sh
 npm ci && npm run lint && npm run typecheck && npm test
-DATABASE_URL_DIRECT=… npm run db:migrate      # CI only; functions never get the direct URL
-# deploy with the target's CLI or git integration
+# Vercel / Lambda: deploy with the target's CLI or git integration; its `npm run build` migrates
+# Docker / Cloud Run: the image builds with SKIP_DB_DEPLOY=1, so run this first:
+DATABASE_URL_DIRECT=… npm run db:deploy        # migrations + seed on a fresh database
 curl -fsS https://<site>/healthz              # 200 once the first tick has run
 ```
 
-First deploy only: `npm run db:seed` once against the new database (creates the superadmin from
-`SEED_SUPERADMIN_EMAIL` / `SEED_SUPERADMIN_PASSWORD`, plans, templates, legal drafts). Never re-run it
-on a live environment: reference data ships inside migrations.
+`npm run build` runs `nuxt build`, then `npm run db:deploy`: migrations on `DATABASE_URL_DIRECT` (or `DATABASE_URL`), and the seed once when the database has no staff user yet (a fresh environment). A live environment is never re-seeded. `SKIP_DB_DEPLOY=1` builds without a database. Give the build `DATABASE_URL_DIRECT` (and, in production, `SEED_SUPERADMIN_PASSWORD`); the functions never use the direct URL.
 
 ## Cloudflare (all targets)
 

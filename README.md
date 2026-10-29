@@ -193,7 +193,7 @@ The app is **one Nitro build that runs on any host**; the host is chosen at buil
 |---|---|---|
 | App (functions) | Any host: VPS / Docker (`node-server`), Cloud Run, AWS Lambda, Vercel Pro… | `deploy/<target>/`; region Singapore |
 | Database | Neon Postgres | **Pooled** URL in `DATABASE_URL` for the app; **direct** URL only for migrations in CI |
-| Media storage | Cloudflare R2 bucket with a public media domain, CORS allowing `GET` from the app origin (the photo editor draws on a canvas) | `R2_*`, `NUXT_PUBLIC_MEDIA_URL`; leave `R2_ENDPOINT` empty |
+| Media storage | Cloudflare R2 bucket with a public media domain, CORS allowing `GET` from the app origin (the photo editor draws on a canvas) | `R2_*`, `NUXT_PUBLIC_MEDIA_URL`; leave `R2_ENDPOINT` empty. Or a **public** Vercel Blob store: `BLOB_READ_WRITE_TOKEN` (+ `BLOB_STORE_ID`) switches storage to it, and media is served from the store's own `*.public.blob.vercel-storage.com` host |
 | Media processor | `services/media-processor/Dockerfile` on any container host | Reachable at `MEDIA_PROCESSOR_URL`, shares `MEDIA_PROCESSOR_SECRET` |
 | Tick | One cron entry every minute + a backup pinger | `GET https://<site>/api/internal/tick` with `Authorization: Bearer $CRON_SECRET` |
 | Email | Resend | Key set in `/admin` → Pengaturan |
@@ -207,19 +207,19 @@ Environment variables: `.env.production.example` (generate secrets with `openssl
 | Any VPS / Docker host | `node-server` | `tick` service in `deploy/docker/compose.yml` + external pinger | Same compose |
 | Google Cloud Run | `node-server` (container) | Cloud Scheduler | Cloud Run service |
 | AWS Lambda | `aws-lambda` | EventBridge Scheduler | Lambda container image or Fargate |
-| Vercel (Pro: per-minute cron) | `vercel` | Vercel Cron | External container host |
+| Vercel (Pro: per-minute cron) | `vercel` | Vercel Cron from `vercel.json` at the repo root (only `main` and `staging` deploy) | External container host |
 
 ### Release order
 
 ```sh
 npm ci && npm run lint && npm run typecheck && npm test
-DATABASE_URL_DIRECT=… npm run db:migrate      # CI only; migrations are expand / contract
-NITRO_PRESET=<preset> npm run build            # the build never migrates
+NITRO_PRESET=<preset> npm run build            # builds, then migrates (+ seeds a fresh database)
+# container images build with SKIP_DB_DEPLOY=1: run `npm run db:deploy` from CI before rolling out
 # deploy with the target's CLI or git integration
 curl -fsS https://<site>/healthz              # 200 once the first tick has run
 ```
 
-**First deploy only:** run `npm run db:seed` once against the new database (superadmin from `SEED_SUPERADMIN_EMAIL` / `SEED_SUPERADMIN_PASSWORD`, plans, templates, legal drafts). Never re-run it on a live environment; reference data ships inside migrations.
+`npm run build` runs `nuxt build`, then `npm run db:deploy`: migrations (expand / contract) on `DATABASE_URL_DIRECT` (or `DATABASE_URL`), and on a **fresh** database (no staff user yet) the seed: superadmin from `SEED_SUPERADMIN_EMAIL` / `SEED_SUPERADMIN_PASSWORD`, plans, templates, legal drafts. A live environment is never re-seeded; reference data ships inside migrations. `SKIP_DB_DEPLOY=1` builds without a database.
 
 ### After the first deploy
 

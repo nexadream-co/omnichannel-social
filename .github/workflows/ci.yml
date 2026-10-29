@@ -48,6 +48,7 @@ jobs:
       - run: npm run build
         env:
           NITRO_PRESET: ${{ matrix.preset }}
+          SKIP_DB_DEPLOY: '1'
 
   # The newcomer path, public site and back-office in a real browser (docs/blueprint/17 Phase 14).
   e2e:

@@ -13,7 +13,7 @@ export function fakeStorageDriver(objects = new Map<string, { body: Uint8Array, 
       objects.delete(key)
     },
     async presignPut({ key }) {
-      return `https://media.test/${key}?signed=put`
+      return { url: `https://media.test/${key}?signed=put`, headers: {} }
     },
     async presignGet({ key }) {
       return `https://media.test/${key}?signed=get`

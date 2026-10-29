@@ -33,7 +33,10 @@ const schema = z.object({
   R2_SECRET_ACCESS_KEY: z.string().default(''),
   R2_BUCKET: z.string().default(''),
   R2_ENDPOINT: z.string().default(''),
-  STORAGE_DRIVER: z.enum(['r2', 'fake']).default('r2'),
+  BLOB_STORE_ID: z.string().default(''),
+  BLOB_READ_WRITE_TOKEN: z.string().default(''),
+  /** Empty: Vercel Blob when BLOB_READ_WRITE_TOKEN is set, otherwise R2. */
+  STORAGE_DRIVER: z.enum(['r2', 'vercel-blob', 'fake', '']).default(''),
 
   META_APP_ID: z.string().default(''),
   META_APP_SECRET: z.string().default(''),
@@ -49,7 +52,8 @@ const schema = z.object({
   DEBUG_JOBS: bool
 })
 
-export type Env = z.infer<typeof schema> & {
+export type Env = Omit<z.infer<typeof schema>, 'STORAGE_DRIVER'> & {
+  STORAGE_DRIVER: 'r2' | 'vercel-blob' | 'fake'
   isProduction: boolean
   siteUrl: string
   siteOrigin: string
@@ -80,6 +84,7 @@ export function loadEnv(source: Record<string, string | undefined> = process.env
   const siteUrl = value.NUXT_PUBLIC_SITE_URL.replace(/\/+$/, '')
   return {
     ...value,
+    STORAGE_DRIVER: value.STORAGE_DRIVER || (value.BLOB_READ_WRITE_TOKEN ? 'vercel-blob' : 'r2'),
     isProduction,
     siteUrl,
     siteOrigin: new URL(siteUrl).origin,
