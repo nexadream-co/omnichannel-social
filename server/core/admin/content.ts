@@ -5,6 +5,7 @@ import { recordAudit } from '../audit'
 import { assertPermission, type StaffContext } from '../context'
 import { auditLogs, contactMessages, faqs, pages, workspaces } from '../db/schema'
 import { appError } from '../errors'
+import { rangeStart } from './range'
 
 const meta = (page: number, limit: number, total: number) => ({ page, limit, total, pageCount: Math.max(1, Math.ceil(total / limit)) })
 const listQuery = z.object({
@@ -162,15 +163,6 @@ export const auditQuery = listQuery.extend({
   audience: z.enum(['all', 'creator', 'staff']).default('all'),
   range: z.enum(['all', 'today', '7d', '30d']).default('7d')
 })
-
-/** Range presets resolve on the platform clock (Asia/Jakarta). */
-export function rangeStart(range: string): Date | null {
-  if (range === 'all') return null
-  const todayWib = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date())
-  const midnight = new Date(`${todayWib}T00:00:00+07:00`)
-  const days = range === 'today' ? 0 : range === '7d' ? 6 : 29
-  return new Date(midnight.getTime() - days * 86_400_000)
-}
 
 export async function listAuditLogs(ctx: StaffContext, query: z.infer<typeof auditQuery>) {
   assertPermission(ctx, 'settings.read')

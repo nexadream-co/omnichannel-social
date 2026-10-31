@@ -74,7 +74,7 @@ function filterBy(value: string) {
         :data="list.items.value"
         :columns="columns"
         :loading="list.status.value === 'loading'"
-        empty="Tidak ada error pada rentang ini."
+        :empty="list.status.value === 'error' ? 'Log gagal dimuat. Muat ulang halaman, atau cek log server.' : 'Tidak ada error pada rentang ini.'"
       >
         <template #createdAt-cell="{ row }">
           <span class="whitespace-nowrap text-xs">{{ formatDateTime(row.original.createdAt) }}</span>

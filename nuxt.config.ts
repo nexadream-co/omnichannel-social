@@ -50,6 +50,9 @@ export default defineNuxtConfig({
   nitro: {
     // The host is chosen at build time with NITRO_PRESET (docs/blueprint/19 §4).
     experimental: { asyncContext: false },
+    // sanitize-html is CommonJS and require()s the ESM-only htmlparser2; bundling it turns that require into an
+    // import, so hosts whose loader rejects require(esm) (Vercel) can still load the admin content routes.
+    externals: { inline: ['sanitize-html'] },
     // Read only by the vercel preset: one tick may work for JOBS_TIME_BUDGET_MS (45 s), so allow 60 s.
     vercel: { functions: { maxDuration: 60 } }
   },

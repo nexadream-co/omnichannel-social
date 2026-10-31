@@ -2,7 +2,7 @@ import { and, count, desc, eq, gte, ilike, or, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import { assertPermission, type StaffContext } from '../context'
 import { appLogs, staffUsers, users, workspaces } from '../db/schema'
-import { rangeStart } from './content'
+import { rangeStart } from './range'
 
 export const appLogsQuery = z.object({
   page: z.coerce.number().int().min(1).default(1),
