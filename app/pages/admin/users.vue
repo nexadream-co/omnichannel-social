@@ -9,6 +9,7 @@ const toast = useToast()
 const auth = useStaffAuth()
 const { confirm } = useConfirmDialog()
 const isSuper = computed(() => Boolean(auth.profile.value?.user.role.isSuperAdmin))
+const canReadLogs = computed(() => auth.hasPermission('logs.read'))
 const list = useServerList<Row>('/api/admin/users', { limit: 25 })
 onMounted(list.refresh)
 const METHOD: Record<string, string> = { password: 'Kata sandi', google: 'Google' }
@@ -109,26 +110,34 @@ async function revoke(row: Row) {
           <span class="text-xs text-muted whitespace-nowrap">{{ row.original.lastSeenAt ? formatDateTime(row.original.lastSeenAt) : row.original.lastLoginAt ? formatDateTime(row.original.lastLoginAt) : '—' }}</span>
         </template>
         <template #actions-cell="{ row }">
-          <div
-            v-if="isSuper"
-            class="flex justify-end gap-1"
-          >
+          <div class="flex justify-end gap-1">
             <UButton
+              v-if="canReadLogs"
               size="xs"
               color="neutral"
-              variant="outline"
-              label="Impersonate"
-              :disabled="!row.original.memberships.length || !row.original.isActive"
-              @click="impersonate(row.original, row.original.memberships[0]?.workspaceId)"
-            />
-            <UButton
-              size="xs"
-              color="error"
               variant="ghost"
-              icon="i-lucide-log-out"
-              aria-label="Cabut semua sesi"
-              @click="revoke(row.original)"
+              icon="i-lucide-bug"
+              aria-label="Log error pengguna ini"
+              :to="{ path: '/admin/system/logs', query: { user: row.original.email } }"
             />
+            <template v-if="isSuper">
+              <UButton
+                size="xs"
+                color="neutral"
+                variant="outline"
+                label="Impersonate"
+                :disabled="!row.original.memberships.length || !row.original.isActive"
+                @click="impersonate(row.original, row.original.memberships[0]?.workspaceId)"
+              />
+              <UButton
+                size="xs"
+                color="error"
+                variant="ghost"
+                icon="i-lucide-log-out"
+                aria-label="Cabut semua sesi"
+                @click="revoke(row.original)"
+              />
+            </template>
           </div>
         </template>
       </AdminTable>

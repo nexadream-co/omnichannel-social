@@ -57,7 +57,7 @@ Seed: one `permissions` row per key, `group` = prefix, `description` built from 
 |---|---|---|
 | `superadmin` | ✓ | all (and bypasses every `requirePermission`) |
 | `admin` | | all except `roles.write`, `permissions.write`, `menus.write` (cannot widen own access) |
-| `support` | | every `*.read` except `reports.read`, plus `messages.write` and `publishing.write` (retry a creator's failed post) |
+| `support` | | every `*.read` except `reports.read` and `logs.read`, plus `messages.write` and `publishing.write` (retry a creator's failed post) |
 
 All three are `isSystem: true`. Rules enforced by the API:
 - `isSystem` roles cannot be deleted; their `slug` cannot change.
@@ -120,6 +120,7 @@ Sistem (system)
   Pengaturan          /admin/settings              settings.read
   Log aktivitas       /admin/audit-logs            settings.read
   Antrean pekerjaan   /admin/system/jobs           settings.read
+  Log error           /admin/system/logs           logs.read
 ```
 
 Menu admin endpoints: `GET/POST /api/admin/menus/manage`, `PATCH/DELETE /api/admin/menus/manage/:id` (delete refused while it has children), `POST /api/admin/menus/manage/reorder { items: [{ id, order, parentId }] }` (one transaction).

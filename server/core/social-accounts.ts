@@ -125,7 +125,7 @@ export async function handleConnectCallback(ctx: WorkspaceContext, platform: Pla
     accounts = await adapter.oauth.exchange(input.code, redirectUri(platform), fetchImpl, await oauthOptions(ctx.db))
   } catch (error) {
     const detail = adapter.normalizeError(error)
-    ctx.log.warn('channels.exchange_failed', { platform, kind: detail.kind, code: detail.code })
+    ctx.log.warn('channels.exchange_failed', { platform, kind: detail.kind, code: detail.code, subcode: detail.subcode, message: detail.message, fbtraceId: detail.fbtraceId })
     if (detail.code === 'PERSONAL_ACCOUNT') {
       throw appError(400, 'Akun Instagram pribadi belum bisa dipakai. Ubah ke akun Kreator atau Bisnis (gratis, 1 menit), lalu hubungkan lagi.', 'VALIDATION_FAILED', { reason: 'personal_account' })
     }

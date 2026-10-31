@@ -19,7 +19,8 @@ export const PERMISSIONS = {
   'channels': { read: 'channels.read', write: 'channels.write' },
   'links': { read: 'links.read', write: 'links.write' },
   'hashtags': { read: 'hashtags.read', write: 'hashtags.write' },
-  'moments': { read: 'moments.read', write: 'moments.write' }
+  'moments': { read: 'moments.read', write: 'moments.write' },
+  'logs': { read: 'logs.read' }
 } as const
 
 type Groups = typeof PERMISSIONS
@@ -49,7 +50,8 @@ export const PERMISSION_GROUP_LABELS: Record<PermissionGroup, string> = {
   'channels': 'Kanal & akun sosial',
   'links': 'Link & Etalase',
   'hashtags': 'Daftar tagar',
-  'moments': 'Momen belanja'
+  'moments': 'Momen belanja',
+  'logs': 'Log error'
 }
 
 export const PERMISSION_ACTION_LABELS = { read: 'Lihat', write: 'Ubah' } as const
@@ -70,7 +72,8 @@ export function adminPermissionKeys(): PermissionKey[] {
 }
 export function supportPermissionKeys(): PermissionKey[] {
   return [
-    ...PERMISSION_KEYS.filter(key => key.endsWith('.read') && key !== 'reports.read'),
+    // Log error holds raw platform messages and request details: admins only.
+    ...PERMISSION_KEYS.filter(key => key.endsWith('.read') && key !== 'reports.read' && key !== 'logs.read'),
     'messages.write',
     'publishing.write'
   ]

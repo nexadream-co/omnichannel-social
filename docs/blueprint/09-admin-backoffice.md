@@ -46,6 +46,7 @@ Sistem (system)
   Pengaturan             /admin/settings            settings.read
   Log aktivitas          /admin/audit-logs          settings.read
   Antrean pekerjaan      /admin/system/jobs         settings.read
+  Log error              /admin/system/logs         logs.read
 ```
 
 ## 3. Screen by screen
@@ -115,6 +116,7 @@ These screens exist because Socialz.id depends on Meta APIs that fail in ways cr
 | `/admin/settings` | `GET /api/admin/settings`, `PATCH /api/admin/settings {values}`, `POST /api/admin/settings/test-email {to}` | `settings.read` / `settings.write` | The whole platform configuration, as grouped tabs rendered from the settings catalog (company, email, billing, privacy, app, channels). See `10-platform-settings.md`. |
 | `/admin/audit-logs` | `GET /api/admin/audit-logs?search&action&audience&range\|dateFrom&dateTo` | `settings.read` | Every audit row (both audiences): time, actor (+ "via impersonate" when `impersonatorId` is set), workspace, action label (from `AUDIT_ACTION_LABELS`), target, metadata, IP, user agent. Range presets resolved server-side on the platform clock. |
 | `/admin/system/jobs` | `GET /api/admin/system/jobs`, `POST /api/admin/system/jobs/:name/run` | `settings.read` / `settings.write` | Job overview from the `jobs` table: backlog and oldest due job per queue, dead jobs with their error and a "Coba lagi" retry, last tick age and summary, each schedule's `last_slot`, media processor last callback. "Jalankan sekarang" enqueues and kicks a one-off run of a platform schedule (idempotent by design, see `15` §5); audit `system.job_run` / `system.job_retry`. |
+| `/admin/system/logs` | `GET /api/admin/system/logs?user&search&level&range` | `logs.read` (Superadmin and Admin; never Support) | Warn/error log lines from `app_logs`, newest first: time, level, event (`msg`) with its one-line reason, the creator (email + workspace) or staff member who hit it. `user` matches a creator email (partial) or an exact user / workspace id; `search` matches the event, the path and the stored fields. Detail dialog: path, request id, stored fields, and "Semua log pengguna ini". `/admin/users` rows link here pre-filtered. Lines older than 30 days are deleted by `maintenance.purge`. |
 
 ### 3.7 Account chrome (every staff member)
 

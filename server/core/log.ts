@@ -17,11 +17,25 @@ function scrub(fields: Fields): Fields {
   return out
 }
 
+/** Lines kept between drains; beyond this an instance that never drains (a script, a test) drops the rest instead of growing. */
+const MAX_BUFFERED = 500
+let buffered: Fields[] = []
+
+/** Warn and error lines are kept for the app_logs table (server/core/app-logs.ts); info and debug stay on stdout only. */
 function write(level: Level, msg: string, fields: Fields = {}) {
-  const line = JSON.stringify({ level, time: new Date().toISOString(), msg, ...scrub(fields) })
+  const entry = { level, time: new Date().toISOString(), msg, ...scrub(fields) }
+  const line = JSON.stringify(entry)
   if (level === 'error') console.error(line)
   else if (level === 'warn') console.warn(line)
   else console.log(line)
+  if ((level === 'warn' || level === 'error') && buffered.length < MAX_BUFFERED) buffered.push(entry)
+}
+
+/** Hands over (and clears) the warn/error lines logged since the last call. */
+export function takeBufferedLogs(): Fields[] {
+  const batch = buffered
+  buffered = []
+  return batch
 }
 
 export interface Logger {

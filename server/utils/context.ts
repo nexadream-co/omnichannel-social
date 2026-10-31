@@ -3,6 +3,7 @@ import { getRequestHeader } from 'h3'
 import { uuidv7 } from 'uuidv7'
 import type { CoreContext } from '../core/context'
 import { getDb } from '../core/db/client'
+import { flushLogs } from '../core/app-logs'
 import { log } from '../core/log'
 import { clientIpFromHeaders } from '../core/rate-limit'
 
@@ -14,7 +15,7 @@ export function requestContext(event: H3Event): CoreContext {
   const ctx: CoreContext = {
     db: getDb(),
     log: logger,
-    defer: work => event.waitUntil(work.catch(error => logger.error('defer.failed', { error }))),
+    defer: work => event.waitUntil(work.catch(error => logger.error('defer.failed', { error })).then(() => flushLogs())),
     requestId,
     ip: clientIpFromHeaders(new Headers(getRequestHeaders(event) as Record<string, string>)),
     userAgent: getRequestHeader(event, 'user-agent') ?? null

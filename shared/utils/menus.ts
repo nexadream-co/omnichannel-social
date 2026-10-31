@@ -48,7 +48,8 @@ export const MENU_TREE: MenuNode[] = [
   { slug: 'system', label: 'Sistem', children: [
     { slug: 'settings', label: 'Pengaturan', path: '/admin/settings', icon: 'i-lucide-settings', permissionKey: 'settings.read' },
     { slug: 'audit-logs', label: 'Log aktivitas', path: '/admin/audit-logs', icon: 'i-lucide-scroll-text', permissionKey: 'settings.read' },
-    { slug: 'jobs', label: 'Antrean pekerjaan', path: '/admin/system/jobs', icon: 'i-lucide-list-checks', permissionKey: 'settings.read' }
+    { slug: 'jobs', label: 'Antrean pekerjaan', path: '/admin/system/jobs', icon: 'i-lucide-list-checks', permissionKey: 'settings.read' },
+    { slug: 'logs', label: 'Log error', path: '/admin/system/logs', icon: 'i-lucide-bug', permissionKey: 'logs.read' }
   ] }
 ]
 

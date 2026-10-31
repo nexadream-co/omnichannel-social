@@ -65,3 +65,20 @@ export const rateLimitBuckets = pgTable('rate_limit_buckets', {
   count: integer().notNull().default(0),
   expiresAt: tstz().notNull()
 }, t => [primaryKey({ columns: [t.key, t.windowStart] }), index().on(t.expiresAt)])
+
+/**
+ * Warn/error log lines kept in the app so staff can trace a creator's failures (/admin/system/logs, logs.read).
+ * No foreign keys: a log line must never fail to insert, and it outlives nothing (maintenance.purge keeps 30 days).
+ */
+export const appLogs = pgTable('app_logs', {
+  id: id(),
+  level: text().notNull(),
+  msg: text().notNull(),
+  userId: text(),
+  workspaceId: text(),
+  staffUserId: text(),
+  requestId: text(),
+  path: text(),
+  fields: jsonb(),
+  createdAt: createdAt()
+}, t => [index().on(t.createdAt), index().on(t.userId, t.createdAt), index().on(t.workspaceId, t.createdAt), index().on(t.msg)])

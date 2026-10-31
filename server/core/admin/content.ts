@@ -164,7 +164,7 @@ export const auditQuery = listQuery.extend({
 })
 
 /** Range presets resolve on the platform clock (Asia/Jakarta). */
-function rangeStart(range: string): Date | null {
+export function rangeStart(range: string): Date | null {
   if (range === 'all') return null
   const todayWib = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date())
   const midnight = new Date(`${todayWib}T00:00:00+07:00`)

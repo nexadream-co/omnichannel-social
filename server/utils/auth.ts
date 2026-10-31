@@ -34,7 +34,7 @@ export async function requireWorkspaceContext(event: H3Event): Promise<CreatorRe
   if (access.sessionNeedsWorkspace) await setActiveWorkspace(session.sessionId, access.workspace.id)
   const ctx: CreatorRequestContext = {
     ...base,
-    log: base.log.child({ workspaceId: access.workspace.id }),
+    log: base.log.child({ workspaceId: access.workspace.id, userId: access.user.id, ...(session.impersonatedBy ? { impersonatorId: session.impersonatedBy } : {}) }),
     workspaceId: access.workspace.id,
     userId: access.user.id,
     role: access.membership.role,

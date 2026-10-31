@@ -24,6 +24,7 @@ export const purge: JobHandler = async (_job, ctx) => {
   const commentDays = Math.max(1, Math.trunc(await getSettingNumber('privacy.commentTextRetentionDays', 30)))
   const steps: [string, () => Promise<number>][] = [
     ['webhook_events', () => purgeBatched(db, 'webhook_events', 'id', `received_at < now() - interval '14 days'`)],
+    ['app_logs', () => purgeBatched(db, 'app_logs', 'id', `created_at < now() - interval '30 days'`)],
     ['payment_webhook_events', () => purgeBatched(db, 'payment_webhook_events', 'id', `created_at < now() - interval '180 days'`)],
     ['jobs_finished', () => purgeBatched(db, 'jobs', 'id', `status in ('done', 'cancelled') and finished_at < now() - interval '7 days'`)],
     ['jobs_dead', () => purgeBatched(db, 'jobs', 'id', `status = 'dead' and finished_at < now() - interval '30 days'`)],
