@@ -7,7 +7,7 @@ createNotification(params, tx?)                 server/core/notifications.ts
   ├─ resolve template (DB row if active, else code catalog) and render {{tokens}}
   ├─ write the in-app row (notifications)  ← inside the caller's transaction when tx is given
   └─ dispatchExternal(ctx, channels)       server/core/services/notifications/dispatch.ts
-        └─ emailChannel   (enabled when email.resendApiKey is set, or the dev log driver is active)
+        └─ emailChannel   (enabled when email.resendApiKey or an SMTP host is set, or the dev log driver is active)
 
 sendTemplatedEmail(key, to, vars)              server/core/email.ts — direct email, no bell row
 ```
@@ -159,8 +159,9 @@ Variables for notification-only templates:
 ## 4. Email (`server/core/email.ts` + `server/core/services/email/`)
 
 - `server/core/services/email/resend.ts` is **the only file that knows Resend exists.** It calls `POST https://api.resend.com/emails` with plain `fetch` (`Authorization: Bearer <email.resendApiKey>`, body `{ from, to, subject, html, text, reply_to }`), with a 10 s timeout. No SDK.
-- A second driver, `log.ts`, prints the rendered email (and posts it to Mailpit's SMTP API when `MAILPIT_URL` is set) and is used automatically when `NODE_ENV !== 'production'` and no key is configured.
-- `email.resendApiKey` empty in production → every send is a **silent no-op** returning `{ sent: false, skipped: 'not-configured' }`. It must never throw.
+- `server/core/services/email/smtp.ts` is **the only file that knows nodemailer exists.** It is used when `email.resendApiKey` is empty and an SMTP host is configured: the `email.smtp*` settings when `email.smtpHost` is set, otherwise `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASSWORD` from the env. The block comes whole from one source (`smtpConfigFrom`). Port 465 means implicit TLS; any other port (587 by default) upgrades with STARTTLS when offered. One connection per send, no pool, 10 s connect and 15 s socket timeouts. It needs raw TCP, so it works on Node hosts (Vercel, VPS, Cloud Run, Lambda) but **not on Cloudflare Workers**; Resend stays the portable driver.
+- A third driver, `log.ts`, prints the rendered email (and posts it to Mailpit's HTTP API when `MAILPIT_URL` is set) and is used automatically outside production when neither Resend nor SMTP is configured.
+- Driver order: Resend key → SMTP host → dev log driver → none. None configured in production → every send is a **silent no-op** returning `{ sent: false, skipped: 'not-configured' }`. It must never throw.
 - `from` = `"<email.fromName>" <email.fromEmail>`; `reply_to` = `email.replyTo` or `company.email`.
 - Every HTML body is wrapped by `wrapEmailHtml(inner, { appName, siteUrl, supportEmail, companyName, logoUrl, whatsappUrl })` (`shared/utils/email-brand.ts`): table layout, logo (`company.logoUrl` or a bundled default, absolute URL), brand-coloured CTA class, footer with company name, support email, WhatsApp link when set, and the year. It also **absolutizes root-relative hrefs** (`href="/app/…"` → `https://socialz.id/app/…`) because mail clients have no base URL; `//host`, `mailto:`, `#` and absolute links are left alone.
 - A plain-text alternative is generated (`htmlToText`).

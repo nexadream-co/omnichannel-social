@@ -2,6 +2,7 @@
 
 ## 0.1.0 (Draft)
 
+- Email can go out through any SMTP server (Gmail / Google Workspace with an app password, Brevo, Mailgun, your host's mail server) when no Resend key is set. Fill in Server SMTP, port, username and password under `/admin` → Pengaturan → Email keluar, or set `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER` and `SMTP_PASSWORD` in the env; the back-office fields win when their host is filled in. "Kirim email uji" works with either driver and shows the server's error (for example a wrong password). Migration 0015 adds the settings. SMTP needs a Node host (Vercel, VPS, Cloud Run, Lambda), not Cloudflare Workers.
 - `vercel.json` no longer declares the per-minute tick cron, which Vercel Hobby rejects (daily crons only): on Vercel the tick comes from an external pinger (`GET /api/internal/tick` with `Authorization: Bearer $CRON_SECRET`).
 - Vercel deploys no longer fail with `unused_function`: the 60 s function time limit moves from `vercel.json` to `nuxt.config.ts` (`nitro.vercel.functions.maxDuration`), where Nitro's Vercel output picks it up.
 - Media can live in a public Vercel Blob store instead of R2: setting `BLOB_READ_WRITE_TOKEN` (and `BLOB_STORE_ID`) switches storage over, and `STORAGE_DRIVER` forces one. Direct uploads from the browser and the media processor now receive the headers to send along with the upload URL (`uploadHeaders`, `overlayUploadHeaders`, `putHeaders`); R2 sends none. The Etalase image policy follows the active store's host.

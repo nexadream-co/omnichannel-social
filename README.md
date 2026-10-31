@@ -196,7 +196,7 @@ The app is **one Nitro build that runs on any host**; the host is chosen at buil
 | Media storage | Cloudflare R2 bucket with a public media domain, CORS allowing `GET` from the app origin (the photo editor draws on a canvas) | `R2_*`, `NUXT_PUBLIC_MEDIA_URL`; leave `R2_ENDPOINT` empty. Or a **public** Vercel Blob store: `BLOB_READ_WRITE_TOKEN` (+ `BLOB_STORE_ID`) switches storage to it, and media is served from the store's own `*.public.blob.vercel-storage.com` host |
 | Media processor | `services/media-processor/Dockerfile` on any container host | Reachable at `MEDIA_PROCESSOR_URL`, shares `MEDIA_PROCESSOR_SECRET` |
 | Tick | One cron entry every minute + a backup pinger | `GET https://<site>/api/internal/tick` with `Authorization: Bearer $CRON_SECRET` |
-| Email | Resend | Key set in `/admin` → Pengaturan |
+| Email | Resend, or any SMTP server | Resend key, or SMTP server details, in `/admin` → Pengaturan; or `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASSWORD` env vars (port 587 or 465; 25 is blocked on most hosts). SMTP needs a Node host, not Cloudflare Workers |
 | Payments | Nexadream Payment Hub | Key and order prefix set in `/admin` → Payment gateway |
 | DNS / edge | Cloudflare in front of every domain | SSL Full (strict), short-domain transform rule, rate limits (`deploy/README.md`) |
 

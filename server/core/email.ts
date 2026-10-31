@@ -4,7 +4,7 @@ import { EMAIL_TEMPLATES, escapeHtml, renderTemplateString } from '../../shared/
 import type { CoreContext } from './context'
 import { emailTemplates } from './db/schema'
 import { env } from './env'
-import { resolveEmailDriver, type SendEmailResult } from './services/email'
+import { isEmailDriverConfigured, resolveEmailDriver, type SendEmailResult } from './services/email'
 import { getAllSettings } from './settings'
 
 type Ctx = Pick<CoreContext, 'db' | 'log'>
@@ -79,7 +79,7 @@ export async function sendTemplatedEmail(ctx: Ctx, key: string, to: string, vari
   }
 }
 
-/** True when a real driver would send (Resend key set, or the dev log driver outside production). */
+/** True when a real driver would send (Resend key or SMTP host set, or the dev log driver outside production). */
 export async function isEmailConfigured(): Promise<boolean> {
-  return Boolean(await getAllSettings().then(s => s['email.resendApiKey'])) || !env().isProduction
+  return isEmailDriverConfigured()
 }

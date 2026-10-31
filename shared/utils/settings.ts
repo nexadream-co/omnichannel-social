@@ -16,7 +16,7 @@ export interface SettingDef {
 
 export const SETTING_GROUP_META: Record<SettingGroup, { label: string, description: string, icon: string }> = {
   company: { label: 'Perusahaan', description: 'Identitas yang tampil di situs, email dan faktur.', icon: 'i-lucide-building' },
-  email: { label: 'Email keluar', description: 'Pengirim email lewat Resend. Kosongkan kunci API untuk mematikan pengiriman email.', icon: 'i-lucide-mail' },
+  email: { label: 'Email keluar', description: 'Pengirim email lewat Resend atau server SMTP. Kunci API Resend dipakai lebih dulu; kalau kosong, server SMTP yang dipakai.', icon: 'i-lucide-mail' },
   billing: { label: 'Penagihan', description: 'Aturan uji coba, masa tenggang, pengingat perpanjangan dan penurunan paket.', icon: 'i-lucide-credit-card' },
   privacy: { label: 'Privasi & data', description: 'Kebijakan penyimpanan data kreator dan pengunjung.', icon: 'i-lucide-shield-check' },
   app: { label: 'Aplikasi', description: 'Perilaku aplikasi web.', icon: 'i-lucide-settings-2' },
@@ -46,10 +46,14 @@ export const SETTINGS_CATALOG: SettingDef[] = [
   { key: 'company.tiktok', group: 'company', type: 'string', label: 'TikTok', default: '' },
   { key: 'company.youtube', group: 'company', type: 'string', label: 'YouTube', default: '' },
   // email
-  { key: 'email.resendApiKey', group: 'email', type: 'secret', label: 'Kunci API Resend', hint: 'Kosong = email tidak dikirim.', default: '', isSecret: true },
+  { key: 'email.resendApiKey', group: 'email', type: 'secret', label: 'Kunci API Resend', hint: 'Kosongkan untuk mengirim lewat server SMTP di bawah.', default: '', isSecret: true },
   { key: 'email.fromName', group: 'email', type: 'string', label: 'Nama pengirim', default: 'Socialz.id' },
-  { key: 'email.fromEmail', group: 'email', type: 'string', label: 'Email pengirim', hint: 'Harus di domain yang sudah diverifikasi di Resend.', default: 'halo@socialz.id' },
+  { key: 'email.fromEmail', group: 'email', type: 'string', label: 'Email pengirim', hint: 'Harus di domain yang sudah diverifikasi di Resend, atau yang diizinkan server SMTP.', default: 'halo@socialz.id' },
   { key: 'email.replyTo', group: 'email', type: 'string', label: 'Balas ke', hint: 'Kosong = sama dengan email kontak.', default: '' },
+  { key: 'email.smtpHost', group: 'email', type: 'string', label: 'Server SMTP', hint: 'Contoh smtp.gmail.com. Kosong = pakai SMTP_HOST dari variabel server; kalau itu juga kosong, email tidak dikirim.', default: '' },
+  { key: 'email.smtpPort', group: 'email', type: 'number', label: 'Port SMTP', hint: '587 (STARTTLS) atau 465 (TLS). Port 25 diblokir di kebanyakan hosting.', default: '587' },
+  { key: 'email.smtpUser', group: 'email', type: 'string', label: 'Nama pengguna SMTP', default: '' },
+  { key: 'email.smtpPassword', group: 'email', type: 'secret', label: 'Kata sandi SMTP', hint: 'Untuk Gmail, pakai sandi aplikasi.', default: '', isSecret: true },
   // billing
   { key: 'billing.gracePeriodDays', group: 'billing', type: 'number', label: 'Masa tenggang (hari)', default: '3' },
   { key: 'billing.trialReminderDays', group: 'billing', type: 'number', label: 'Pengingat uji coba (hari sebelum berakhir)', default: '3' },

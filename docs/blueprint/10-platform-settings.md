@@ -67,7 +67,7 @@ The catalog is used three ways:
 | `company.logoUrl` | string | used in the email header |
 | `company.instagram`, `company.threads`, `company.tiktok`, `company.youtube` | string | full URLs; empty hides the icon |
 
-### email: outgoing email through Resend (empty key = email disabled)
+### email: outgoing email through Resend or SMTP
 
 | Key | Type | Default |
 |---|---|---|
@@ -75,8 +75,12 @@ The catalog is used three ways:
 | `email.fromName` | string | `Socialz.id` |
 | `email.fromEmail` | string | `halo@socialz.id` (must be on a domain verified in Resend) |
 | `email.replyTo` | string | `''` = same as `company.email` |
+| `email.smtpHost` | string | `''` = use `SMTP_HOST` from the env |
+| `email.smtpPort` | number | `587` (465 = implicit TLS) |
+| `email.smtpUser` | string | `''` |
+| `email.smtpPassword` | secret | `''`, encrypted |
 
-An empty `email.resendApiKey` makes every send a silent no-op in production. In development, the email service uses a log driver that prints the rendered email to the console (and to Mailpit when it is running), so auth flows can be tested without a key.
+Resend wins when its key is set; otherwise SMTP is used when `email.smtpHost` (or, when that is empty, the `SMTP_*` env vars) names a server. With neither, every send is a silent no-op in production. In development, the email service uses a log driver that prints the rendered email to the console (and to Mailpit when it is running), so auth flows can be tested without a key.
 
 ### billing: trial, grace, renewal and downgrade rules
 
@@ -168,8 +172,8 @@ PATCH /api/admin/settings               (settings.write)
 
 POST  /api/admin/settings/test-email    (settings.write)
   body: { to }
-  email.resendApiKey empty → 409 "Simpan pengaturan email terlebih dahulu."
-  send a short test message; failure → 502 with Resend's error message
+  no Resend key and no SMTP host (production) → 409 "Simpan pengaturan email terlebih dahulu."
+  send a short test message; failure → 502 with the driver's error message
 ```
 
 ## 6. Admin UI (`/admin/settings`)

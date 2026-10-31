@@ -47,6 +47,12 @@ const schema = z.object({
   THREADS_APP_SECRET: z.string().default(''),
   META_WEBHOOK_VERIFY_TOKEN: z.string().default(''),
 
+  /** Fallback SMTP server when the back-office SMTP host is empty (docs/blueprint/11 §4). */
+  SMTP_HOST: z.string().default(''),
+  SMTP_PORT: z.string().default('587'),
+  SMTP_USER: z.string().default(''),
+  SMTP_PASSWORD: z.string().default(''),
+
   MAILPIT_URL: z.string().default(''),
   ADAPTER_MODE: z.enum(['real', 'fake']).default('real'),
   DEBUG_JOBS: bool
