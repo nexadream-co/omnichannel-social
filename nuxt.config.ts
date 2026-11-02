@@ -65,9 +65,11 @@ export default defineNuxtConfig({
       stylistic: { commaDangle: 'never', braceStyle: '1tbs' }
     }
   },
-  // Media editor text fonts (app/assets/css/main.css): only the weights the editor draws with.
+  // Inter italic carries the landing headlines (.landing-display / .landing-heading in main.css). Media editor text
+  // fonts: only the weights the editor draws with.
   fonts: {
     families: [
+      { name: 'Inter', weights: [400, 500, 600, 700, 800, 900], styles: ['normal', 'italic'] },
       { name: 'Plus Jakarta Sans', weights: [800] },
       { name: 'Poppins', weights: [600] },
       { name: 'Bebas Neue', weights: [400] },

@@ -167,3 +167,53 @@
   .animate-pulse,
   .animate-spin { animation: none; }
 }
+
+/*
+ * Public pages (layouts/default.vue, pages/index.vue) in the "sunlit notebook" look: a flat oat canvas, real photos,
+ * white 44px cards lifted by one soft, deep shadow, and heavy italic headlines.
+ */
+:root {
+  --landing-canvas: #f6f2ee;
+  --landing-card: #ffffff;
+  --landing-hairline: #e8e5e0;
+  --landing-ink: #111111;
+  --landing-shadow: 0 32px 80px rgb(0 0 0 / 0.16), 0 2px 8px rgb(0 0 0 / 0.08);
+}
+.dark {
+  --landing-canvas: #141113;
+  --landing-card: #1f1a1d;
+  --landing-hairline: #2e272b;
+  --landing-ink: #f6f2ee;
+  --landing-shadow: 0 32px 80px rgb(0 0 0 / 0.5), 0 2px 8px rgb(0 0 0 / 0.3);
+}
+.landing-canvas { background-color: var(--landing-canvas); }
+.landing-card {
+  background-color: var(--landing-card);
+  box-shadow: var(--landing-shadow);
+}
+.landing-display {
+  font-style: italic;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  color: var(--landing-ink);
+}
+.landing-heading {
+  font-style: italic;
+  font-weight: 800;
+  letter-spacing: -0.015em;
+  line-height: 1.15;
+  color: var(--landing-ink);
+}
+.landing-tile {
+  border-radius: 2rem;
+  box-shadow: var(--landing-shadow);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .landing-tile {
+    transition: transform 300ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .landing-tile:hover {
+    transform: translateY(-10px) rotate(0deg) scale(1.04);
+  }
+}

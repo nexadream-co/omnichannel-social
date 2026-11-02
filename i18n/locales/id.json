@@ -506,6 +506,48 @@
         "name": "Pro",
         "text": "mengelola banyak akun atau dibantu tim: batas lebih longgar dan akses untuk anggota tim."
       }
+    },
+    "emailPlaceholder": "Email kamu",
+    "haveAccount": "Sudah punya akun?",
+    "faqBody": "Belum ketemu jawabannya? Kirim pesan lewat form di bawah atau chat kami.",
+    "tiles": {
+      "label": "Contoh postingan yang diurus Socialz.id",
+      "scheduled": "Terjadwal 19.00",
+      "clicks": "128 klik hari ini",
+      "posted": "Terbit di 3 akun",
+      "reply": "Link terkirim ke DM",
+      "etalase": "Masuk Etalase",
+      "phone": "Cukup dari HP",
+      "first": "Postingan pertamamu!"
+    },
+    "chips": {
+      "schedule": {
+        "title": "Jumat 19.00",
+        "sub": "Terjadwal di 3 akun"
+      },
+      "editor": {
+        "title": "Feed 4:5 siap",
+        "sub": "Label harga Rp89rb"
+      },
+      "hashtags": {
+        "title": "#ootdhijab #outfitharian",
+        "sub": "Cocok dengan caption"
+      },
+      "links": {
+        "title": "socialz.id/tas-kulit",
+        "sub": "128 klik minggu ini"
+      },
+      "etalase": {
+        "title": "Etalase {'@'}tokoayu",
+        "sub": "12 produk, 1 link"
+      },
+      "reply": {
+        "title": "\"Mau kak!\"",
+        "sub": "Link terkirim ke DM"
+      },
+      "connect": "Instagram terhubung",
+      "compose": "Caption + link produk",
+      "time": "Terbit otomatis 19.00"
     }
   },
   "error": {

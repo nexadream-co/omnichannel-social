@@ -23,6 +23,7 @@ const planTarget = (p: Plan) => localePath(!signedIn.value ? '/app/auth/register
         v-model="period"
         :items="[{ value: 'monthly', label: t('landing.monthly') }, { value: 'yearly', label: save ? `${t('landing.yearly')} · ${t('landing.yearlySave', { n: save })}` : t('landing.yearly') }]"
         :content="false"
+        :ui="{ list: 'rounded-full bg-(--landing-card) ring-1 ring-(--landing-hairline)', indicator: 'rounded-full' }"
       />
     </div>
     <div
@@ -33,16 +34,16 @@ const planTarget = (p: Plan) => localePath(!signedIn.value ? '/app/auth/register
         v-for="plan in plans"
         :key="plan.slug"
         v-reveal
-        class="relative rounded-2xl border bg-default p-6 flex flex-col gap-5"
-        :class="plan.slug === featured ? 'order-first sm:order-none border-primary shadow-lg shadow-primary/10 ring-1 ring-primary' : 'border-default'"
+        class="landing-card relative rounded-[2rem] p-7 flex flex-col gap-5 sm:rounded-[2.5rem]"
+        :class="plan.slug === featured ? 'order-first sm:order-none ring-2 ring-primary md:-translate-y-3' : ''"
       >
         <UBadge
           v-if="plan.slug === featured && plan.trialDays > 0"
-          class="absolute -top-3 left-6"
+          class="absolute -top-3 left-7 rounded-full px-3"
           :label="t('landing.trialBadge', { n: plan.trialDays })"
         />
         <div>
-          <h3 class="text-xl font-semibold text-highlighted">
+          <h3 class="text-2xl font-bold italic text-highlighted">
             {{ plan.name }}
           </h3>
           <p
@@ -54,7 +55,7 @@ const planTarget = (p: Plan) => localePath(!signedIn.value ? '/app/auth/register
         </div>
         <div>
           <p>
-            <span class="text-4xl font-bold text-highlighted">
+            <span class="text-4xl font-black italic tracking-tight text-highlighted">
               <TickNumber
                 v-if="price(plan) > 0"
                 :value="shownPrice(plan)"
@@ -93,6 +94,7 @@ const planTarget = (p: Plan) => localePath(!signedIn.value ? '/app/auth/register
           :to="planTarget(plan)"
           size="lg"
           block
+          class="rounded-full"
           :variant="plan.slug === featured ? 'solid' : 'outline'"
           :label="price(plan) > 0 ? t('landing.choose', { plan: plan.name }) : t(signedIn ? 'landing.ctaApp' : 'landing.startFree')"
         />

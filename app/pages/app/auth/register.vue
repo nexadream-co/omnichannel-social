@@ -18,7 +18,9 @@ const schema = computed(() => z.object({
   phone: z.string().trim().refine(value => !value || isValidIndonesianPhone(value), 'Nomor HP tidak valid.').optional(),
   acceptTerms: z.boolean().refine(value => value, t('authError.acceptTerms'))
 }))
-const state = reactive({ name: '', email: '', password: '', phone: '', acceptTerms: false })
+// The landing hero's email pill hands the address over (?email=), so it is not typed twice.
+const route = useRoute()
+const state = reactive({ name: '', email: typeof route.query.email === 'string' ? route.query.email : '', password: '', phone: '', acceptTerms: false })
 const loading = ref(false)
 const errorMessage = ref<string | null>(null)
 

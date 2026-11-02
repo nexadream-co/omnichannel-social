@@ -506,6 +506,48 @@
         "name": "Pro",
         "text": "run several accounts or work with a team: higher limits and access for team members."
       }
+    },
+    "emailPlaceholder": "Your email",
+    "haveAccount": "Already have an account?",
+    "faqBody": "Still looking for an answer? Send us a message below or chat with us.",
+    "tiles": {
+      "label": "Example posts handled by Socialz.id",
+      "scheduled": "Scheduled 7:00 PM",
+      "clicks": "128 clicks today",
+      "posted": "Live on 3 accounts",
+      "reply": "Link sent by DM",
+      "etalase": "Added to Storefront",
+      "phone": "Just your phone",
+      "first": "Your first post!"
+    },
+    "chips": {
+      "schedule": {
+        "title": "Friday 7:00 PM",
+        "sub": "Scheduled on 3 accounts"
+      },
+      "editor": {
+        "title": "Feed 4:5 ready",
+        "sub": "Price tag Rp89k"
+      },
+      "hashtags": {
+        "title": "#ootdhijab #outfitharian",
+        "sub": "Matches your caption"
+      },
+      "links": {
+        "title": "socialz.id/tas-kulit",
+        "sub": "128 clicks this week"
+      },
+      "etalase": {
+        "title": "{'@'}tokoayu Storefront",
+        "sub": "12 products, 1 link"
+      },
+      "reply": {
+        "title": "\"I want it!\"",
+        "sub": "Link sent by DM"
+      },
+      "connect": "Instagram connected",
+      "compose": "Caption + product link",
+      "time": "Goes live at 7:00 PM"
     }
   },
   "error": {

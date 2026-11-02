@@ -66,22 +66,30 @@ const socials = computed(() => {
 </script>
 
 <template>
-  <div class="min-h-dvh flex flex-col bg-default">
-    <header class="sticky top-0 z-40 border-b border-default bg-default/90 backdrop-blur">
-      <UContainer class="h-16 flex items-center justify-between gap-4">
+  <div class="landing-canvas min-h-dvh flex flex-col">
+    <header class="sticky top-0 z-40 bg-(--landing-canvas)/80 backdrop-blur-md">
+      <UContainer class="h-16 sm:h-20 flex items-center justify-between gap-4">
         <NuxtLink
           :to="localePath('/')"
-          class="font-bold text-lg text-primary shrink-0"
+          class="group flex items-center gap-2 shrink-0"
         >
-          {{ site?.company.name || t('app.name') }}
+          <img
+            src="/favicon.svg"
+            alt=""
+            width="32"
+            height="32"
+            class="size-8 -rotate-12 motion-safe:transition-transform motion-safe:group-hover:rotate-0"
+          >
+          <span class="landing-display text-2xl">{{ site?.company.name || t('app.name') }}</span>
         </NuxtLink>
-        <nav class="hidden lg:flex items-center gap-1">
+        <nav class="hidden lg:flex items-center gap-1 rounded-full bg-(--landing-card)/70 p-1 ring-1 ring-(--landing-hairline)">
           <UButton
             v-for="s in sections"
             :key="s.id"
             :to="sectionLink(s.id)"
             :color="activeSection === s.id ? 'primary' : 'neutral'"
-            variant="ghost"
+            :variant="activeSection === s.id ? 'soft' : 'ghost'"
+            class="rounded-full"
             :label="s.label"
           />
         </nav>
@@ -91,6 +99,7 @@ const socials = computed(() => {
           <UButton
             v-if="signedIn"
             :to="localePath('/app')"
+            class="rounded-full px-4"
             :label="t('landing.ctaApp')"
           />
           <template v-else>
@@ -99,16 +108,16 @@ const socials = computed(() => {
               variant="ghost"
               color="neutral"
               :label="t('landing.ctaLogin')"
-              class="hidden sm:inline-flex"
+              class="hidden sm:inline-flex rounded-full"
             />
             <UButton
               :to="localePath('/app/auth/register')"
               :label="t('landing.ctaRegister')"
-              class="hidden sm:inline-flex"
+              class="hidden sm:inline-flex rounded-full px-4"
             />
           </template>
           <UButton
-            class="lg:hidden"
+            class="lg:hidden rounded-full"
             color="neutral"
             variant="ghost"
             icon="i-lucide-menu"
@@ -170,10 +179,10 @@ const socials = computed(() => {
       <slot />
     </main>
 
-    <footer class="border-t border-default py-10 text-sm">
+    <footer class="border-t border-(--landing-hairline) py-10 text-sm">
       <UContainer class="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
         <div class="space-y-2 lg:col-span-2">
-          <p class="font-bold text-primary text-base">
+          <p class="landing-display text-xl">
             {{ site?.company.name || t('app.name') }}
           </p>
           <p class="text-muted max-w-sm">
@@ -258,7 +267,7 @@ const socials = computed(() => {
           </NuxtLink>
         </div>
       </UContainer>
-      <UContainer class="mt-8 pt-6 border-t border-default text-xs text-dimmed">
+      <UContainer class="mt-8 pt-6 border-t border-(--landing-hairline) text-xs text-dimmed">
         © {{ new Date().getFullYear() }} {{ site?.company.legalName || site?.company.name || t('app.name') }}
       </UContainer>
     </footer>
