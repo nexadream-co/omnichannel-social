@@ -99,6 +99,13 @@ const tiles = [
   { photo: '1739269552505-9263189ce9eb', label: 'reply', icon: 'i-lucide-message-circle-reply', tilt: 'rotate-[6deg] translate-y-1', edge: false },
   { photo: '1770013413878-2530e2c3d82b', label: 'etalase', icon: 'i-lucide-store', tilt: 'rotate-[11deg] translate-y-7', edge: true }
 ]
+// Landing motion (main.css "Landing motion"): grid cards reveal one after another along a row of three, and the hero
+// tiles fan out from a stack in the middle, centre first, the outer ones last.
+const stagger = (index: number) => ({ '--reveal-delay': `${(index % 3) * 90}ms` })
+const fanStyle = (index: number) => ({
+  '--fan-x': `${(2 - index) * 80}%`,
+  '--enter-delay': `${350 + Math.abs(index - 2) * 110}ms`
+})
 const featureCards: Record<typeof features[number], { icon: string, photo: string }> = {
   schedule: { icon: 'i-lucide-calendar-clock', photo: '1748636879951-f4a4a7a2b794' },
   editor: { icon: 'i-lucide-crop', photo: '1759393851752-47a6ced4f604' },
@@ -118,10 +125,13 @@ const featureCards: Record<typeof features[number], { icon: string, photo: strin
     >
       <UContainer class="space-y-12 sm:space-y-16">
         <div class="mx-auto max-w-4xl space-y-6 text-center">
-          <h1 class="landing-display text-[2.75rem] sm:text-6xl lg:text-[4.9rem] text-balance">
+          <h1 class="landing-enter landing-display text-[2.75rem] sm:text-6xl lg:text-[4.9rem] text-balance">
             {{ t('landing.heroTitle') }}
           </h1>
-          <p class="mx-auto max-w-2xl text-base sm:text-lg text-toned text-pretty">
+          <p
+            class="landing-enter mx-auto max-w-2xl text-base sm:text-lg text-toned text-pretty"
+            style="--enter-delay: 100ms"
+          >
             {{ t('landing.heroBody') }}
           </p>
 
@@ -129,14 +139,16 @@ const featureCards: Record<typeof features[number], { icon: string, photo: strin
             v-if="signedIn"
             :to="localePath('/app')"
             size="xl"
-            class="rounded-full px-7"
+            class="landing-enter rounded-full px-7"
+            style="--enter-delay: 200ms"
             :label="t('landing.ctaApp')"
             trailing-icon="i-lucide-arrow-right"
           />
           <template v-else>
             <form
               v-if="registrationOpen"
-              class="mx-auto flex max-w-md items-center gap-2 rounded-full bg-(--landing-card) p-1.5 shadow-lg shadow-black/5 ring-1 ring-(--landing-hairline)"
+              class="landing-enter mx-auto flex max-w-md items-center gap-2 rounded-full bg-(--landing-card) p-1.5 shadow-lg shadow-black/5 ring-1 ring-(--landing-hairline)"
+              style="--enter-delay: 200ms"
               @submit.prevent="startRegister"
             >
               <label
@@ -171,7 +183,10 @@ const featureCards: Record<typeof features[number], { icon: string, photo: strin
               disabled
               :label="t('landing.ctaClosed')"
             />
-            <p class="text-sm text-muted">
+            <p
+              class="landing-enter text-sm text-muted"
+              style="--enter-delay: 260ms"
+            >
               {{ t('landing.haveAccount') }}
               <NuxtLink
                 :to="localePath('/app/auth/login')"
@@ -184,9 +199,10 @@ const featureCards: Record<typeof features[number], { icon: string, photo: strin
 
           <div class="flex flex-wrap justify-center gap-2">
             <span
-              v-for="chip in planChips"
+              v-for="(chip, index) in planChips"
               :key="chip"
-              class="rounded-full bg-(--landing-card)/70 px-3 py-1 text-sm font-medium text-toned ring-1 ring-(--landing-hairline)"
+              class="landing-pop rounded-full bg-(--landing-card)/70 px-3 py-1 text-sm font-medium text-toned ring-1 ring-(--landing-hairline)"
+              :style="{ '--enter-delay': `${380 + index * 70}ms` }"
             >{{ chip }}</span>
           </div>
         </div>
@@ -199,33 +215,43 @@ const featureCards: Record<typeof features[number], { icon: string, photo: strin
           <li
             v-for="(tile, index) in tiles"
             :key="tile.photo"
-            class="relative -mx-3 sm:-mx-4"
+            class="landing-fan relative -mx-3 sm:-mx-4"
             :class="[tile.tilt, tile.edge ? 'hidden sm:block' : '', index === 2 ? 'z-10' : '']"
+            :style="fanStyle(index)"
           >
-            <div class="landing-tile relative size-32 overflow-hidden bg-(--landing-card) sm:size-40 lg:size-48">
-              <img
-                :src="unsplash(tile.photo)"
-                alt=""
-                width="480"
-                height="480"
-                :loading="index === 2 ? 'eager' : 'lazy'"
-                class="size-full object-cover"
-              >
-              <span
-                class="absolute inset-x-1.5 bottom-2 items-center justify-center gap-1 truncate rounded-full bg-white/90 px-1.5 py-1 text-[10px] sm:px-2 sm:text-[11px] font-semibold text-neutral-900 backdrop-blur sm:inset-x-3 sm:bottom-3 sm:flex sm:text-xs"
-                :class="index === 2 ? 'flex' : 'hidden'"
-              >
-                <UIcon
-                  :name="tile.icon"
-                  class="size-3.5 shrink-0 text-(--color-brand-600)"
-                />
-                <span class="truncate">{{ t(`landing.tiles.${tile.label}`) }}</span>
-              </span>
+            <div
+              class="landing-bob"
+              :style="{ '--bob-delay': `${-index * 1.3}s` }"
+            >
+              <div class="landing-tile relative size-32 overflow-hidden bg-(--landing-card) sm:size-40 lg:size-48">
+                <img
+                  :src="unsplash(tile.photo)"
+                  alt=""
+                  width="480"
+                  height="480"
+                  :loading="index === 2 ? 'eager' : 'lazy'"
+                  class="size-full object-cover"
+                >
+                <span
+                  class="landing-pop absolute inset-x-1.5 bottom-2 items-center justify-center gap-1 truncate rounded-full bg-white/90 px-1.5 py-1 text-[10px] sm:px-2 sm:text-[11px] font-semibold text-neutral-900 backdrop-blur sm:inset-x-3 sm:bottom-3 sm:flex sm:text-xs"
+                  :class="index === 2 ? 'flex' : 'hidden'"
+                  :style="{ '--enter-delay': `${1000 + Math.abs(index - 2) * 120}ms` }"
+                >
+                  <UIcon
+                    :name="tile.icon"
+                    class="size-3.5 shrink-0 text-(--color-brand-600)"
+                  />
+                  <span class="truncate">{{ t(`landing.tiles.${tile.label}`) }}</span>
+                </span>
+              </div>
             </div>
           </li>
         </ul>
 
-        <p class="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-sm text-muted">
+        <p
+          class="landing-enter flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-sm text-muted"
+          style="--enter-delay: 900ms"
+        >
           <span class="inline-flex items-center gap-2 text-default">
             {{ t('landing.worksWith') }}
             <UIcon
@@ -300,6 +326,7 @@ const featureCards: Record<typeof features[number], { icon: string, photo: strin
             :key="key"
             v-reveal
             class="flex flex-col rounded-[2rem] bg-white/[0.06] p-6 ring-1 ring-white/10 sm:p-7"
+            :style="stagger(index)"
           >
             <span class="text-sm font-black italic text-(--color-brand-400)">{{ String(index + 1).padStart(2, '0') }}</span>
             <h3 class="mt-3 text-xl font-bold italic">
@@ -308,7 +335,10 @@ const featureCards: Record<typeof features[number], { icon: string, photo: strin
             <p class="mt-2 text-sm text-white/70">
               {{ t(`landing.pain.items.${key}.body`) }}
             </p>
-            <p class="mt-auto flex items-center gap-1.5 pt-5 text-sm font-semibold text-(--color-brand-300)">
+            <p
+              class="landing-pin mt-auto flex items-center gap-1.5 pt-5 text-sm font-semibold text-(--color-brand-300)"
+              style="--pin-delay: 400ms"
+            >
               <UIcon
                 name="i-lucide-circle-check"
                 class="size-4 shrink-0"
@@ -340,10 +370,11 @@ const featureCards: Record<typeof features[number], { icon: string, photo: strin
         </div>
         <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           <article
-            v-for="key in features"
+            v-for="(key, index) in features"
             :key="key"
             v-reveal
-            class="landing-card flex flex-col rounded-[2rem] p-2.5"
+            class="group landing-card flex flex-col rounded-[2rem] p-2.5"
+            :style="stagger(index)"
           >
             <div class="relative aspect-[4/3] overflow-hidden rounded-[1.5rem] bg-elevated">
               <img
@@ -352,9 +383,9 @@ const featureCards: Record<typeof features[number], { icon: string, photo: strin
                 width="640"
                 height="480"
                 loading="lazy"
-                class="size-full object-cover"
+                class="size-full object-cover motion-safe:transition-transform motion-safe:duration-700 motion-safe:group-hover:scale-105"
               >
-              <span class="absolute bottom-3 left-3 flex max-w-[calc(100%-1.5rem)] items-center gap-2.5 rounded-2xl bg-white/95 py-2 pr-3.5 pl-2 text-neutral-900 shadow-lg backdrop-blur">
+              <span class="landing-pin absolute bottom-3 left-3 flex max-w-[calc(100%-1.5rem)] items-center gap-2.5 rounded-2xl bg-white/95 py-2 pr-3.5 pl-2 text-neutral-900 shadow-lg backdrop-blur">
                 <span class="flex size-8 shrink-0 items-center justify-center rounded-full bg-(--color-brand-50) text-(--color-brand-600)">
                   <UIcon
                     :name="featureCards[key].icon"
@@ -397,7 +428,8 @@ const featureCards: Record<typeof features[number], { icon: string, photo: strin
             v-for="(step, index) in steps"
             :key="step.title"
             v-reveal
-            class="landing-card flex flex-col rounded-[2rem] p-2.5"
+            class="group landing-card flex flex-col rounded-[2rem] p-2.5"
+            :style="stagger(index)"
           >
             <div class="relative aspect-[4/3] overflow-hidden rounded-[1.5rem] bg-elevated">
               <img
@@ -406,10 +438,16 @@ const featureCards: Record<typeof features[number], { icon: string, photo: strin
                 width="640"
                 height="480"
                 loading="lazy"
-                class="size-full object-cover"
+                class="size-full object-cover motion-safe:transition-transform motion-safe:duration-700 motion-safe:group-hover:scale-105"
               >
-              <span class="absolute top-3 left-3 flex size-10 items-center justify-center rounded-full bg-white text-lg font-black italic text-neutral-900 shadow-lg">{{ index + 1 }}</span>
-              <span class="absolute right-3 bottom-3 flex max-w-[calc(100%-1.5rem)] items-center gap-2 rounded-full bg-white/95 py-1.5 pr-3.5 pl-2 text-sm font-semibold text-neutral-900 shadow-lg backdrop-blur">
+              <span
+                class="landing-pin absolute top-3 left-3 flex size-10 items-center justify-center rounded-full bg-white text-lg font-black italic text-neutral-900 shadow-lg"
+                style="--pin-delay: 200ms"
+              >{{ index + 1 }}</span>
+              <span
+                class="landing-pin absolute right-3 bottom-3 flex max-w-[calc(100%-1.5rem)] items-center gap-2 rounded-full bg-white/95 py-1.5 pr-3.5 pl-2 text-sm font-semibold text-neutral-900 shadow-lg backdrop-blur"
+                style="--pin-delay: 400ms"
+              >
                 <UIcon
                   :name="step.icon"
                   class="size-4 shrink-0 text-(--color-brand-600)"
@@ -448,14 +486,20 @@ const featureCards: Record<typeof features[number], { icon: string, photo: strin
                 class="size-full object-cover"
               >
             </div>
-            <span class="absolute -right-2 top-8 flex rotate-6 items-center gap-1.5 rounded-full bg-white px-3 py-2 text-xs font-semibold text-neutral-900 shadow-lg sm:-right-6">
+            <span
+              class="landing-bob absolute -right-2 top-8 flex rotate-6 items-center gap-1.5 rounded-full bg-white px-3 py-2 text-xs font-semibold text-neutral-900 shadow-lg sm:-right-6"
+              style="--bob-delay: -2s"
+            >
               <UIcon
                 name="i-lucide-smartphone"
                 class="size-4 text-(--color-brand-600)"
               />
               {{ t('landing.tiles.phone') }}
             </span>
-            <span class="absolute -left-2 bottom-10 flex -rotate-6 items-center gap-1.5 rounded-full bg-white px-3 py-2 text-xs font-semibold text-neutral-900 shadow-lg sm:-left-6">
+            <span
+              class="landing-bob absolute -left-2 bottom-10 flex -rotate-6 items-center gap-1.5 rounded-full bg-white px-3 py-2 text-xs font-semibold text-neutral-900 shadow-lg sm:-left-6"
+              style="--bob-delay: -5s"
+            >
               <UIcon
                 name="i-lucide-party-popper"
                 class="size-4 text-(--color-brand-600)"
@@ -477,9 +521,10 @@ const featureCards: Record<typeof features[number], { icon: string, photo: strin
             </div>
             <ul class="grid gap-6 sm:grid-cols-2">
               <li
-                v-for="point in newbiePoints"
+                v-for="(point, index) in newbiePoints"
                 :key="point.key"
-                class="flex gap-3"
+                class="landing-pin flex gap-3"
+                :style="{ '--pin-delay': `${200 + index * 90}ms` }"
               >
                 <span class="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                   <UIcon
@@ -626,14 +671,16 @@ const featureCards: Record<typeof features[number], { icon: string, photo: strin
       class="pt-8 pb-20 sm:pb-28"
     >
       <UContainer class="text-center space-y-6">
-        <img
-          v-reveal
-          src="/favicon.svg"
-          alt=""
-          width="96"
-          height="96"
-          class="landing-tile mx-auto size-20 -rotate-6 sm:size-24"
-        >
+        <div class="landing-bob">
+          <img
+            v-reveal
+            src="/favicon.svg"
+            alt=""
+            width="96"
+            height="96"
+            class="landing-tile mx-auto size-20 -rotate-6 sm:size-24"
+          >
+        </div>
         <h2 class="landing-display text-4xl sm:text-6xl text-balance">
           {{ t('landing.finalTitle') }}
         </h2>

@@ -55,6 +55,8 @@
     opacity: 0;
     transform: translateY(16px);
     transition: opacity 500ms ease-out, transform 500ms ease-out;
+    /* Grids stagger their cards by setting --reveal-delay per item. */
+    transition-delay: var(--reveal-delay, 0ms);
   }
   .reveal-ready .reveal.revealed {
     opacity: 1;
@@ -216,4 +218,61 @@
   .landing-tile:hover {
     transform: translateY(-10px) rotate(0deg) scale(1.04);
   }
+}
+
+/*
+ * Landing motion (pages/index.vue), only when motion is welcome. Everything ends in the element's resting state, and
+ * the CSS-only hero entrance plays without JS, so nothing can stay hidden.
+ *  - .landing-enter: hero copy rises in on load, staggered by --enter-delay.
+ *  - .landing-fan: the photo tiles start stacked in the middle, untilted, and fan out to their places (--fan-x, --enter-delay).
+ *  - .landing-bob: a slow float; --bob-delay (negative) puts each item at a different phase.
+ *  - .landing-pin: a small card pinned on a v-reveal card lands just after the card itself (--pin-delay).
+ */
+@media (prefers-reduced-motion: no-preference) {
+  .landing-enter {
+    animation: landing-rise 700ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    animation-delay: var(--enter-delay, 0ms);
+  }
+  .landing-fan {
+    animation: landing-fan 1000ms cubic-bezier(0.2, 0.9, 0.25, 1.1) both;
+    animation-delay: var(--enter-delay, 0ms);
+  }
+  .landing-pop {
+    animation: landing-pop 450ms cubic-bezier(0.2, 0.9, 0.3, 1.3) both;
+    animation-delay: var(--enter-delay, 0ms);
+  }
+  .landing-bob {
+    animation: landing-bob 7s ease-in-out infinite;
+    animation-delay: var(--bob-delay, 0s);
+  }
+  .reveal-ready .reveal .landing-pin {
+    opacity: 0;
+    transform: translateY(10px) scale(0.94);
+    transition: opacity 400ms ease-out, transform 450ms cubic-bezier(0.2, 0.9, 0.3, 1.25);
+    transition-delay: calc(var(--reveal-delay, 0ms) + var(--pin-delay, 250ms));
+  }
+  .reveal-ready .reveal.revealed .landing-pin {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes landing-rise {
+  from { opacity: 0; transform: translateY(24px); filter: blur(6px); }
+  to { opacity: 1; transform: none; filter: none; }
+}
+
+/* No `to`: rotate and translate return to the tile's own tilt classes. */
+@keyframes landing-fan {
+  from { opacity: 0; rotate: 0deg; translate: 0 0; transform: translateX(var(--fan-x, 0)) translateY(48px) scale(0.8); }
+}
+
+@keyframes landing-pop {
+  from { opacity: 0; transform: translateY(6px) scale(0.6); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes landing-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
 }
