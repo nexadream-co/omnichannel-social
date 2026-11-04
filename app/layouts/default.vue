@@ -73,13 +73,7 @@ const socials = computed(() => {
           :to="localePath('/')"
           class="group flex items-center gap-2 shrink-0"
         >
-          <img
-            src="/favicon.svg"
-            alt=""
-            width="32"
-            height="32"
-            class="size-8 -rotate-12 motion-safe:transition-transform motion-safe:group-hover:rotate-0"
-          >
+          <BrandMark class="size-8" />
           <span class="landing-display text-2xl">{{ site?.company.name || t('app.name') }}</span>
         </NuxtLink>
         <nav class="hidden lg:flex items-center gap-1 rounded-full bg-(--landing-card)/70 p-1 ring-1 ring-(--landing-hairline)">

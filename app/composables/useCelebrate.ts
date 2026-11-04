@@ -9,9 +9,9 @@ export function useCelebrate() {
   const preference = usePreferredReducedMotion()
   const reduced = computed(() => preference.value === 'reduce')
 
-  async function confetti(opts: { origin?: HTMLElement | { x: number, y: number }, big?: boolean } = {}): Promise<void> {
+  async function confetti(opts: { origin?: HTMLElement | { x: number, y: number }, big?: boolean, angle?: number, spread?: number, particleCount?: number, haptics?: boolean } = {}): Promise<void> {
     if (!import.meta.client) return
-    haptic('success')
+    if (opts.haptics !== false) haptic('success')
     if (reduced.value) return
     const { default: fire } = await import('canvas-confetti')
     let origin = { x: 0.5, y: 0.6 }
@@ -24,7 +24,8 @@ export function useCelebrate() {
         : opts.origin
       origin = { x: point.x / window.innerWidth, y: point.y / window.innerHeight }
     }
-    await fire({ particleCount: opts.big ? 140 : 70, spread: opts.big ? 90 : 70, origin, colors: COLORS, disableForReducedMotion: true })
+    // Above the toaster (z-100), so a burst from a moment toast falls in front of it.
+    await fire({ particleCount: opts.particleCount ?? (opts.big ? 140 : 70), spread: opts.spread ?? (opts.big ? 90 : 70), angle: opts.angle ?? 90, origin, colors: COLORS, zIndex: 110, disableForReducedMotion: true })
   }
 
   function spark(target: SparkTarget): void {

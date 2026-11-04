@@ -39,8 +39,8 @@ const { t } = useI18n()
       class="absolute inset-0 bg-default/70 flex flex-col items-center justify-center gap-1 text-xs text-default pointer-events-none"
     >
       <UIcon
-        name="i-lucide-loader-circle"
-        class="size-5 motion-safe:animate-spin"
+        name="i-socialz-loader"
+        class="size-5"
       />
       {{ t('composer.processing') }}
     </div>

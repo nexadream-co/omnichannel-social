@@ -1,5 +1,5 @@
 /** First-time moments a workspace celebrates once (stored in workspaces.milestones, see server/core/milestones.ts). */
-export const MILESTONE_KEYS = ['firstAccountConnected', 'firstPostScheduled', 'firstPostPublished', 'firstClick', 'firstAutoDm', 'checklistComplete', 'etalasePublished', 'upgradePaid', 'clicks100', 'clicks1000', 'clicks10000'] as const
+export const MILESTONE_KEYS = ['firstAccountConnected', 'firstPostScheduled', 'firstPostPublished', 'firstClick', 'firstAutoDm', 'firstRuleActive', 'firstLinkAdded', 'checklistComplete', 'etalasePublished', 'upgradePaid', 'clicks100', 'clicks1000', 'clicks10000'] as const
 export type MilestoneKey = typeof MILESTONE_KEYS[number]
 
 /** Per-week target celebration, keyed by the Monday of that week. */

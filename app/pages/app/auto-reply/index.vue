@@ -24,6 +24,7 @@ const toast = useToast()
 const { confirm } = useConfirmDialog()
 const entitlements = useEntitlements()
 const { spark, haptic } = useCelebrate()
+const moments = useMoments()
 useHead({ title: () => t('autoReply.title') })
 
 const rules = ref<RuleRow[] | null>(null)
@@ -50,7 +51,11 @@ async function toggle(rule: RuleRow, active: boolean) {
   }
   try {
     await apiFetch(`/api/app/autoreply/rules/${rule.id}`, { method: 'PATCH', body: { active } })
-    if (active) toast.add({ title: t('autoReply.toggledOn', { keyword: rule.keywords[0] ?? t('autoReply.anyComment').toLowerCase() }), color: 'success' })
+    if (active) {
+      const keyword = rule.keywords[0]
+      const first = moments.celebrate('firstRuleActive', { params: { keyword }, body: keyword ? undefined : t('moments.firstRuleActive.bodyAny') })
+      if (!first) toast.add({ title: t('autoReply.toggledOn', { keyword: keyword ?? t('autoReply.anyComment').toLowerCase() }), color: 'success' })
+    }
   } catch (caught) {
     rule.active = previous
     if (!entitlements.handlePlanError(caught)) toast.add({ title: extractErrorMessage(caught, t('authError.generic')), color: 'error' })

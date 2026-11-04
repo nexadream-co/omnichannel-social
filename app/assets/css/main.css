@@ -276,3 +276,66 @@
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-8px); }
 }
+
+/* Moment toasts (app/composables/useMoments.ts): a brand gradient border that sweeps around the card twice. */
+@property --moment-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+.moment-toast {
+  border: 2px solid transparent;
+  background:
+    linear-gradient(var(--ui-bg), var(--ui-bg)) padding-box,
+    conic-gradient(from var(--moment-angle), #e6114f, #ff7a45, #ffd166, #f93466, #e6114f) border-box;
+}
+.moment-toast-big {
+  box-shadow: 0 14px 34px -14px color-mix(in srgb, #e6114f 55%, transparent), 0 4px 12px -4px rgb(0 0 0 / 0.12);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .moment-toast { animation: moment-border 2.4s linear 2; }
+}
+@keyframes moment-border {
+  to { --moment-angle: 360deg; }
+}
+
+/*
+ * BrandMark hover: the bag tilts and a sparkle pops in its corner, on the icon itself or on a `.group` ancestor (the
+ * link around it). Plain CSS so it also works on the public Etalase, which ships no JS. Reduced motion jumps straight
+ * to the hover pose.
+ */
+.brand-mark-bag,
+.brand-mark-spark {
+  transform-box: view-box;
+}
+.brand-mark-bag {
+  transform-origin: 32px 38px;
+}
+.brand-mark-spark {
+  transform-origin: 50.5px 13.5px;
+  transform: scale(0) rotate(-90deg);
+  opacity: 0;
+}
+.brand-mark:hover .brand-mark-bag,
+.group:is(:hover, :focus-visible) .brand-mark-bag {
+  transform: rotate(-10deg);
+}
+.brand-mark:hover .brand-mark-spark,
+.group:is(:hover, :focus-visible) .brand-mark-spark {
+  transform: none;
+  opacity: 1;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .brand-mark-bag {
+    transition: transform 280ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .brand-mark-spark {
+    transition: transform 320ms cubic-bezier(0.34, 1.56, 0.64, 1) 60ms, opacity 120ms ease-out 60ms;
+  }
+}
+
+/* The brand loader (A3 bag, i-socialz-loader) animates its own dots; Nuxt UI adds animate-spin to every loading icon. */
+[class*="socialz:loader"].animate-spin,
+[class*="socialz-loader"].animate-spin {
+  animation: none;
+}

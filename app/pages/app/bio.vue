@@ -30,8 +30,8 @@ const toast = useToast()
 const config = useRuntimeConfig()
 const entitlements = useEntitlements()
 const undo = useUndoToast()
-const { spark, confetti } = useCelebrate()
-const milestones = useMilestones()
+const { spark } = useCelebrate()
+const moments = useMoments()
 const reducedMotion = usePreferredReducedMotion()
 useHead({ title: () => t('bio.title') })
 
@@ -157,10 +157,9 @@ async function togglePublish(event?: MouseEvent) {
     toast.add({ title: t('bio.unpublished'), color: 'success' })
     return
   }
-  if (milestones.reach('etalasePublished')) {
+  if (moments.celebrate('etalasePublished', { share: { url: page.value!.url } })) {
     firstPublish.value = true
     shareOpen.value = true
-    void confetti({ big: true })
     return
   }
   toast.add({ title: t('bio.published'), color: 'success' })
@@ -484,8 +483,7 @@ const previewOpen = ref(false)
                     >
                     <span class="inline-flex items-center gap-1.5 rounded-md border border-default px-3 py-1.5 text-sm hover:bg-elevated">
                       <UIcon
-                        :name="uploading ? 'i-lucide-loader-circle' : 'i-lucide-upload'"
-                        :class="uploading && 'motion-safe:animate-spin'"
+                        :name="uploading ? 'i-socialz-loader' : 'i-lucide-upload'"
                         class="size-4"
                       />
                       {{ uploading ? t('busy.uploadingPlain') : t('bio.avatar') }}

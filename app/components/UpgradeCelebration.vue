@@ -1,15 +1,10 @@
 <script setup lang="ts">
 import { FEATURE_META, type FeatureKey } from '#shared/utils/plans'
 
-/** Shown once after the first paid upgrade: confetti plus the features that just opened. */
+/** Shown once after the first paid upgrade, next to the moment toast: the features that just opened. */
 defineProps<{ planName: string, features: FeatureKey[] }>()
 const open = defineModel<boolean>('open', { default: false })
 const { t } = useI18n()
-const { confetti } = useCelebrate()
-
-watch(open, (value) => {
-  if (value) void confetti({ big: true })
-})
 </script>
 
 <template>

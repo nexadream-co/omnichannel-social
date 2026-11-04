@@ -4,13 +4,16 @@ import type { LinkRow } from '~/pages/app/links/index.vue'
 /** Shared pieces for adding a product link from anywhere (composer, Etalase, links page). */
 export function useAddProductLink() {
   const config = useRuntimeConfig()
+  const moments = useMoments()
 
-  /** POST /api/app/links. Throws, so callers can hand plan errors to entitlements.handlePlanError. */
-  function create(url: string, opts: { showInBio?: boolean, title?: string, priceIdr?: number, imageUrl?: string, imageSourceUrl?: string } = {}) {
-    return apiFetch<{ link: LinkRow, customIgnored: boolean }>('/api/app/links', {
+  /** POST /api/app/links. Throws, so callers can hand plan errors to entitlements.handlePlanError. The first link ever is a moment. */
+  async function create(url: string, opts: { showInBio?: boolean, title?: string, priceIdr?: number, imageUrl?: string, imageSourceUrl?: string } = {}) {
+    const result = await apiFetch<{ link: LinkRow, customIgnored: boolean }>('/api/app/links', {
       method: 'POST',
       body: { destinationUrl: url.trim(), title: opts.title || undefined, priceIdr: opts.priceIdr || undefined, imageUrl: opts.imageUrl || undefined, imageSourceUrl: opts.imageSourceUrl || undefined, showInBio: opts.showInBio }
     })
+    moments.celebrate('firstLinkAdded')
+    return result
   }
 
   /** The autofill job fills title and photo within seconds: poll until both exist. */

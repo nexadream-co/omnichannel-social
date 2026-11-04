@@ -24,6 +24,7 @@ const toast = useToast()
 const auth = useCreatorAuth()
 const entitlements = useEntitlements()
 const { reach } = useMilestones()
+const moments = useMoments()
 const { spark } = useCelebrate()
 const celebration = reactive({ open: false, planName: '', features: [] as FeatureKey[] })
 const { confirm } = useConfirmDialog()
@@ -75,6 +76,7 @@ async function handleReturn() {
     celebration.features = after ? FEATURE_KEYS.filter(key => after.features[key] && !before?.[key]) : []
     celebration.planName = after?.planName ?? ''
     celebration.open = true
+    moments.show('upgradePaid', { params: { plan: celebration.planName } })
   }
 }
 

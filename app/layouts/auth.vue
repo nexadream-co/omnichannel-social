@@ -10,12 +10,13 @@ const isStaff = computed(() => route.path.startsWith('/admin'))
     <header class="h-16 px-4 flex items-center justify-between">
       <NuxtLink
         :to="isStaff ? '/admin/auth/login' : localePath('/')"
-        class="font-bold text-lg text-primary"
+        class="group flex items-center gap-2 font-bold text-lg text-primary"
       >
-        {{ t('app.name') }}<span
+        <BrandMark class="size-8" />
+        <span>{{ t('app.name') }}<span
           v-if="isStaff"
           class="text-muted font-medium"
-        > · Admin</span>
+        > · Admin</span></span>
       </NuxtLink>
       <div class="flex items-center gap-1">
         <LocaleSwitch v-if="!isStaff" />

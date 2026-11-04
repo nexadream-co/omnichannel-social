@@ -49,8 +49,8 @@ function onChange(event: Event) {
       class="absolute inset-0 grid place-items-center bg-default/70"
     >
       <UIcon
-        name="i-lucide-loader-circle"
-        class="size-5 text-primary motion-safe:animate-spin"
+        name="i-socialz-loader"
+        class="size-5 text-primary"
       />
     </span>
     <span

@@ -79,9 +79,14 @@ const { data: platformStatus } = useFetch<{ publishingPaused: boolean, autoReply
       <template #header="{ collapsed }">
         <NuxtLink
           to="/admin/dashboard"
-          class="font-bold text-primary truncate"
+          :aria-label="collapsed ? 'Socialz.id · Admin' : undefined"
+          class="group flex items-center gap-2 min-w-0 font-bold text-primary"
         >
-          {{ collapsed ? 'S' : 'Socialz.id · Admin' }}
+          <BrandMark class="size-8" />
+          <span
+            v-if="!collapsed"
+            class="truncate"
+          >Socialz.id · Admin</span>
         </NuxtLink>
       </template>
       <template #default="{ collapsed }">

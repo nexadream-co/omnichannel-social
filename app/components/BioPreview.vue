@@ -210,11 +210,7 @@ const ring = (section: string) => flash.value[section] ? 'ring-2 ring-primary/40
           :style="{ background: theme.card, border: line }"
         >
           <p class="inline-flex items-center gap-1.5 text-xs font-bold">
-            <img
-              src="/favicon.svg"
-              alt=""
-              class="size-4"
-            >
+            <BrandMark class="size-4" />
             Socialz.id
           </p>
           <p

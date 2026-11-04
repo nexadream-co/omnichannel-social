@@ -4,6 +4,10 @@ export default defineAppConfig({
       primary: 'brand',
       neutral: 'zinc'
     },
+    // The brand loader (app/assets/icons/loader.svg) everywhere Nuxt UI shows a loading state; main.css stops the spin.
+    icons: {
+      loading: 'i-socialz-loader'
+    },
     button: {
       compoundVariants: [
         // Press feedback. The arbitrary transition list replaces the base transition-colors, which would otherwise

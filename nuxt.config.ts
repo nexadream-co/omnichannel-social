@@ -86,5 +86,9 @@ export default defineNuxtConfig({
     detectBrowserLanguage: false,
     // Absolute hreflang/canonical URLs (docs/blueprint/14 §6).
     baseUrl: process.env.NUXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+  },
+  // Our own icons, used as i-socialz-<file name> (the brand loader).
+  icon: {
+    customCollections: [{ prefix: 'socialz', dir: './app/assets/icons' }]
   }
 })

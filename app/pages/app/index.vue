@@ -2,7 +2,6 @@
 import { PLATFORM_META } from '#shared/channels/registry'
 import type { Platform } from '#shared/channels/types'
 import { ONBOARDING_STEPS } from '#shared/utils/onboarding'
-import type { MomentsSummary } from '~/components/HomeMoments.vue'
 import type { OverduePost } from '~/components/OverduePostCard.vue'
 
 definePageMeta({ layout: 'creator' })
@@ -10,10 +9,9 @@ definePageMeta({ layout: 'creator' })
 const { t, tm, rt, locale } = useI18n()
 const localePath = useLocalePath()
 const route = useRoute()
-const toast = useToast()
 const auth = useCreatorAuth()
-const { reach, at } = useMilestones()
-const { confetti } = useCelebrate()
+const { at } = useMilestones()
+const moments = useMoments()
 useHead({ title: () => t('nav.home') })
 
 const profile = computed(() => auth.profile.value)
@@ -34,9 +32,8 @@ watch(doneCount, value => requestAnimationFrame(() => {
 }), { immediate: true, flush: 'post' })
 
 watch([profile, allDone], ([current, done]) => {
-  if (!current || !done || !reach('checklistComplete')) return
-  confetti({ big: true })
-  toast.add({ title: t('home.checklistComplete'), color: 'success', icon: 'i-lucide-party-popper' })
+  if (!current || !done) return
+  moments.celebrate('checklistComplete')
 }, { immediate: true })
 
 // "What do I do today?" (docs/SCREENS.md #12): problems first, then what is coming up.
@@ -61,7 +58,9 @@ async function loadPosts() {
     : []
 }
 
-interface Summary extends MomentsSummary {
+interface Summary {
+  clicks7d: number
+  autoReplies7d: number
   topProducts: { linkId: string, title: string | null, imageUrl: string | null, clicks: number }[]
   needsReauth: number
   bioUrl: string | null
@@ -101,7 +100,10 @@ const tip = computed(() => {
 const welcome = ref(route.query.welcome === '1')
 // The sheet is opened from the address once, then the address is cleaned so a reload does not show it again.
 onMounted(() => {
-  if (route.query.welcome === '1') navigateTo({ query: {} }, { replace: true })
+  if (route.query.welcome !== '1') return
+  navigateTo({ query: {} }, { replace: true })
+  const name = profile.value?.user.name.trim().split(/\s+/)[0] ?? ''
+  moments.show('welcome', { params: { name } })
 })
 
 const { confirm } = useConfirmDialog()
@@ -247,8 +249,6 @@ async function dismiss() {
           :title="renewal.days === 0 ? t('home.renewalToday', { plan: renewal.plan }) : t('home.renewal', { plan: renewal.plan, n: renewal.days })"
           :actions="[{ label: t('home.renewalAction'), to: localePath('/app/billing'), color: 'info', variant: 'outline' }]"
         />
-
-        <HomeMoments :summary="summary" />
 
         <UCard v-if="canRead">
           <template #header>

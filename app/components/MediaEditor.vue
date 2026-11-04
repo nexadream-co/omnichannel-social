@@ -376,8 +376,8 @@ onBeforeUnmount(() => {
             class="flex flex-col items-center gap-2 text-neutral-300 text-sm"
           >
             <UIcon
-              name="i-lucide-loader-circle"
-              class="size-6 motion-safe:animate-spin"
+              name="i-socialz-loader"
+              class="size-6"
             />
             {{ t('common.loading') }}
           </div>
@@ -478,8 +478,8 @@ onBeforeUnmount(() => {
             class="absolute inset-0 bg-black/60 flex flex-col items-center justify-center gap-2 text-white text-sm"
           >
             <UIcon
-              name="i-lucide-loader-circle"
-              class="size-7 motion-safe:animate-spin"
+              name="i-socialz-loader"
+              class="size-7"
             />
             {{ savingPercent === null ? t('mediaEditor.saving') : t('composer.uploading', { percent: savingPercent }) }}
           </div>

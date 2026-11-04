@@ -24,8 +24,8 @@ const route = useRoute()
 const toast = useToast()
 const auth = useCreatorAuth()
 const entitlements = useEntitlements()
-const milestones = useMilestones()
-const { confetti, spark } = useCelebrate()
+const { spark } = useCelebrate()
+const moments = useMoments()
 const productLinks = useAddProductLink()
 
 const editId = typeof route.query.post === 'string' ? route.query.post : null
@@ -378,11 +378,11 @@ async function submit(mode: 'schedule' | 'now' | 'draft') {
     if (mode === 'draft') {
       toast.add({ title: t('composer.savedDraft'), color: 'success' })
     } else if (mode === 'now') {
-      toast.add({ title: t('composer.postingNow'), color: 'success' })
+      // The first post sent straight away is the same first-post moment, told as a launch.
+      if (!(wasFirst && moments.celebrate('firstPostScheduled', { as: 'firstPostNow' }))) toast.add({ title: t('composer.postingNow'), color: 'success' })
       void offerAutoReply(saved.postId)
-    } else if (wasFirst && milestones.reach('firstPostScheduled')) {
-      // The first scheduled post is a moment: confetti and a sheet that says what happens next.
-      void confetti({ big: true })
+    } else if (wasFirst && moments.celebrate('firstPostScheduled', { params: { when } })) {
+      // The first scheduled post is a moment: the moment toast and a sheet that says what happens next.
       const hint = await autoReplyHint(saved.postId)
       Object.assign(success, { scheduledAt, caption: caption.value, imageUrl: firstMedia ? (firstMedia.kind === 'image' ? firstMedia.previewUrl : firstMedia.posterUrl ?? null) : null, hintLinkId: hint?.linkId ?? null, open: true })
       return

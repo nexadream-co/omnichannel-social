@@ -120,6 +120,13 @@
       "when": 1793436363597,
       "tag": "0016_app_logs",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1793799483599,
+      "tag": "0017_more_milestones",
+      "breakpoints": true
     }
   ]
 }

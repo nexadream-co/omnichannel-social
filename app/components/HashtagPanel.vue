@@ -426,8 +426,8 @@ async function deleteSet(set: HashtagSet) {
                 class="text-xs text-muted flex items-center gap-1.5"
               >
                 <UIcon
-                  name="i-lucide-loader-circle"
-                  class="size-3.5 motion-safe:animate-spin"
+                  name="i-socialz-loader"
+                  class="size-3.5"
                 />
                 {{ t('hashtags.research.pending') }}
               </p>

@@ -140,9 +140,9 @@ async function choose(outcome: Outcome) {
                 @click="choose(outcome)"
               >
                 <UIcon
-                  :name="busy === outcome ? 'i-lucide-loader-circle' : OUTCOMES[outcome].icon"
+                  :name="busy === outcome ? 'i-socialz-loader' : OUTCOMES[outcome].icon"
                   class="size-5 shrink-0 mt-0.5"
-                  :class="[busy === outcome && 'motion-safe:animate-spin', ICON_COLOR[OUTCOMES[outcome].color]]"
+                  :class="ICON_COLOR[OUTCOMES[outcome].color]"
                 />
                 <span>
                   <span class="block text-sm font-medium text-highlighted">{{ OUTCOMES[outcome].label }}</span>

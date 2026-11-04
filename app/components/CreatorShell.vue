@@ -8,6 +8,8 @@ const route = useRoute()
 const auth = useCreatorAuth()
 const entitlements = useEntitlements()
 onMounted(() => entitlements.load())
+// Moments that happened while the creator was away, and the greeting after sign-in.
+useMomentWatch()
 // Hidden when the plan already has every feature, or when this role can't buy (docs/blueprint/06 §6).
 const showUpgrade = computed(() => Boolean(entitlements.data.value) && !entitlements.hasEveryFeature.value && auth.hasAbility('billing.manage'))
 
@@ -88,9 +90,14 @@ function isActive(to: string) {
       <template #header="{ collapsed }">
         <NuxtLink
           :to="localePath('/app')"
-          class="font-bold text-lg text-primary truncate"
+          :aria-label="collapsed ? t('app.name') : undefined"
+          class="group flex items-center gap-2 min-w-0 font-bold text-lg text-primary"
         >
-          {{ collapsed ? 'S' : t('app.name') }}
+          <BrandMark class="size-8" />
+          <span
+            v-if="!collapsed"
+            class="truncate"
+          >{{ t('app.name') }}</span>
         </NuxtLink>
       </template>
 
@@ -164,8 +171,9 @@ function isActive(to: string) {
             <div class="flex min-w-0 items-center gap-2 lg:hidden">
               <NuxtLink
                 :to="localePath('/app')"
-                class="font-bold text-primary shrink-0"
+                class="group flex items-center gap-1.5 font-bold text-primary shrink-0"
               >
+                <BrandMark class="size-6" />
                 {{ t('app.name') }}
               </NuxtLink>
               <Transition name="fade">

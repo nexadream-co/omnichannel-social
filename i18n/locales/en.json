@@ -183,7 +183,6 @@
       "streak": "{n} weeks in a row"
     },
     "noUpcomingHint": "Schedule once, it posts itself.",
-    "checklistComplete": "All steps done. You're officially on autopilot!",
     "overdueTitle": "{count} overdue posts",
     "overdueMore": "See {n} more",
     "renewal": "{plan} ends in {n} days",
@@ -194,14 +193,6 @@
     "openEtalase": "Open Etalase",
     "noReplies": "No automatic DMs yet.",
     "setupAutoReply": "Set up Auto Reply",
-    "moments": {
-      "firstPostPublished": "Your first post is live on {platform} 🚀",
-      "see": "View",
-      "firstClick": "Someone clicked your product! 🎉",
-      "seeStats": "See stats",
-      "firstAutoDm": "Auto Reply is working: {n} DMs sent while you were busy 💬",
-      "clicksRound": "{n} clicks to your products. Keep going!"
-    },
     "welcome": {
       "title": "Hi {name}! {n} steps to go",
       "titleDone": "Hi {name}! Your account is ready",
@@ -1292,8 +1283,6 @@
       "perWeek": "{n} posts",
       "saved": "Target saved.",
       "fill": "Fill",
-      "hit": "This week's target reached 🎯",
-      "hitStreak": "This week's target reached 🎯 · {n} weeks in a row",
       "progressNode": "{count}/{target} filled this week"
     },
     "pick": {
@@ -1889,5 +1878,112 @@
   },
   "shell": {
     "mainNav": "Main menu"
+  },
+  "moments": {
+    "share": "Share",
+    "shareFooter": "Made with Socialz.id",
+    "shareSaved": "Image saved. Post it to your Story!",
+    "shareFailed": "The image couldn't be made. Try again in a moment.",
+    "accountFallback": "Account",
+    "welcome": {
+      "title": "Welcome, {name}! 🎉",
+      "body": "Your account is ready. Your first post is 5 minutes away."
+    },
+    "emailVerified": {
+      "title": "Email verified! ✅",
+      "body": "Your account is secure and ready to use."
+    },
+    "firstAccountConnected": {
+      "title": "{platform} connected! 🔗",
+      "body": "You can now schedule posts to this account.",
+      "action": "Create a post"
+    },
+    "firstPostScheduled": {
+      "title": "Ready to go live! 🗓️",
+      "body": "Your first post goes out {when}. Socialz will post it for you."
+    },
+    "firstPostNow": {
+      "title": "Lift-off! 🚀",
+      "body": "Your first post is on its way. It usually goes live within a minute."
+    },
+    "firstPostPublished": {
+      "title": "Live on {platform}! 🚀",
+      "body": "Your followers can now see your first post.",
+      "action": "View",
+      "share": "My first post is live!"
+    },
+    "etalasePublished": {
+      "title": "Your Storefront is online! 🛍️",
+      "body": "Put the link in your Instagram bio so followers can shop right away.",
+      "share": "My first Storefront is online!"
+    },
+    "firstRuleActive": {
+      "title": "Auto reply is on! 💬",
+      "body": "When someone comments \"{keyword}\", the product link goes out by DM.",
+      "bodyAny": "Every new comment gets a DM with the product link.",
+      "action": "Create a post"
+    },
+    "firstLinkAdded": {
+      "title": "First product saved! 🏷️",
+      "body": "Every click on this link is counted."
+    },
+    "firstClick": {
+      "title": "Someone clicked your product! 👆",
+      "body": "Your first click is in. This is where earnings start.",
+      "action": "See statistics",
+      "share": "My product got its first click!"
+    },
+    "firstAutoDm": {
+      "title": "First auto DM sent! 💌",
+      "body": "Auto reply works while you're busy.",
+      "action": "See activity",
+      "share": "My auto reply sent its first DM!"
+    },
+    "clicks100": {
+      "title": "{n} clicks! 🏆",
+      "body": "Your products have been clicked {n} times. Keep going!",
+      "action": "See statistics",
+      "share": "clicks on my products!"
+    },
+    "clicks1000": {
+      "title": "{n} clicks! 🏆",
+      "body": "Your products have been clicked {n} times. Keep going!",
+      "action": "See statistics",
+      "share": "clicks on my products!"
+    },
+    "clicks10000": {
+      "title": "{n} clicks! 🏆",
+      "body": "Your products have been clicked {n} times. Amazing!",
+      "action": "See statistics",
+      "share": "clicks on my products!"
+    },
+    "checklistComplete": {
+      "title": "All steps done! 🎯",
+      "body": "You're officially on autopilot. Just fill your calendar each week."
+    },
+    "upgradePaid": {
+      "title": "Welcome to {plan}! 👑",
+      "body": "Every feature in your plan is unlocked."
+    },
+    "weekTarget": {
+      "title": "This week's target reached! 🎯",
+      "body": "Consistency is the key. Keep the rhythm.",
+      "bodyStreak": "{n} weeks in a row. Nice!",
+      "share": "I hit my weekly posting target!"
+    },
+    "greeting": {
+      "morning": "Good morning, {name}! 👋",
+      "afternoon": "Good afternoon, {name}! 👋",
+      "evening": "Good evening, {name}! 👋",
+      "night": "Good evening, {name}! 👋",
+      "sinceLast": "Here's what happened since your last visit:",
+      "since24h": "Here's what happened in the last 24 hours:",
+      "published": "published",
+      "clicks": "clicks",
+      "autoDms": "auto DMs",
+      "upcoming": "{n} posts go live in the next 24 hours.",
+      "empty": "Nothing is scheduled for today yet.",
+      "action": "Create a post"
+    }
   }
 }

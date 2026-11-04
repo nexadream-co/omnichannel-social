@@ -37,7 +37,13 @@ async function onSubmit() {
     errorKey.value = authErrorKey(result.code, result.status)
     return
   }
+  markGreeting()
   await navigateTo(safeRedirect(route.query.redirect, localePath('/app')))
+}
+
+function google() {
+  markGreeting()
+  return auth.signInWithGoogle(safeRedirect(route.query.redirect, '/app'))
 }
 </script>
 
@@ -69,7 +75,7 @@ async function onSubmit() {
           icon="i-simple-icons-google"
           size="lg"
           :label="t('auth.googleButton')"
-          @click="auth.signInWithGoogle(safeRedirect(route.query.redirect, '/app'))"
+          @click="google"
         />
         <USeparator :label="t('common.or')" />
       </template>

@@ -5,9 +5,10 @@ import { resetFakeChannels } from '../../server/core/channels/fake'
 import type { WorkspaceContext } from '../../server/core/context'
 import { creatorProfile, onboardingSteps, resolveCreatorAccess } from '../../server/core/access'
 import { closeDb, getDb } from '../../server/core/db/client'
-import { bioPages, dmRules, linkClicks, links, plans, postTargets, posts, shortLinks, subscriptions, users, workspaces } from '../../server/core/db/schema'
+import { bioPages, dmEvents, dmRules, linkClicks, links, plans, postTargets, posts, shortLinks, subscriptions, users, workspaces } from '../../server/core/db/schema'
 import { resetEnvCache } from '../../server/core/env'
 import { recordMilestone } from '../../server/core/milestones'
+import { momentsSummary } from '../../server/core/moments'
 import { provisionWorkspace } from '../../server/core/registration'
 import { connectAccounts } from '../../server/core/social-accounts'
 import { SEED_PLANS } from '../../shared/utils/plans'
@@ -27,7 +28,7 @@ beforeAll(async () => {
 })
 beforeEach(async () => {
   resetFakeChannels()
-  await truncate('link_clicks', 'short_links', 'dm_rules', 'bio_pages', 'jobs', 'post_targets', 'post_media', 'posts', 'links', 'social_accounts', 'trial_claims', 'subscription_events', 'subscriptions', 'workspace_members', 'workspaces', 'users', 'app_settings', 'audit_logs')
+  await truncate('dm_events', 'link_clicks', 'short_links', 'dm_rules', 'bio_pages', 'jobs', 'post_targets', 'post_media', 'posts', 'links', 'social_accounts', 'trial_claims', 'subscription_events', 'subscriptions', 'workspace_members', 'workspaces', 'users', 'app_settings', 'audit_logs')
   const base = testContext()
   const [user] = await getDb().insert(users).values({ name: 'Rina', email: 'rina@x.id', emailVerified: true }).returning({ id: users.id })
   userId = user!.id
@@ -153,5 +154,59 @@ describe('migration 0012 backfill', () => {
     const [after] = await db.select({ m: workspaces.milestones }).from(workspaces).where(eq(workspaces.id, ws.workspaceId))
     expect(after!.m.clicks100).toBeTruthy()
     expect(after!.m.clicks1000).toBeUndefined()
+  })
+})
+
+describe('migration 0017 backfill', () => {
+  const backfill = readFileSync(new URL('../../server/core/db/migrations/0017_more_milestones.sql', import.meta.url), 'utf8')
+
+  it('marks an active rule and an existing link, and keeps existing values', async () => {
+    const db = getDb()
+    const [account] = (await connectAccounts(ws, 'instagram', [fakeAccount('ig-1')])).connected
+    await db.insert(dmRules).values({ workspaceId: ws.workspaceId, socialAccountId: account!, name: 'off', keywords: ['mau'], dmMessage: 'Halo', active: false })
+    await db.execute(sql.raw(backfill))
+    const [none] = await db.select({ m: workspaces.milestones }).from(workspaces).where(eq(workspaces.id, ws.workspaceId))
+    expect(none!.m).toEqual({})
+
+    await db.insert(dmRules).values({ workspaceId: ws.workspaceId, socialAccountId: account!, name: 'on', keywords: ['harga'], dmMessage: 'Halo' })
+    await db.insert(links).values({ workspaceId: ws.workspaceId, destinationUrl: 'https://shopee.co.id/x' })
+    await db.update(workspaces).set({ milestones: { firstLinkAdded: '2020-01-01T00:00:00.000Z' } }).where(eq(workspaces.id, ws.workspaceId))
+    await db.execute(sql.raw(backfill))
+    const [row] = await db.select({ m: workspaces.milestones }).from(workspaces).where(eq(workspaces.id, ws.workspaceId))
+    expect(row!.m.firstRuleActive).toBeTruthy()
+    expect(row!.m.firstLinkAdded).toBe('2020-01-01T00:00:00.000Z')
+  })
+})
+
+describe('momentsSummary', () => {
+  it('is empty for a new workspace', async () => {
+    expect(await momentsSummary(ws, {})).toEqual({ firstPublished: null, clicksTotal: 0, hasAutoDm: false, upcoming24h: 0, since: null })
+  })
+
+  it('reports what happened, and what happened since a time', async () => {
+    const db = getDb()
+    const [account] = (await connectAccounts(ws, 'instagram', [fakeAccount('ig-1')])).connected
+    const [post] = await db.insert(posts).values({ workspaceId: ws.workspaceId, baseCaption: 'x', status: 'published' }).returning({ id: posts.id })
+    await db.insert(postTargets).values({ workspaceId: ws.workspaceId, postId: post!.id, socialAccountId: account!, platform: 'instagram', format: 'feed', status: 'published', publishedAt: new Date(Date.now() - 3 * 86_400_000), permalink: 'https://instagram.com/p/1' })
+    await db.insert(posts).values({ workspaceId: ws.workspaceId, baseCaption: 'y', status: 'scheduled', scheduledAt: new Date(Date.now() + 3_600_000) })
+    await db.insert(posts).values({ workspaceId: ws.workspaceId, baseCaption: 'z', status: 'scheduled', scheduledAt: new Date(Date.now() + 3 * 86_400_000) })
+    const [link] = await db.insert(links).values({ workspaceId: ws.workspaceId, destinationUrl: 'https://shopee.co.id/x' }).returning({ id: links.id })
+    const [short] = await db.insert(shortLinks).values({ workspaceId: ws.workspaceId, slug: 'abc123', domain: 'localhost', linkId: link!.id }).returning({ id: shortLinks.id })
+    await db.insert(linkClicks).values([
+      { workspaceId: ws.workspaceId, shortLinkId: short!.id, clickedAt: new Date(Date.now() - 2 * 86_400_000) },
+      { workspaceId: ws.workspaceId, shortLinkId: short!.id, clickedAt: new Date(Date.now() - 3_600_000) },
+      { workspaceId: ws.workspaceId, shortLinkId: short!.id, clickedAt: new Date(Date.now() - 3_600_000), isBot: true }
+    ])
+    await db.insert(dmEvents).values({ workspaceId: ws.workspaceId, socialAccountId: account!, commentId: 'c1', commenterId: 'u1', status: 'dm_sent' })
+
+    const all = await momentsSummary(ws, {})
+    expect(all).toMatchObject({ firstPublished: { postId: post!.id, platform: 'instagram', permalink: 'https://instagram.com/p/1' }, clicksTotal: 2, hasAutoDm: true, upcoming24h: 1, since: null })
+
+    const since = await momentsSummary(ws, { since: new Date(Date.now() - 86_400_000).toISOString() })
+    expect(since.since).toEqual({ published: 0, clicks: 1, autoDms: 1 })
+  })
+
+  it('requires the analytics ability', async () => {
+    await expect(momentsSummary({ ...ws, role: 'nobody' as never }, {})).rejects.toMatchObject({ statusCode: 403 })
   })
 })

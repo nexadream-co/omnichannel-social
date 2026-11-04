@@ -10,6 +10,7 @@ const localePath = useLocalePath()
 const toast = useToast()
 const entitlements = useEntitlements()
 const { haptic } = useCelebrate()
+const moments = useMoments()
 
 interface Account { id: string, platform: string, username: string | null, status: string }
 interface Media { externalId: string, caption: string, thumbUrl: string | null }
@@ -116,7 +117,9 @@ async function save(active: boolean) {
     allowNextLeave()
     haptic('success')
     pop.trigger()
-    toast.add({ title: active ? t('autoReply.activated') : t('autoReply.saved'), color: 'success' })
+    const keyword = form.keywords[0]
+    const first = active && moments.celebrate('firstRuleActive', { params: { keyword }, body: keyword ? undefined : t('moments.firstRuleActive.bodyAny'), action: { to: localePath('/app/compose') } })
+    if (!first) toast.add({ title: active ? t('autoReply.activated') : t('autoReply.saved'), color: 'success' })
     await new Promise(resolve => setTimeout(resolve, 700))
     await navigateTo(localePath('/app/auto-reply'))
   } catch (caught) {

@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { MAX_POSTS_PER_WEEK } from '#shared/utils/planner'
-import { haptic } from '~/utils/haptics'
 
 /**
  * "2/3 terisi minggu ini" with the weekly target picker (Kalender, week view). Reaching the target during this
@@ -9,6 +8,7 @@ import { haptic } from '~/utils/haptics'
 const props = defineProps<{ count: number, target: number, monday: string, loading: boolean }>()
 const { t } = useI18n()
 const milestones = useMilestones()
+const moments = useMoments()
 const auth = useCreatorAuth()
 const toast = useToast()
 const planner = usePlanner()
@@ -42,12 +42,15 @@ watch(() => props.loading, async (loading) => {
   glowTimer = setTimeout(() => {
     glowing.value = false
   }, 900)
-  haptic('success')
   let streak = 1
   try {
     streak = (await apiFetch<{ streak: number }>('/api/app/planner/week')).streak
-  } catch { /* the toast works without the streak */ }
-  toast.add({ title: streak > 1 ? t('planner.rhythm.hitStreak', { n: streak }) : t('planner.rhythm.hit'), color: 'success' })
+  } catch { /* the moment works without the streak */ }
+  moments.show('weekTarget', {
+    params: { n: streak },
+    body: streak > 1 ? t('moments.weekTarget.bodyStreak', { n: streak }) : undefined,
+    share: { stat: streak > 1 ? `${streak}×` : '🎯' }
+  })
 })
 
 async function setTarget(value: number) {

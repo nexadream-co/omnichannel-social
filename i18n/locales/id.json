@@ -183,7 +183,6 @@
       "streak": "{n} minggu berturut-turut"
     },
     "noUpcomingHint": "Jadwalkan sekali, terbit sendiri.",
-    "checklistComplete": "Semua langkah beres. Kamu resmi jalan otomatis!",
     "overdueTitle": "{count} postingan tertunda",
     "overdueMore": "Lihat {n} lainnya",
     "renewal": "{plan} berakhir {n} hari lagi",
@@ -194,14 +193,6 @@
     "openEtalase": "Buka Etalase",
     "noReplies": "Belum ada DM otomatis.",
     "setupAutoReply": "Pasang Balas Otomatis",
-    "moments": {
-      "firstPostPublished": "Postingan pertamamu sudah tayang di {platform} 🚀",
-      "see": "Lihat",
-      "firstClick": "Ada yang klik produkmu! 🎉",
-      "seeStats": "Lihat statistik",
-      "firstAutoDm": "Balas Otomatis bekerja: {n} DM terkirim saat kamu sibuk 💬",
-      "clicksRound": "{n} klik ke produkmu. Lanjutkan!"
-    },
     "welcome": {
       "title": "Halo {name}! {n} langkah lagi",
       "titleDone": "Halo {name}! Akunmu sudah siap",
@@ -1292,8 +1283,6 @@
       "perWeek": "{n} postingan",
       "saved": "Target disimpan.",
       "fill": "Isi",
-      "hit": "Target minggu ini tercapai 🎯",
-      "hitStreak": "Target minggu ini tercapai 🎯 · {n} minggu berturut-turut",
       "progressNode": "{count}/{target} terisi minggu ini"
     },
     "pick": {
@@ -1889,5 +1878,112 @@
   },
   "shell": {
     "mainNav": "Menu utama"
+  },
+  "moments": {
+    "share": "Bagikan",
+    "shareFooter": "Dibuat dengan Socialz.id",
+    "shareSaved": "Gambar tersimpan. Pasang di Story-mu, ya!",
+    "shareFailed": "Gambar belum bisa dibuat. Coba lagi sebentar lagi.",
+    "accountFallback": "Akun",
+    "welcome": {
+      "title": "Selamat datang, {name}! 🎉",
+      "body": "Akunmu sudah jadi. Postingan pertamamu tinggal 5 menit lagi."
+    },
+    "emailVerified": {
+      "title": "Email terverifikasi! ✅",
+      "body": "Akunmu sudah aman dan siap dipakai."
+    },
+    "firstAccountConnected": {
+      "title": "{platform} tersambung! 🔗",
+      "body": "Sekarang kamu bisa menjadwalkan postingan ke akun ini.",
+      "action": "Buat postingan"
+    },
+    "firstPostScheduled": {
+      "title": "Siap tayang! 🗓️",
+      "body": "Postingan pertamamu terbit {when}. Biar Socialz yang posting."
+    },
+    "firstPostNow": {
+      "title": "Meluncur! 🚀",
+      "body": "Postingan pertamamu sedang dikirim. Biasanya tayang dalam semenit."
+    },
+    "firstPostPublished": {
+      "title": "Sudah tayang di {platform}! 🚀",
+      "body": "Postingan pertamamu sekarang bisa dilihat followers.",
+      "action": "Lihat",
+      "share": "Postingan pertamaku sudah tayang!"
+    },
+    "etalasePublished": {
+      "title": "Etalasemu sudah online! 🛍️",
+      "body": "Pasang linknya di bio Instagram supaya followers bisa langsung belanja.",
+      "share": "Etalase pertamaku sudah online!"
+    },
+    "firstRuleActive": {
+      "title": "Balas Otomatis menyala! 💬",
+      "body": "Begitu ada yang komen \"{keyword}\", link produk langsung dikirim lewat DM.",
+      "bodyAny": "Setiap komentar baru langsung dibalas DM berisi link produk.",
+      "action": "Buat postingan"
+    },
+    "firstLinkAdded": {
+      "title": "Produk pertama tersimpan! 🏷️",
+      "body": "Setiap klik ke link ini akan tercatat."
+    },
+    "firstClick": {
+      "title": "Ada yang klik produkmu! 👆",
+      "body": "Klik pertama sudah masuk. Ini awal cuanmu.",
+      "action": "Lihat statistik",
+      "share": "Produkku dapat klik pertama!"
+    },
+    "firstAutoDm": {
+      "title": "DM otomatis pertama terkirim! 💌",
+      "body": "Balas Otomatis bekerja waktu kamu sibuk.",
+      "action": "Lihat aktivitas",
+      "share": "Balas Otomatis-ku sudah kirim DM pertama!"
+    },
+    "clicks100": {
+      "title": "{n} klik! 🏆",
+      "body": "Produkmu sudah diklik {n} kali. Lanjutkan!",
+      "action": "Lihat statistik",
+      "share": "klik ke produkku!"
+    },
+    "clicks1000": {
+      "title": "{n} klik! 🏆",
+      "body": "Produkmu sudah diklik {n} kali. Lanjutkan!",
+      "action": "Lihat statistik",
+      "share": "klik ke produkku!"
+    },
+    "clicks10000": {
+      "title": "{n} klik! 🏆",
+      "body": "Produkmu sudah diklik {n} kali. Luar biasa!",
+      "action": "Lihat statistik",
+      "share": "klik ke produkku!"
+    },
+    "checklistComplete": {
+      "title": "Semua langkah beres! 🎯",
+      "body": "Kamu resmi jalan otomatis. Tinggal isi kalender tiap minggu."
+    },
+    "upgradePaid": {
+      "title": "Selamat datang di {plan}! 👑",
+      "body": "Semua fitur paketmu sudah terbuka."
+    },
+    "weekTarget": {
+      "title": "Target minggu ini tercapai! 🎯",
+      "body": "Konsisten itu kuncinya. Pertahankan ritmenya.",
+      "bodyStreak": "{n} minggu berturut-turut. Mantap!",
+      "share": "Target posting mingguanku tercapai!"
+    },
+    "greeting": {
+      "morning": "Selamat pagi, {name}! 👋",
+      "afternoon": "Selamat siang, {name}! 👋",
+      "evening": "Selamat sore, {name}! 👋",
+      "night": "Selamat malam, {name}! 👋",
+      "sinceLast": "Ini yang terjadi sejak kunjungan terakhirmu:",
+      "since24h": "Ini yang terjadi dalam 24 jam terakhir:",
+      "published": "post terbit",
+      "clicks": "klik",
+      "autoDms": "DM otomatis",
+      "upcoming": "{n} postingan akan terbit dalam 24 jam ke depan.",
+      "empty": "Belum ada postingan terjadwal hari ini.",
+      "action": "Buat postingan"
+    }
   }
 }

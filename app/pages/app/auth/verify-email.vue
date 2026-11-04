@@ -5,6 +5,7 @@ const { t } = useI18n()
 const localePath = useLocalePath()
 const route = useRoute()
 const auth = useCreatorAuth()
+const moments = useMoments()
 useHead({ title: () => t('auth.verifyTitle') })
 
 const token = computed(() => String(route.query.token ?? ''))
@@ -16,6 +17,7 @@ onMounted(async () => {
   if (!token.value) return
   const result = await auth.verifyEmail(token.value)
   status.value = result.ok ? 'done' : 'failed'
+  if (result.ok) moments.show('emailVerified')
 })
 
 async function resend() {

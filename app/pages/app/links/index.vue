@@ -292,8 +292,8 @@ const searching = computed(() => Boolean(list.search.value.trim()) || showArchiv
             class="flex items-center gap-1 text-xs text-muted"
           >
             <UIcon
-              name="i-lucide-loader-circle"
-              class="size-3.5 motion-safe:animate-spin"
+              name="i-socialz-loader"
+              class="size-3.5"
             />
             {{ t('links.filling') }}
           </p>

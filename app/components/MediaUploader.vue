@@ -197,8 +197,8 @@ defineExpose({ edit, addFromLibrary, addFiles })
           />
           <UIcon
             v-else
-            name="i-lucide-loader-circle"
-            class="size-6 text-primary motion-safe:animate-spin"
+            name="i-socialz-loader"
+            class="size-6 text-primary"
           />
           <span class="tabular-nums">{{ item.status === 'uploading' ? `${item.progress}%` : t('composer.processing') }}</span>
         </div>

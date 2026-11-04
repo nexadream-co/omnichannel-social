@@ -13,7 +13,7 @@ const route = useRoute()
 const toast = useToast()
 const auth = useCreatorAuth()
 const { confirm } = useConfirmDialog()
-const { reach } = useMilestones()
+const moments = useMoments()
 const { spark } = useCelebrate()
 useHead({ title: () => t('accounts.title') })
 
@@ -30,12 +30,14 @@ onMounted(async () => {
   // Results of the OAuth round trip arrive as query params (the callback is a browser redirect).
   const error = route.query.error ? String(route.query.error) : null
   const connected = route.query.connected ? Number(route.query.connected) : 0
-  const platform = route.query.platform && String(route.query.platform) in PLATFORM_META ? PLATFORM_META[String(route.query.platform) as Platform].name : ''
+  const meta = route.query.platform && String(route.query.platform) in PLATFORM_META ? PLATFORM_META[String(route.query.platform) as Platform] : null
+  const platform = meta?.name ?? ''
   if (error === 'limit_reached') useEntitlements().upgradeRequired(null, t('accounts.error.limit_reached'))
   else if (error) toast.add({ title: t(`accounts.error.${error}`, t('accounts.error.unknown')), color: 'error', duration: 8000 })
   else if (connected) {
-    toast.add({ title: t('accounts.connected', { count: connected, platform }), color: 'success' })
-    if (reach('firstAccountConnected')) {
+    const first = moments.celebrate('firstAccountConnected', { params: { platform: platform || t('moments.accountFallback') }, platformIcon: meta?.icon, action: { to: localePath('/app/compose') } })
+    if (!first) toast.add({ title: t('accounts.connected', { count: connected, platform }), color: 'success' })
+    if (first) {
       justConnected.value = { platform }
       const newest = [...(data.value?.items ?? [])].sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0]
       await nextTick()

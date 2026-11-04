@@ -672,14 +672,10 @@ const featureCards: Record<typeof features[number], { icon: string, photo: strin
     >
       <UContainer class="text-center space-y-6">
         <div class="landing-bob">
-          <img
+          <BrandMark
             v-reveal
-            src="/favicon.svg"
-            alt=""
-            width="96"
-            height="96"
             class="landing-tile mx-auto size-20 -rotate-6 sm:size-24"
-          >
+          />
         </div>
         <h2 class="landing-display text-4xl sm:text-6xl text-balance">
           {{ t('landing.finalTitle') }}
