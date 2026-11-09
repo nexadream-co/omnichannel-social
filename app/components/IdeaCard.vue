@@ -2,7 +2,7 @@
 import type { DropdownMenuItem } from '@nuxt/ui'
 import { PILLAR_META, type IdeaDetail } from '#shared/utils/planner'
 
-/** One idea in Bank Ide. Draggable onto a Kalender day (desktop) when it is still open. */
+/** One idea in Bank Ide. Draggable onto a Kalender day (mouse, or a touch hold on a tablet) when it is still open. */
 const props = defineProps<{ idea: IdeaDetail }>()
 const emit = defineEmits<{ open: [idea: IdeaDetail], schedule: [idea: IdeaDetail] }>()
 const { t } = useI18n()
@@ -12,10 +12,16 @@ const planner = usePlanner()
 
 const canWrite = computed(() => auth.hasAbility('posts.write'))
 const draggable = computed(() => canWrite.value && props.idea.status === 'open')
-const grabbed = ref(false)
+const el = ref<HTMLElement | null>(null)
 const thumb = computed(() => {
   const first = props.idea.media[0]
   return first ? (first.kind === 'image' ? first.url : first.posterUrl) : null
+})
+
+const { lifted } = useDragSource(el, {
+  enabled: () => draggable.value,
+  payload: () => ({ kind: 'idea', id: props.idea.id, from: props.idea.plannedOn }),
+  preview: () => ({ kind: 'idea', title: props.idea.title, icon: props.idea.pillar ? PILLAR_META[props.idea.pillar].icon : undefined })
 })
 
 const menu = computed<DropdownMenuItem[][]>(() => {
@@ -36,11 +42,9 @@ const menu = computed<DropdownMenuItem[][]>(() => {
 
 <template>
   <div
-    class="group rounded-md border border-dashed border-accented bg-default p-2.5 flex gap-2.5 motion-safe:transition-transform"
-    :class="grabbed ? 'motion-safe:scale-[1.03] shadow-lg cursor-grabbing' : draggable ? 'cursor-grab' : ''"
-    :draggable="draggable"
-    @dragstart="planner.drag.value = { kind: 'idea', id: idea.id, from: idea.plannedOn }; grabbed = true"
-    @dragend="planner.drag.value = null; grabbed = false"
+    ref="el"
+    class="group rounded-md border border-dashed border-accented bg-default p-2.5 flex gap-2.5 select-none [-webkit-touch-callout:none] motion-safe:transition-[opacity,transform]"
+    :class="lifted ? 'opacity-30 scale-95' : draggable ? 'cursor-grab active:cursor-grabbing touch-pan-y' : ''"
   >
     <SmartImage
       v-if="thumb"
@@ -96,6 +100,7 @@ const menu = computed<DropdownMenuItem[][]>(() => {
       color="neutral"
       variant="soft"
       class="lg:hidden self-start"
+      data-no-drag
       :label="t('calendar.scheduleShort')"
       @click="emit('schedule', idea)"
     />
@@ -109,6 +114,7 @@ const menu = computed<DropdownMenuItem[][]>(() => {
         size="xs"
         color="neutral"
         variant="ghost"
+        data-no-drag
         :aria-label="t('planner.idea.actions')"
       />
     </UDropdownMenu>

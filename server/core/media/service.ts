@@ -51,6 +51,13 @@ export function toMediaView(row: MediaRow) {
 }
 export type MediaView = ReturnType<typeof toMediaView>
 
+/** A still picture of an asset for small previews: the image itself, or a video's poster frame (null until it exists). */
+export function thumbnailOf(row: Pick<MediaRow, 'kind' | 'publicUrl' | 'variants'>): string | null {
+  if (row.kind === 'image') return row.publicUrl
+  const poster = variantsOf(row).poster
+  return poster ? storage().publicUrl(poster) : null
+}
+
 async function findMedia(ctx: WorkspaceContext, id: string) {
   const [row] = await ctx.db.select().from(mediaAssets).where(and(eq(mediaAssets.id, id), eq(mediaAssets.workspaceId, ctx.workspaceId))).limit(1)
   if (!row) throw appError(404, 'Media tidak ditemukan.', 'NOT_FOUND')

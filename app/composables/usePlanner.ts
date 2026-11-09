@@ -1,7 +1,9 @@
 import { haptic } from '~/utils/haptics'
-import { zonedParts } from '~/utils/schedule'
+import { isPastSlot, zonedParts } from '~/utils/schedule'
 import { momentName, type PlannerMoment } from '#shared/utils/planner'
 
+/** Local, instant change to the calendar for a move, and how to put it back (undo or a failed save). */
+export interface LocalMove { apply: () => void, rollback: () => void }
 /** What is being dragged on the Kalender: a scheduled post (reschedule) or an idea (move its planned day). */
 export type PlannerDrag = { kind: 'post', postId: string, time: string, scheduledAt: string } | { kind: 'idea', id: string, from: string | null }
 
@@ -21,16 +23,31 @@ export function usePlanner() {
   const fail = (caught: unknown) => toast.add({ title: extractErrorMessage(caught, t('authError.generic')), color: 'error' })
   const dayLabel = (day: string) => formatDate(`${day}T12:00:00Z`, { locale: locale.value, timeZone: 'UTC' })
 
-  /** `from` given (a move that can be undone): the toast offers "Urungkan", which puts the idea back on `from`. */
-  async function planIdea(id: string, plannedOn: string | null, from?: string | null) {
+  /**
+   * A day a dragged item may not land on: before today, or, for a post (which keeps its time of day), a time on
+   * today that already passed.
+   */
+  function isPastDrop(day: string, today = zonedParts(new Date(), tzOf()).date) {
+    if (day < today) return true
+    const item = drag.value
+    return item?.kind === 'post' && isPastSlot(day, item.time, tzOf())
+  }
+
+  /**
+   * `from` given (a move that can be undone): the toast offers "Urungkan", which puts the idea back on `from`.
+   * `local`: the calendar's instant change, rolled back on undo or failure.
+   */
+  async function planIdea(id: string, plannedOn: string | null, from?: string | null, local?: LocalMove) {
     if (from !== undefined) {
       let ok = true
       await undoable.run({
         title: plannedOn ? t('calendar.ideaMovedTo', { day: dayLabel(plannedOn) }) : t('planner.idea.saved'),
+        apply: local?.apply,
         commit: () => apiFetch(`/api/app/planner/ideas/${id}`, { method: 'PATCH', body: { plannedOn } }),
         undo: () => apiFetch(`/api/app/planner/ideas/${id}`, { method: 'PATCH', body: { plannedOn: from } }),
         rollback: () => {
           ok = false
+          local?.rollback()
         }
       })
       return ok
@@ -59,15 +76,18 @@ export function usePlanner() {
     return ok
   }
 
-  /** Moves a post to another day or time; the toast's "Urungkan" reschedules it back to `from`. */
-  async function movePost(postId: string, to: string, from: string) {
+  /** Moves a post to another day or time; the toast's "Urungkan" reschedules it back to `from`. `local`: as in planIdea. */
+  async function movePost(postId: string, to: string, from: string, local?: LocalMove) {
     let ok = true
+    const at = zonedParts(new Date(to), tzOf())
     await undoable.run({
-      title: t('calendar.movedTo', { day: dayLabel(zonedParts(new Date(to), tzOf()).date) }),
+      title: t('calendar.movedTo', { day: `${dayLabel(at.date)} · ${at.time}` }),
+      apply: local?.apply,
       commit: () => apiFetch(`/api/app/posts/${postId}/reschedule`, { method: 'POST', body: { scheduledAt: to } }),
       undo: () => apiFetch(`/api/app/posts/${postId}/reschedule`, { method: 'POST', body: { scheduledAt: from } }),
       rollback: () => {
         ok = false
+        local?.rollback()
       }
     })
     if (ok) haptic('success')
@@ -128,5 +148,5 @@ export function usePlanner() {
     return navigateTo(localePath({ path: '/app/compose', query: { idea: id } }))
   }
 
-  return { drag, dayLabel, tzOf, planIdea, archiveIdea, movePost, captureIdea, restoreIdea, prepareMoment, repeatPost, toPost, fail }
+  return { drag, dayLabel, tzOf, isPastDrop, planIdea, archiveIdea, movePost, captureIdea, restoreIdea, prepareMoment, repeatPost, toPost, fail }
 }

@@ -1171,6 +1171,7 @@
     "next": "Bulan berikutnya",
     "empty": "Tidak ada postingan di bulan ini.",
     "dragHint": "Seret postingan atau ide ke tanggal lain untuk memindahkannya.",
+    "dragHintTouch": "Tahan postingan atau ide, lalu geser ke hari lain. Lepas di tempat untuk memilih jam.",
     "moved": "Jadwal dipindahkan.",
     "more": "+{n} lagi",
     "prevWeek": "Minggu sebelumnya",

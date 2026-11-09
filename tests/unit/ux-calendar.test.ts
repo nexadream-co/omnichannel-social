@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { isPastSlot } from '../../app/utils/schedule'
-import { dayPlatforms, groupPostsByDay, type CalendarEntry } from '../../app/utils/calendar'
+import { groupPostsByDay, type CalendarEntry } from '../../app/utils/calendar'
 
 const entry = (over: Partial<CalendarEntry>): CalendarEntry => ({ id: 'e', postId: 'p1', platform: 'instagram', status: 'scheduled', scheduledAt: new Date(Date.now() + 3_600_000).toISOString(), removedAt: null, caption: 'Hai', pillar: null, ...over })
 
@@ -19,10 +19,15 @@ describe('Kalender day posts', () => {
     expect(done!.overdue).toBe(false)
   })
 
-  it('shows at most three platform dots and counts the rest', () => {
-    const post = (platforms: ('instagram' | 'threads' | 'facebook' | 'tiktok')[]) => ({ postId: 'x', time: '09:00', caption: '', platforms, removed: [], status: 'scheduled', scheduledAt: '', overdue: false })
-    expect(dayPlatforms([post(['instagram', 'threads']), post(['instagram'])])).toEqual({ shown: ['instagram', 'threads'], more: 0 })
-    expect(dayPlatforms([post(['instagram', 'threads', 'facebook', 'tiktok'])])).toEqual({ shown: ['instagram', 'threads', 'facebook'], more: 1 })
+  it('carries the first picture and every target account onto the chip', () => {
+    const [post] = [...groupPostsByDay([
+      entry({ thumbnail: { url: 'https://cdn/p.jpg', kind: 'image' }, username: 'kreator' }),
+      entry({ id: 'f', platform: 'threads', thumbnail: { url: 'https://cdn/p.jpg', kind: 'image' }, username: 'kreator' }),
+      entry({ id: 'g', platform: 'facebook', username: 'Toko Kreator' })
+    ], 'Asia/Jakarta').values()].flat()
+    expect(post).toMatchObject({ thumb: 'https://cdn/p.jpg', video: false, platforms: ['instagram', 'threads', 'facebook'], accounts: ['kreator', 'Toko Kreator'] })
+    const [video] = [...groupPostsByDay([entry({ thumbnail: { url: null, kind: 'video' } })], 'Asia/Jakarta').values()].flat()
+    expect(video).toMatchObject({ thumb: null, video: true, accounts: [] })
   })
 })
 

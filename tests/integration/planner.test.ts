@@ -115,6 +115,16 @@ describe('idea → post', () => {
     expect(await getIdea(ws, idea.id)).toMatchObject({ status: 'open', postId: null, plannedOn: '2030-01-02' })
   })
 
+  it('gives each calendar entry its first picture and account, so a chip is recognisable', async () => {
+    const mediaId = await image(ws)
+    const at = new Date(Date.now() + 2 * 86_400_000)
+    const { postId } = await createPost(ws, { caption: 'Pakai foto', mediaIds: [mediaId], targets: [{ socialAccountId: igId }], mode: 'draft', scheduledAt: at.toISOString() })
+    const { postId: bare } = await createPost(ws, { caption: 'Tanpa foto', mediaIds: [], targets: [{ socialAccountId: igId }], mode: 'draft', scheduledAt: at.toISOString() })
+    const { items } = await calendarWindow(ws, new Date(at.getTime() - 3_600_000), new Date(at.getTime() + 3_600_000))
+    expect(items.find(i => i.postId === postId)).toMatchObject({ thumbnail: { kind: 'image', url: expect.any(String) }, username: expect.any(String) })
+    expect(items.find(i => i.postId === bare)).toMatchObject({ thumbnail: null })
+  })
+
   it('keeps the pillar when the calendar drags a post', async () => {
     const at = new Date(Date.now() + 3 * 86_400_000).toISOString()
     const { postId } = await createPost(ws, { caption: 'Edukasi', mediaIds: [], targets: [{ socialAccountId: igId }], mode: 'draft', scheduledAt: at, pillar: 'edukasi' })

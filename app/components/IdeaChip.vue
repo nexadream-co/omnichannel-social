@@ -5,28 +5,31 @@ import { PILLAR_META, type PlannerIdea } from '#shared/utils/planner'
  * A planned idea on a Kalender day: dashed, so it never reads as a post that will go out.
  * `wrap`: two lines instead of one (the week view's narrow, tall columns).
  */
-defineProps<{ idea: PlannerIdea, wrap?: boolean }>()
+const props = defineProps<{ idea: PlannerIdea, wrap?: boolean }>()
 const emit = defineEmits<{ open: [id: string] }>()
 const { t } = useI18n()
 const auth = useCreatorAuth()
-const planner = usePlanner()
 const draggable = computed(() => auth.hasAbility('posts.write'))
-const grabbed = ref(false)
+const icon = computed(() => props.idea.pillar ? PILLAR_META[props.idea.pillar].icon : 'i-lucide-lightbulb')
+const el = ref<HTMLElement | null>(null)
+const { lifted } = useDragSource(el, {
+  enabled: () => draggable.value,
+  payload: () => ({ kind: 'idea', id: props.idea.id, from: props.idea.plannedOn }),
+  preview: () => ({ kind: 'idea', title: props.idea.title, icon: icon.value })
+})
 </script>
 
 <template>
   <button
+    ref="el"
     type="button"
-    :draggable="draggable"
-    class="w-full text-left text-xs rounded px-1.5 py-1 border border-dashed border-accented text-muted hover:text-default hover:bg-elevated/60 flex gap-1 min-w-0 motion-safe:transition-transform"
-    :class="[wrap ? 'items-start' : 'items-center', grabbed ? 'motion-safe:scale-[1.03] shadow-lg cursor-grabbing bg-default' : draggable ? 'cursor-grab' : '']"
+    class="w-full text-left text-xs rounded-md px-1.5 py-1 border border-dashed border-accented text-muted hover:text-default hover:bg-elevated/60 flex gap-1 min-w-0 select-none [-webkit-touch-callout:none] motion-safe:transition-[opacity,transform]"
+    :class="[wrap ? 'items-start' : 'items-center', lifted ? 'opacity-30 scale-95' : '', draggable ? 'cursor-grab active:cursor-grabbing touch-pan-y' : '']"
     :title="t('planner.idea.chip')"
     @click="emit('open', idea.id)"
-    @dragstart="planner.drag.value = { kind: 'idea', id: idea.id, from: idea.plannedOn }; grabbed = true"
-    @dragend="planner.drag.value = null; grabbed = false"
   >
     <UIcon
-      :name="idea.pillar ? PILLAR_META[idea.pillar].icon : 'i-lucide-lightbulb'"
+      :name="icon"
       class="size-3 shrink-0"
       :class="wrap ? 'mt-0.5' : ''"
     />

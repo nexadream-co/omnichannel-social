@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { momentName, type PlannerIdea } from '#shared/utils/planner'
-import type { DayPost, MomentMark } from '~/utils/calendar'
+import { dropCellClass, type DayPost, type MomentMark } from '~/utils/calendar'
 
 /** Week view (tablet and desktop): every post and idea of each day, and "Isi" on empty days ahead. */
 const props = defineProps<{ days: string[], today: string, posts: Map<string, DayPost[]>, ideas: Map<string, PlannerIdea[]>, marks: Map<string, MomentMark[]> }>()
@@ -20,9 +20,9 @@ const weekday = (day: string) => new Intl.DateTimeFormat(locale.value === 'en' ?
       v-for="day in days"
       :key="day"
       class="min-h-72 motion-safe:transition-colors border-r border-b border-default p-1.5 flex flex-col gap-1 bg-default"
-      :class="[day < today ? 'bg-muted/40' : '', dnd.state(day) === 'ok' ? 'bg-primary/10' : dnd.state(day) === 'past' ? 'animate-shake' : '', dnd.settled.value === day ? 'ring-2 ring-inset ring-primary/40' : '', marks.has(day) ? 'border-t-2 border-t-primary/40' : '']"
-      @dragover="dnd.dragover(day, $event)"
-      @drop.prevent="dnd.drop(day)"
+      :class="[day < today ? 'bg-muted/40' : '', dropCellClass(dnd.state(day), dnd.settled.value === day), marks.has(day) ? 'border-t-2 border-t-primary/40' : '']"
+      :data-drop-day="day"
+      @planner-drop="dnd.drop(day)"
     >
       <div class="flex items-center gap-1.5 mb-1">
         <span class="text-xs text-muted capitalize">{{ weekday(day) }}</span>

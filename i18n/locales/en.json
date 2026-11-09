@@ -1171,6 +1171,7 @@
     "next": "Next month",
     "empty": "No posts this month.",
     "dragHint": "Drag a post or an idea to another day to move it.",
+    "dragHintTouch": "Hold a post or idea, then drag it to another day. Let go in place to pick a time.",
     "moved": "Schedule moved.",
     "more": "+{n} more",
     "prevWeek": "Previous week",

@@ -1,17 +1,19 @@
 <script setup lang="ts">
-import { momentName, PILLAR_META, type PlannerIdea } from '#shared/utils/planner'
-import type { DayPost, MomentMark } from '~/utils/calendar'
+import { momentName, type PlannerIdea } from '#shared/utils/planner'
+import { dropCellClass, type DayPost, type MomentMark } from '~/utils/calendar'
 
 /**
- * Phone: a list of days; long-press a scheduled post to move it. The week shows every day from today on, so empty
- * ones can be filled; past days and the month show only days with something on them.
+ * Phone: a list of days. Hold a scheduled post or an idea, then drag it onto another day (a hold released in
+ * place opens "Pindahkan ke…" for a post). The week shows every day from today on, so empty ones can be filled
+ * or dropped on; past days and the month show only days with something on them.
  */
 const props = defineProps<{ days: string[], showEmpty: boolean, today: string, loading: boolean, posts: Map<string, DayPost[]>, ideas: Map<string, PlannerIdea[]>, marks: Map<string, MomentMark[]> }>()
-const emit = defineEmits<{ fill: [day: string], openIdea: [id: string], movePost: [post: DayPost] }>()
+const emit = defineEmits<{ fill: [day: string], openIdea: [id: string], movePost: [post: DayPost], drop: [day: string] }>()
 const { t, locale } = useI18n()
 const auth = useCreatorAuth()
 const planner = usePlanner()
 const canWrite = computed(() => auth.hasAbility('posts.write'))
+const dnd = usePlannerDrop(() => props.today, day => emit('drop', day))
 
 const listed = computed(() => props.days.filter(day => (props.showEmpty && day >= props.today) || props.posts.has(day) || props.ideas.has(day) || props.marks.has(day)))
 </script>
@@ -27,6 +29,10 @@ const listed = computed(() => props.days.filter(day => (props.showEmpty && day >
     <section
       v-for="day in listed"
       :key="day"
+      class="rounded-lg -mx-2 px-2 py-1 motion-safe:transition-colors"
+      :class="dropCellClass(dnd.state(day), dnd.settled.value === day)"
+      :data-drop-day="day"
+      @planner-drop="dnd.drop(day)"
     >
       <div class="flex items-center gap-2 mb-2">
         <h3
@@ -57,20 +63,18 @@ const listed = computed(() => props.days.filter(day => (props.showEmpty && day >
           v-for="idea in ideas.get(day) ?? []"
           :key="idea.id"
         >
-          <button
-            type="button"
-            class="w-full text-left flex items-center gap-3 rounded-md border border-dashed border-accented p-3"
-            @click="emit('openIdea', idea.id)"
-          >
-            <UIcon
-              :name="idea.pillar ? PILLAR_META[idea.pillar].icon : 'i-lucide-lightbulb'"
-              class="size-4 text-muted shrink-0"
-            />
-            <span class="text-sm truncate flex-1">{{ idea.title }}</span>
-            <span class="text-xs text-muted shrink-0">{{ t('planner.idea.chip') }}</span>
-          </button>
+          <CalendarAgendaIdea
+            :idea="idea"
+            @open="emit('openIdea', $event)"
+          />
         </li>
-        <li v-if="canWrite && day >= today && !posts.has(day) && !ideas.has(day)">
+        <li
+          v-if="dnd.state(day) === 'ok'"
+          class="rounded-md border border-dashed border-primary/60 p-3 text-center text-sm text-primary"
+        >
+          {{ t('calendar.dropHere') }}
+        </li>
+        <li v-else-if="canWrite && day >= today && !posts.has(day) && !ideas.has(day)">
           <button
             type="button"
             class="w-full flex items-center gap-2 rounded-md border border-dashed border-default p-3 text-sm text-muted"

@@ -118,6 +118,8 @@
 
   .animate-nav-pop { animation: nav-pop 180ms ease-out; }
   .animate-shake { animation: shake-x 240ms ease-in-out; }
+  .animate-drag-lift { animation: drag-lift 160ms ease-out; }
+  .animate-drop-land { animation: drop-land 260ms ease-out; }
   .shimmer {
     background-image: linear-gradient(90deg, transparent, color-mix(in srgb, var(--ui-text-muted) 14%, transparent), transparent);
     background-size: 200% 100%;
@@ -133,6 +135,24 @@
   0% { transform: scale(1); }
   50% { transform: scale(1.12); }
   100% { transform: scale(1); }
+}
+
+/* Kalender drag (useDragSource): while something is carried, the whole page shows the grabbing hand and no text gets selected. */
+.planner-dragging,
+.planner-dragging * {
+  cursor: grabbing !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+}
+
+@keyframes drag-lift {
+  0% { transform: scale(0.92) rotate(0deg); opacity: 0.6; }
+  100% { transform: scale(1) rotate(2deg); opacity: 1; }
+}
+
+@keyframes drop-land {
+  0% { transform: scale(1.04); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ui-primary) 45%, transparent); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 color-mix(in srgb, var(--ui-primary) 0%, transparent); }
 }
 
 @keyframes shake-x {

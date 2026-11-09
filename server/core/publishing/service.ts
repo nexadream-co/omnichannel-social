@@ -14,6 +14,7 @@ import { latestInsights } from '../engagement-jobs'
 import { countScheduledThisMonth, getEntitlements } from '../entitlements'
 import { appError } from '../errors'
 import { enqueue } from '../jobs/enqueue'
+import { thumbnailOf } from '../media/service'
 import { ideaOfPost, markIdeaUsed, plannerWindow, releaseIdeasOf } from '../planner/ideas'
 import { zonedDateKey } from '../timezone'
 import { refreshPostStatus } from './status'
@@ -378,16 +379,25 @@ export async function calendarWindow(ctx: WorkspaceContext, from: Date, to: Date
   assertAbility(ctx, 'posts.read')
   if (to.getTime() - from.getTime() > 62 * 86_400_000) throw appError(400, 'Rentang kalender maksimal 62 hari.', 'VALIDATION_FAILED')
   const [rows, [workspace]] = await Promise.all([
-    ctx.db.select({ id: postTargets.id, postId: postTargets.postId, platform: postTargets.platform, status: postTargets.status, scheduledAt: postTargets.scheduledAt, publishedAt: postTargets.publishedAt, removedAt: postTargets.removedAt, caption: posts.baseCaption, pillar: posts.pillar })
+    ctx.db.select({ id: postTargets.id, postId: postTargets.postId, platform: postTargets.platform, status: postTargets.status, scheduledAt: postTargets.scheduledAt, publishedAt: postTargets.publishedAt, removedAt: postTargets.removedAt, caption: posts.baseCaption, pillar: posts.pillar, username: socialAccounts.username })
       .from(postTargets).innerJoin(posts, eq(posts.id, postTargets.postId))
+      .leftJoin(socialAccounts, eq(socialAccounts.id, postTargets.socialAccountId))
       .where(and(eq(postTargets.workspaceId, ctx.workspaceId), gte(postTargets.scheduledAt, from), lt(postTargets.scheduledAt, to), sql`${postTargets.status} <> 'cancelled'`))
       .orderBy(asc(postTargets.scheduledAt)),
     ctx.db.select({ timezone: workspaces.timezone }).from(workspaces).where(eq(workspaces.id, ctx.workspaceId))
   ])
+  // The first photo or video of each post, so a calendar chip is recognisable at a glance.
+  const postIds = [...new Set(rows.map(r => r.postId))]
+  const media = postIds.length
+    ? await ctx.db.select({ postId: postMedia.postId, kind: mediaAssets.kind, publicUrl: mediaAssets.publicUrl, variants: mediaAssets.variants })
+        .from(postMedia).innerJoin(mediaAssets, eq(mediaAssets.id, postMedia.mediaId))
+        .where(and(eq(postMedia.workspaceId, ctx.workspaceId), inArray(postMedia.postId, postIds), eq(postMedia.position, 0)))
+    : []
+  const thumbs = new Map(media.map(m => [m.postId, { url: thumbnailOf(m), kind: m.kind }]))
   // Planned ideas live on local days: the window's instants become days on the workspace clock.
   const tz = workspace?.timezone ?? 'Asia/Jakarta'
   const planner = await plannerWindow(ctx, zonedDateKey(from, tz), zonedDateKey(to, tz), zonedDateKey(new Date(), tz))
-  return { items: rows.map(r => ({ ...r, caption: r.caption.slice(0, 120) })), ...planner }
+  return { items: rows.map(r => ({ ...r, caption: r.caption.slice(0, 120), thumbnail: thumbs.get(r.postId) ?? null })), ...planner }
 }
 
 export async function publishAttemptsOf(ctx: WorkspaceContext, targetId: string) {

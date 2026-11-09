@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { PLATFORM_META } from '#shared/channels/registry'
 import { momentName, type PlannerIdea } from '#shared/utils/planner'
-import { dayPlatforms, type DayPost, type MomentMark } from '~/utils/calendar'
+import { dropCellClass, type DayPost, type MomentMark } from '~/utils/calendar'
 
 /** Month view (tablet and desktop): up to three chips a day, posts first, then ideas. */
 const props = defineProps<{ days: string[], month: string, today: string, posts: Map<string, DayPost[]>, ideas: Map<string, PlannerIdea[]>, marks: Map<string, MomentMark[]> }>()
@@ -39,31 +38,15 @@ function chips(day: string) {
         v-for="day in days"
         :key="day"
         class="min-h-28 motion-safe:transition-colors border-r border-b border-default p-1.5 flex flex-col gap-1"
-        :class="[day.startsWith(month) ? 'bg-default' : 'bg-muted/40', dnd.state(day) === 'ok' ? 'bg-primary/10' : dnd.state(day) === 'past' ? 'animate-shake' : '', dnd.settled.value === day ? 'ring-2 ring-inset ring-primary/40' : '', marks.has(day) ? 'border-t-2 border-t-primary/40' : '']"
-        @dragover="dnd.dragover(day, $event)"
-        @drop.prevent="dnd.drop(day)"
+        :class="[day.startsWith(month) ? 'bg-default' : 'bg-muted/40', dropCellClass(dnd.state(day), dnd.settled.value === day), marks.has(day) ? 'border-t-2 border-t-primary/40' : '']"
+        :data-drop-day="day"
+        @planner-drop="dnd.drop(day)"
       >
         <div class="flex items-center justify-between gap-1 min-w-0">
           <span
             class="text-xs size-6 flex items-center justify-center rounded-full shrink-0"
             :class="day === today ? 'bg-primary text-inverted font-semibold ring-2 ring-primary/40 ring-offset-1 ring-offset-default motion-safe:animate-pulse' : day.startsWith(month) ? 'text-default' : 'text-dimmed'"
           >{{ Number(day.slice(8)) }}</span>
-          <span
-            v-if="dayPlatforms(posts.get(day) ?? []).shown.length"
-            class="flex items-center gap-0.5 min-w-0"
-            aria-hidden="true"
-          >
-            <UIcon
-              v-for="p in dayPlatforms(posts.get(day) ?? []).shown"
-              :key="p"
-              :name="PLATFORM_META[p].icon"
-              class="size-2.5 text-muted"
-            />
-            <span
-              v-if="dayPlatforms(posts.get(day) ?? []).more"
-              class="text-[10px] text-muted"
-            >+{{ dayPlatforms(posts.get(day) ?? []).more }}</span>
-          </span>
           <span
             v-for="mark in (marks.get(day) ?? []).filter(m => m.label).slice(0, 1)"
             :key="mark.moment.id"

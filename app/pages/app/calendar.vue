@@ -115,20 +115,28 @@ const title = computed(() => {
 })
 const isCurrent = computed(() => days.value.includes(today) && (mode.value === 'week' || month.value === today.slice(0, 7)))
 
-// Drop on a day: a post keeps its time of day; an idea just moves. Nothing lands in the past (the grid says so
-// while hovering). Both moves come with an "Urungkan" toast.
+// Drop on a day: a post keeps its time of day; an idea just moves. Nothing lands in the past (the grid and the drag
+// card say so while hovering). The chip moves at once, the save follows, and the toast offers "Urungkan".
 async function drop(day: string) {
   const item = planner.drag.value
   planner.drag.value = null
   if (!item || !canWrite.value) return
-  if (day < today) return haptic('warn')
+  if (planner.isPastDrop(day, today)) return haptic('warn')
+  const before = data.value
+  const local = (next: CalendarWindow) => ({ apply: () => {
+    data.value = next
+  }, rollback: () => {
+    data.value = before
+  } })
   if (item.kind === 'idea') {
-    if (item.from !== day) await planner.planIdea(item.id, day, item.from)
+    if (item.from === day) return
+    const moved = before.ideas.some(i => i.id === item.id)
+    await planner.planIdea(item.id, day, item.from, moved ? local({ ...before, ideas: before.ideas.map(i => i.id === item.id ? { ...i, plannedOn: day } : i) }) : undefined)
     return
   }
-  if (isPastSlot(day, item.time, tz.value)) return haptic('warn')
   const to = toZonedIso(day, item.time, tz.value)
-  if (new Date(to).getTime() !== new Date(item.scheduledAt).getTime()) await planner.movePost(item.postId, to, item.scheduledAt)
+  if (new Date(to).getTime() === new Date(item.scheduledAt).getTime()) return
+  await planner.movePost(item.postId, to, item.scheduledAt, local({ ...before, items: before.items.map(i => i.postId === item.postId ? { ...i, scheduledAt: to } : i) }))
 }
 
 // Phone: long-press (or ⋯) on a post opens "Pindahkan ke…".
@@ -339,7 +347,14 @@ const tabs = computed(() => [{ value: 'calendar', label: t('calendar.tabCalendar
           @fill="fill"
           @open-idea="openIdeaById"
           @move-post="moving = $event"
+          @drop="drop"
         />
+        <p
+          v-if="canWrite"
+          class="md:hidden text-xs text-muted mt-3"
+        >
+          {{ t('calendar.dragHintTouch') }}
+        </p>
       </div>
 
       <aside
@@ -372,5 +387,6 @@ const tabs = computed(() => [{ value: 'calendar', label: t('calendar.tabCalendar
       @close="pickDay = null"
       @new-idea="newIdea"
     />
+    <PlannerDragLayer />
   </div>
 </template>
