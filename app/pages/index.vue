@@ -51,9 +51,9 @@ const planChips = computed(() => {
 })
 
 const live = [
-  { name: 'Instagram', icon: 'i-simple-icons-instagram' },
-  { name: 'Threads', icon: 'i-simple-icons-threads' },
-  { name: 'Facebook', icon: 'i-simple-icons-facebook' }
+  { name: 'Instagram', icon: 'i-simple-icons-instagram', color: brandIconClass('instagram') },
+  { name: 'Threads', icon: 'i-simple-icons-threads', color: brandIconClass('threads') },
+  { name: 'Facebook', icon: 'i-simple-icons-facebook', color: brandIconClass('facebook') }
 ]
 const soon = [
   { name: 'TikTok', icon: 'i-simple-icons-tiktok' },
@@ -259,6 +259,7 @@ const featureCards: Record<typeof features[number], { icon: string, photo: strin
               :key="p.name"
               :name="p.icon"
               class="size-4"
+              :class="p.color"
               :aria-label="p.name"
             />
           </span>

@@ -83,9 +83,9 @@ async function save() {
             <span class="min-w-0 flex-1">
               <span class="flex items-center gap-1.5 text-sm text-default">
                 <span class="truncate">{{ account.username || PLATFORM_META[account.platform].name }}</span>
-                <UIcon
-                  :name="PLATFORM_META[account.platform].icon"
-                  class="size-3.5 shrink-0 text-muted"
+                <PlatformIcon
+                  :platform="account.platform"
+                  class="size-3.5 shrink-0"
                 />
               </span>
               <span class="block text-xs text-muted">{{ t('billing.selectUsage', { posts: account.upcomingPosts ?? 0, rules: account.activeRules ?? 0 }) }}</span>

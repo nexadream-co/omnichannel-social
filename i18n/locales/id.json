@@ -57,7 +57,14 @@
     "collapse": "Ciutkan menu",
     "expand": "Buka menu",
     "media": "Galeri Media",
-    "create": "Buat"
+    "create": "Buat",
+    "postsHub": "Postingan",
+    "hubCalendar": "Kalender",
+    "hubList": "Semua postingan",
+    "addAccount": "Hubungkan akun lain",
+    "connectAccount": "Hubungkan akun",
+    "moreAccounts": "+{n} akun lainnya",
+    "needsReauth": "perlu dihubungkan ulang"
   },
   "auth": {
     "email": "Email",

@@ -307,11 +307,18 @@ async function remove() {
             class="px-4 py-3 space-y-2"
           >
             <div class="flex flex-wrap items-center gap-3">
-              <UAvatar
-                :src="target.avatarUrl ?? undefined"
-                :icon="PLATFORM_META[target.platform].icon"
-                size="sm"
-              />
+              <span class="relative shrink-0">
+                <UAvatar
+                  :src="target.avatarUrl ?? undefined"
+                  :icon="PLATFORM_META[target.platform].icon"
+                  size="sm"
+                />
+                <PlatformBadge
+                  :platform="target.platform"
+                  size="xs"
+                  class="absolute -bottom-1 -right-1"
+                />
+              </span>
               <div class="min-w-0 flex-1">
                 <p class="font-medium truncate">
                   {{ target.username || PLATFORM_META[target.platform].name }}

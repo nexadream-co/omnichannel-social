@@ -474,8 +474,8 @@ async function submit(mode: 'schedule' | 'now' | 'draft') {
                     :aria-pressed="selected.includes(account.id)"
                     @click="toggle(account.id)"
                   >
-                    <UIcon
-                      :name="PLATFORM_META[account.platform].icon"
+                    <PlatformIcon
+                      :platform="account.platform"
                       class="size-4"
                     />
                     <span class="max-w-36 truncate">{{ account.username || PLATFORM_META[account.platform].name }}</span>
@@ -489,9 +489,9 @@ async function submit(mode: 'schedule' | 'now' | 'draft') {
                     v-else
                     class="flex items-center gap-2 rounded-full border border-dashed border-default pl-3 pr-1.5 py-1 text-sm text-muted"
                   >
-                    <UIcon
-                      :name="PLATFORM_META[account.platform].icon"
-                      class="size-4 opacity-60"
+                    <PlatformIcon
+                      :platform="account.platform"
+                      class="size-4 opacity-60 grayscale"
                     />
                     <span class="max-w-36 truncate opacity-70">{{ account.username || PLATFORM_META[account.platform].name }}</span>
                     <UButton
@@ -547,8 +547,8 @@ async function submit(mode: 'schedule' | 'now' | 'draft') {
                     :size="16"
                     :label="`${c.count}/${c.max}`"
                   />
-                  <UIcon
-                    :name="PLATFORM_META[c.platform].icon"
+                  <PlatformIcon
+                    :platform="c.platform"
                     class="size-3.5"
                   />
                   {{ c.count }}/{{ c.max }}
@@ -619,6 +619,7 @@ async function submit(mode: 'schedule' | 'now' | 'draft') {
               :color="issue.level === 'error' ? 'error' : 'warning'"
               variant="subtle"
               :icon="PLATFORM_META[issue.account.platform].icon"
+              :ui="{ icon: brandIconClass(issue.account.platform) }"
               :title="t(issue.code, issue.params ?? {})"
               :actions="fixAction(issue)"
             />
@@ -669,7 +670,7 @@ async function submit(mode: 'schedule' | 'now' | 'draft') {
                   class="space-y-3"
                 >
                   <p class="text-sm font-semibold flex items-center gap-2">
-                    <UIcon :name="PLATFORM_META[account.platform].icon" />
+                    <PlatformIcon :platform="account.platform" />
                     {{ account.username || PLATFORM_META[account.platform].name }}
                   </p>
                   <UFormField :label="t('composer.format', { platform: PLATFORM_META[account.platform].name })">

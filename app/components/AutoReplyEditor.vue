@@ -488,6 +488,7 @@ watch(testOpen, (open) => {
 
       <UAlert
         icon="i-simple-icons-instagram"
+        :ui="{ icon: brandIconClass('instagram') }"
         color="neutral"
         variant="subtle"
         :title="t('autoReply.limitsNote')"

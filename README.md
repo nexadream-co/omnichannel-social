@@ -225,7 +225,7 @@ curl -fsS https://<site>/healthz              # 200 once the first tick has run
 
 1. Sign in at `/admin`, change the superadmin password.
 2. Pengaturan (company, email → "Kirim email uji", billing, privacy, app, channels) → Payment gateway (activate) → Paket (prices) → Halaman (legal pages reviewed; privacy and terms must be live before Meta App Review) → Staf.
-3. Register with the Payment Hub: webhook `https://<site>/api/webhooks/payments/nexadream_hub`; redirects `https://<site>/app/billing?status=success|failed|pending`. Until the hub key exists, non-production environments can use the payment simulator (`docs/blueprint/08` §11).
+3. Register with the Payment Hub: webhook `https://<site>/api/payments/webhook`; finish/error/pending redirects `https://<site>/pay/done`. Until the hub key exists, non-production environments can use the payment simulator (`docs/blueprint/08` §11).
 4. Register with Meta, the same table as [the development setup](#one-time-setup) with `<site>` instead of the tunnel host: OAuth redirects `https://<site>/api/app/channels/<platform>/callback`, webhook `https://<site>/api/webhooks/meta` (field `comments` for Instagram), data deletion `/api/meta/data-deletion`, deauthorize `/api/meta/deauthorize`. Then App Review (`docs/ROADMAP.md`).
 
 ## Troubleshooting

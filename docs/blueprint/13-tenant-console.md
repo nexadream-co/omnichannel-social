@@ -128,11 +128,12 @@ Domain pages (compose, calendar, posts, links, Etalase, auto-reply, analytics, a
 
 ## 5. Shell — `layouts/creator.vue` → `<CreatorShell>`
 
-- **Desktop/tablet left rail** (collapsible, cookie state; `sticky h-dvh`, scrolls independently): logo, `CREATOR_NAV` items filtered by ability, a prominent **"+ Buat Postingan"** button at the top, rail foot = `<UpgradeRailButton>` (hidden when the plan already has every feature or the role can't buy) + help + collapse toggle.
-- **Phone:** a **bottom nav** with five entries (Beranda, Kalender, Link Produk, Etalase, Lainnya) plus a floating **"Buat Postingan"** button. "Lainnya" opens a sheet with the remaining nav and account chrome. Every core flow must work one-handed.
+- **Desktop/tablet left rail** (collapsible, cookie state; `sticky h-dvh`, scrolls independently): logo, `CREATOR_NAV` items filtered by ability (minus hub tabs and workspace chrome), a prominent **"+ Buat Postingan"** button at the top, the connected social accounts under the menu (`<RailAccounts>`: avatar + platform badge, warning dot for `needs_reauth`, + to connect), rail foot = `<UpgradeRailButton>` (hidden when the plan already has every feature or the role can't buy) + help + collapse toggle.
+- **Postingan hub:** Kalender (`/app/calendar`), Semua postingan (`/app/posts`) and Galeri Media (`/app/media`) are one rail entry, with `<PostsHubTabs>` at the top of each page. Items with `hub` are tabs, not rail entries; the hub entry stays active on them.
+- **Phone:** a **bottom nav**: Beranda, Postingan, the raised **Buat** button, Link Produk, Lainnya. "Lainnya" opens a sheet with the remaining nav and account chrome. Every core flow must work one-handed.
 - **Top bar** = account chrome only: breadcrumb (desktop), `<NotificationMenu>`, `<UserMenu>`. The user menu is fixed code (not DB), grouped under captions:
   - *Akun*: Profil, Ubah kata sandi
-  - *Bisnis*: Langganan (`billing.manage`), Tim (lock icon if plan lacks `teamAccess`), Pengaturan, Log aktivitas (lock icon if plan lacks `activityLog`)
+  - *Bisnis*: Akun Sosial (`accounts.manage`), Tim (lock icon if plan lacks `teamAccess`), Paket (`billing.manage`), Pengaturan, Log aktivitas
   - *Aplikasi*: Mode gelap, Bahasa (Indonesia / English), Bantuan
   - Keluar
   A caption with no visible rows is not drawn.
@@ -148,18 +149,13 @@ export interface CreatorNavItem {
   key: string; labelKey: string; to: string; icon: string
   ability?: WorkspaceAbility     // hides the entry when the role lacks it
   feature?: FeatureKey           // NEVER hides; shows a lock, page opens the upgrade dialog
+  bottomNav?: boolean; bottomNavCenter?: boolean
+  hub?: string                   // a tab of another entry (PostsHubTabs), not in the rail
+  workspace?: boolean            // user menu + phone "Lainnya", not the rail
 }
-export const CREATOR_NAV: CreatorNavItem[] = [
-  { key: 'home',       labelKey: 'nav.home',       to: '/app',            icon: 'i-lucide-house' },           // Beranda
-  { key: 'compose',    labelKey: 'nav.compose',    to: '/app/compose',    icon: 'i-lucide-square-pen', ability: 'posts.write' }, // Buat Postingan
-  { key: 'calendar',   labelKey: 'nav.calendar',   to: '/app/calendar',   icon: 'i-lucide-calendar' },        // Kalender
-  { key: 'posts',      labelKey: 'nav.posts',      to: '/app/posts',      icon: 'i-lucide-list' },            // Postingan
-  { key: 'links',      labelKey: 'nav.links',      to: '/app/links',      icon: 'i-lucide-link' },            // Link Produk
-  { key: 'bio',        labelKey: 'nav.bio',        to: '/app/bio',        icon: 'i-lucide-store' },           // Etalase
-  { key: 'autoReply',  labelKey: 'nav.autoReply',  to: '/app/auto-reply', icon: 'i-lucide-message-circle-reply' }, // Balas Otomatis
-  { key: 'analytics',  labelKey: 'nav.analytics',  to: '/app/analytics',  icon: 'i-lucide-chart-column' },    // Statistik
-  { key: 'accounts',   labelKey: 'nav.accounts',   to: '/app/accounts',   icon: 'i-lucide-at-sign' }          // Akun Sosial
-]
+// Rail: Beranda · Postingan · Link Produk · Etalase · Balas Otomatis · Statistik
+// Hub tabs of Postingan: Semua postingan (/app/posts), Galeri Media (/app/media)
+// Workspace: Akun Sosial (/app/accounts), Tim (/app/team)
 ```
 
 ## 6. Shared composables

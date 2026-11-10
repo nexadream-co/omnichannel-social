@@ -213,9 +213,9 @@ const breakdowns = computed(() => data.value
               :key="`${row.postId}${row.platform}`"
               class="flex items-center gap-3"
             >
-              <UIcon
-                :name="PLATFORM_META[row.platform].icon"
-                class="size-5 shrink-0 text-muted"
+              <PlatformIcon
+                :platform="row.platform"
+                class="size-5 shrink-0"
               />
               <p class="text-sm text-default line-clamp-2 flex-1 min-w-0">
                 {{ row.caption }}

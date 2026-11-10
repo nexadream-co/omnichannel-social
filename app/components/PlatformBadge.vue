@@ -10,7 +10,7 @@ const props = withDefaults(defineProps<{ platform: Platform, size?: 'xs' | 'sm' 
 
 // Black logos flip to white in dark mode, so Threads, TikTok and X stay visible on a dark page.
 const SKIN: Record<Platform, string> = {
-  instagram: 'bg-[linear-gradient(45deg,#f9ce34_0%,#ee2a7b_50%,#6228d7_100%)] text-white',
+  instagram: 'bg-[radial-gradient(circle_at_30%_107%,#fdf497_0%,#fdf497_5%,#fd5949_45%,#d6249f_60%,#285aeb_90%)] text-white',
   facebook: 'bg-[#1877F2] text-white',
   youtube: 'bg-[#FF0000] text-white',
   threads: 'bg-black text-white dark:bg-white dark:text-black',

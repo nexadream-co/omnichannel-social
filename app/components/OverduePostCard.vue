@@ -72,11 +72,11 @@ async function publishNow(event: MouseEvent) {
             icon="i-lucide-clock-alert"
             :label="late"
           />
-          <span class="flex gap-1 text-muted">
-            <UIcon
+          <span class="flex gap-1">
+            <PlatformIcon
               v-for="p in [...new Set(post.targets.map(x => x.platform))]"
               :key="p"
-              :name="PLATFORM_META[p].icon"
+              :platform="p"
               class="size-4"
             />
           </span>

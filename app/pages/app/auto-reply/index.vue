@@ -105,6 +105,7 @@ async function remove(rule: RuleRow) {
     <EmptyState
       v-else-if="!hasInstagram"
       icon="i-simple-icons-instagram"
+      :icon-class="brandIconClass('instagram')"
       :title="t('autoReply.needInstagram')"
       :action="{ label: t('autoReply.connect'), icon: 'i-lucide-plus', to: localePath('/app/accounts') }"
     />

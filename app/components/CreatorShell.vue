@@ -38,23 +38,25 @@ function lockIcon(item: CreatorNavItem): string | undefined {
   return item.feature && entitlements.data.value && !entitlements.has(item.feature) ? 'i-lucide-lock' : undefined
 }
 
+// Hub tabs (Semua postingan, Galeri Media) keep their rail entry lit; workspace chrome lives in the user menu.
 const railItems = computed<NavigationMenuItem[]>(() => visibleNav.value
-  .filter(item => item.key !== 'compose')
+  .filter(item => item.key !== 'compose' && !item.hub && !item.workspace)
   .map(item => ({
     label: t(item.labelKey),
     icon: item.icon,
     to: localePath(item.to),
     exact: item.to === '/app',
+    active: isActive(item),
     trailingIcon: lockIcon(item)
   })))
 
 const bottomItems = computed(() => visibleNav.value.filter(item => item.bottomNav))
 const bottomLeft = computed(() => bottomItems.value.slice(0, 2))
 const bottomRight = computed(() => bottomItems.value.slice(2))
-// "Lainnya": the product tools first (Link Produk, Etalase), then the rest in rail order.
-const MORE_FIRST = ['links', 'bio']
+// "Lainnya": the product tools first, then the rest in rail order (workspace chrome last). Hub tabs are reached from their hub.
+const MORE_FIRST = ['bio', 'autoReply']
 const moreItems = computed(() => {
-  const rest = visibleNav.value.filter(item => !item.bottomNav && !item.bottomNavCenter)
+  const rest = visibleNav.value.filter(item => !item.bottomNav && !item.bottomNavCenter && !item.hub)
   return [...MORE_FIRST.map(key => rest.find(item => item.key === key)).filter(item => item !== undefined), ...rest.filter(item => !MORE_FIRST.includes(item.key))]
 })
 const navColumns = computed(() => bottomItems.value.length + 1 + (canCompose.value ? 1 : 0))
@@ -68,9 +70,10 @@ watch(() => route.fullPath, () => {
   moreOpen.value = false
 })
 
-function isActive(to: string) {
-  const target = localePath(to)
-  return to === '/app' ? route.path === target : route.path.startsWith(target)
+const onPath = (to: string) => to === '/app' ? route.path === localePath(to) : route.path.startsWith(localePath(to))
+/** An entry is lit on its own pages and on the pages of its hub tabs (Postingan: Kalender, Semua postingan, Galeri Media). */
+function isActive(item: CreatorNavItem) {
+  return onPath(item.to) || CREATOR_NAV.some(tab => tab.hub === item.key && onPath(tab.to))
 }
 </script>
 
@@ -117,6 +120,7 @@ function isActive(to: string) {
           :collapsed="collapsed"
           tooltip
         />
+        <RailAccounts :collapsed="collapsed" />
       </template>
 
       <template #footer="{ collapsed }">
@@ -215,12 +219,12 @@ function isActive(to: string) {
           <NuxtLink
             :to="localePath(item.to)"
             class="flex flex-col items-center gap-0.5 py-2 text-xs"
-            :class="isActive(item.to) ? 'text-primary' : 'text-muted'"
+            :class="isActive(item) ? 'text-primary' : 'text-muted'"
           >
             <UIcon
               :name="item.icon"
               class="size-5"
-              :class="isActive(item.to) ? 'motion-safe:animate-nav-pop' : ''"
+              :class="isActive(item) ? 'motion-safe:animate-nav-pop' : ''"
             />
             <span class="truncate max-w-full px-1">{{ t(item.labelKey) }}</span>
           </NuxtLink>
@@ -229,14 +233,14 @@ function isActive(to: string) {
           <NuxtLink
             :to="localePath('/app/compose')"
             class="flex flex-col items-center gap-0.5 pb-2 text-xs"
-            :class="isActive('/app/compose') ? 'text-primary' : 'text-muted'"
+            :class="onPath('/app/compose') ? 'text-primary' : 'text-muted'"
             :aria-label="t('nav.compose')"
           >
             <span class="-mt-5 grid size-14 place-items-center rounded-full bg-primary text-inverted shadow-lg ring-4 ring-(--ui-bg)">
               <UIcon
                 name="i-lucide-plus"
                 class="size-6"
-                :class="isActive('/app/compose') ? 'motion-safe:animate-nav-pop' : ''"
+                :class="onPath('/app/compose') ? 'motion-safe:animate-nav-pop' : ''"
               />
             </span>
             <span class="font-medium">{{ t('nav.create') }}</span>
@@ -249,12 +253,12 @@ function isActive(to: string) {
           <NuxtLink
             :to="localePath(item.to)"
             class="flex flex-col items-center gap-0.5 py-2 text-xs"
-            :class="isActive(item.to) ? 'text-primary' : 'text-muted'"
+            :class="isActive(item) ? 'text-primary' : 'text-muted'"
           >
             <UIcon
               :name="item.icon"
               class="size-5"
-              :class="isActive(item.to) ? 'motion-safe:animate-nav-pop' : ''"
+              :class="isActive(item) ? 'motion-safe:animate-nav-pop' : ''"
             />
             <span class="truncate max-w-full px-1">{{ t(item.labelKey) }}</span>
           </NuxtLink>

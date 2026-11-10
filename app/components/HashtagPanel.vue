@@ -483,6 +483,7 @@ async function deleteSet(set: HashtagSet) {
                         color="info"
                         variant="subtle"
                         icon="i-simple-icons-threads"
+                        :ui="{ leadingIcon: brandIconClass('threads') }"
                         :label="t(`hashtags.activity.${activityLevel(item.activity)}`)"
                       />
                     </div>

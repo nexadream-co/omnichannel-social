@@ -23,7 +23,7 @@ watch(platforms, (list) => {
   if (!active.value || !list.includes(active.value)) active.value = list[0] ?? null
 }, { immediate: true })
 
-const tabs = computed(() => platforms.value.map(value => ({ value, label: PLATFORM_META[value].name, icon: PLATFORM_META[value].icon })))
+const tabs = computed(() => platforms.value.map(value => ({ value, label: PLATFORM_META[value].name, icon: PLATFORM_META[value].icon, ui: { leadingIcon: brandIconClass(value) } })))
 const caps = computed(() => current.value ? CHANNELS[current.value.platform] : null)
 const cover = computed(() => props.media[0] ?? null)
 const shown = computed(() => current.value && caps.value ? previewCaption(caps.value, current.value.caption) : { text: '', truncated: false })

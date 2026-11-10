@@ -9,6 +9,8 @@ export interface EmptyAction {
 
 const props = defineProps<{
   icon: string
+  /** Extra classes for the icon, e.g. a brand colour (brandIconClass). */
+  iconClass?: string
   title: string
   description?: string
   action?: EmptyAction
@@ -35,7 +37,7 @@ const happy = computed(() => props.tone === 'happy')
         >
           <UIcon
             :name="icon"
-            :class="compact ? 'size-6' : 'size-8'"
+            :class="[compact ? 'size-6' : 'size-8', iconClass]"
           />
           <span
             class="art-ink absolute -top-1 -right-1 size-2 rounded-full bg-current opacity-70"

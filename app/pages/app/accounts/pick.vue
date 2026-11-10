@@ -72,10 +72,17 @@ async function save() {
             :disabled="account.alreadyConnected"
             @update:model-value="(on: boolean | 'indeterminate') => toggle(account.externalId, on === true)"
           />
-          <UAvatar
-            :src="account.avatarUrl ?? undefined"
-            :icon="PLATFORM_META[session.platform].icon"
-          />
+          <span class="relative shrink-0">
+            <UAvatar
+              :src="account.avatarUrl ?? undefined"
+              :icon="PLATFORM_META[session.platform].icon"
+            />
+            <PlatformBadge
+              :platform="session.platform"
+              size="xs"
+              class="absolute -bottom-1 -right-1"
+            />
+          </span>
           <span class="flex-1 min-w-0 truncate font-medium">{{ account.username }}</span>
           <UBadge
             v-if="account.alreadyConnected"

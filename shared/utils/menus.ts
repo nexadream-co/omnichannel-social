@@ -95,22 +95,27 @@ export interface CreatorNavItem {
   bottomNav?: boolean
   /** The raised centre button of the phone bottom nav. */
   bottomNavCenter?: boolean
+  /** A tab inside another rail entry (its key): not in the rail; that entry stays highlighted here (PostsHubTabs). */
+  hub?: string
+  /** Workspace chrome (accounts, team): in the user menu and the phone "Lainnya", not the rail. */
+  workspace?: boolean
 }
 
 /**
- * Code-defined creator rail (docs/blueprint/13 §5).
- * Phone bottom nav: Beranda · Kalender · [Buat] · Postingan · Lainnya.
+ * Code-defined creator rail (docs/blueprint/13 §5), kept short so the console reads as an app, not an admin panel:
+ * Beranda · Postingan (Kalender, Semua postingan, Galeri Media as tabs) · Link Produk · Etalase · Balas Otomatis · Statistik.
+ * Phone bottom nav: Beranda · Postingan · [Buat] · Link Produk · Lainnya.
  */
 export const CREATOR_NAV: CreatorNavItem[] = [
   { key: 'home', labelKey: 'nav.home', to: '/app', icon: 'i-lucide-house', bottomNav: true },
   { key: 'compose', labelKey: 'nav.compose', to: '/app/compose', icon: 'i-lucide-square-pen', ability: 'posts.write', bottomNavCenter: true },
-  { key: 'calendar', labelKey: 'nav.calendar', to: '/app/calendar', icon: 'i-lucide-calendar', ability: 'posts.read', bottomNav: true },
-  { key: 'posts', labelKey: 'nav.posts', to: '/app/posts', icon: 'i-lucide-list', ability: 'posts.read', bottomNav: true },
-  { key: 'media', labelKey: 'nav.media', to: '/app/media', icon: 'i-lucide-images', ability: 'posts.read' },
-  { key: 'links', labelKey: 'nav.links', to: '/app/links', icon: 'i-lucide-link', ability: 'links.manage' },
+  { key: 'calendar', labelKey: 'nav.postsHub', to: '/app/calendar', icon: 'i-lucide-calendar-days', ability: 'posts.read', bottomNav: true },
+  { key: 'posts', labelKey: 'nav.posts', to: '/app/posts', icon: 'i-lucide-list', ability: 'posts.read', hub: 'calendar' },
+  { key: 'media', labelKey: 'nav.media', to: '/app/media', icon: 'i-lucide-images', ability: 'posts.read', hub: 'calendar' },
+  { key: 'links', labelKey: 'nav.links', to: '/app/links', icon: 'i-lucide-link', ability: 'links.manage', bottomNav: true },
   { key: 'bio', labelKey: 'nav.bio', to: '/app/bio', icon: 'i-lucide-store', ability: 'bio.manage' },
   { key: 'autoReply', labelKey: 'nav.autoReply', to: '/app/auto-reply', icon: 'i-lucide-message-circle-reply', ability: 'autoreply.manage' },
   { key: 'analytics', labelKey: 'nav.analytics', to: '/app/analytics', icon: 'i-lucide-chart-column', ability: 'analytics.read' },
-  { key: 'accounts', labelKey: 'nav.accounts', to: '/app/accounts', icon: 'i-lucide-at-sign', ability: 'accounts.manage' },
-  { key: 'team', labelKey: 'nav.team', to: '/app/team', icon: 'i-lucide-users', ability: 'team.manage', feature: 'teamAccess' }
+  { key: 'accounts', labelKey: 'nav.accounts', to: '/app/accounts', icon: 'i-lucide-at-sign', ability: 'accounts.manage', workspace: true },
+  { key: 'team', labelKey: 'nav.team', to: '/app/team', icon: 'i-lucide-users', ability: 'team.manage', feature: 'teamAccess', workspace: true }
 ]

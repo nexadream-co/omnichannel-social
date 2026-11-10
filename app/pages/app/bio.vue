@@ -558,6 +558,7 @@ const previewOpen = ref(false)
                       :key="key"
                       v-model="form.socials[key]"
                       :icon="SOCIAL_ICON[key]"
+                      :ui="{ leadingIcon: brandIconClass(key) }"
                       :placeholder="SOCIAL_PLACEHOLDER[key]"
                       :aria-label="key"
                       class="w-full"

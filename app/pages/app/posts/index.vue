@@ -166,6 +166,7 @@ function menu(post: PostRow) {
 
 <template>
   <div class="w-full max-w-3xl mx-auto">
+    <PostsHubTabs />
     <CommandBar
       :title="t('posts.title')"
       :description="t('posts.subtitle')"
@@ -339,8 +340,8 @@ function menu(post: PostRow) {
                   :key="target.id"
                   class="inline-flex items-center gap-1 text-xs rounded-full bg-elevated px-2 py-0.5"
                 >
-                  <UIcon
-                    :name="PLATFORM_META[target.platform].icon"
+                  <PlatformIcon
+                    :platform="target.platform"
                     class="size-3.5"
                   />
                   <span v-if="target.removedAt">{{ t('posts.removedOn', { platform: PLATFORM_META[target.platform].name }) }}</span>

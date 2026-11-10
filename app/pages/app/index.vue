@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { PLATFORM_META } from '#shared/channels/registry'
 import type { Platform } from '#shared/channels/types'
 import { ONBOARDING_STEPS } from '#shared/utils/onboarding'
 import type { OverduePost } from '~/components/OverduePostCard.vue'
@@ -290,10 +289,10 @@ async function dismiss() {
               >
                 <span class="text-sm text-muted w-28 shrink-0">{{ post.scheduledAt ? formatRelative(post.scheduledAt, locale) : '—' }}</span>
                 <span class="flex gap-1 shrink-0">
-                  <UIcon
+                  <PlatformIcon
                     v-for="p in [...new Set(post.targets.map(x => x.platform))]"
                     :key="p"
-                    :name="PLATFORM_META[p].icon"
+                    :platform="p"
                     class="size-4"
                   />
                 </span>

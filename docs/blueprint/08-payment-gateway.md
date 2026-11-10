@@ -308,10 +308,12 @@ When provisioning or moving an environment, give the hub admin these values (the
 
 | What | Value |
 |---|---|
-| Webhook | `{{SITE_URL}}/api/webhooks/payments/nexadream_hub` |
-| Finish redirect | `{{SITE_URL}}/app/billing?status=success` |
-| Error redirect | `{{SITE_URL}}/app/billing?status=failed` |
-| Pending redirect | `{{SITE_URL}}/app/billing?status=pending` |
+| Webhook | `{{SITE_URL}}/api/payments/webhook` (alias of `/api/webhooks/payments/nexadream_hub`) |
+| Finish redirect | `{{SITE_URL}}/pay/done` |
+| Error redirect | `{{SITE_URL}}/pay/done` |
+| Pending redirect | `{{SITE_URL}}/pay/done` |
+
+`/pay/done` forwards `order_id` / `reference` to `/app/billing`, which reads the payment's status from the database; a `status` in the query is display-only. Checkout still sends a per-payment finish URL straight to `/app/billing`. Staging (2026-11-10) is registered as `https://socialz-iota.vercel.app/api/payments/webhook` and `https://socialz-iota.vercel.app/pay/done`.
 
 Receive from them the **platform API key** and the **order prefix**. Enter both (plus the base URL) at `/admin/payment-gateways`, then activate.
 

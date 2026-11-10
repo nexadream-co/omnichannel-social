@@ -38,7 +38,7 @@ curl -fsS https://<site>/healthz              # 200 once the first tick has run
   - `starts_with(http.request.uri.path, "/@")` → dynamic `concat("/bio/", substring(http.request.uri.path, 2))`
   - one path segment matching `^/[0-9A-Za-z_-]{3,32}$` → dynamic `concat("/r", http.request.uri.path)`
   - `/_nuxt/*`, `/favicon.*`, `/robots.txt` pass through.
-- **Rate limiting rules**: the short domain (per IP) and `/api/webhooks/*`.
+- **Rate limiting rules**: the short domain (per IP), `/api/webhooks/*` and `/api/payments/webhook`.
 - Origin host check: `server/middleware/00.host-guard.ts` returns 404 for anything else on the short domain.
 
 ## After the first deploy (back-office)
@@ -49,8 +49,9 @@ Halaman (review the legal drafts with counsel; privacy and terms must be live be
 
 Staging can run in **test mode** until the hub key exists: the seed activates the payment simulator in any non-production environment (`docs/blueprint/08` §11). Production never offers it.
 
-Register with the Payment Hub admin: webhook `https://<site>/api/webhooks/payments/nexadream_hub`,
-finish/error/pending redirects `https://<site>/app/billing?status=success|failed|pending`.
+Register with the Payment Hub admin: webhook `https://<site>/api/payments/webhook`,
+finish/error/pending redirects `https://<site>/pay/done` (it forwards to `/app/billing`, which reads the real status).
+The older `https://<site>/api/webhooks/payments/nexadream_hub` and `https://<site>/app/billing?status=…` still work.
 
 Register with Meta: webhook `https://<site>/api/webhooks/meta` (verify token = `META_WEBHOOK_VERIFY_TOKEN`,
 fields: `comments` for Instagram), data deletion `https://<site>/api/meta/data-deletion`, deauthorize

@@ -149,8 +149,8 @@ async function disconnect(account: Account) {
             <p class="flex items-center gap-1.5 min-w-0">
               <span class="font-medium text-highlighted truncate">{{ account.username || PLATFORM_META[account.platform].name }}</span>
               <span class="text-sm text-muted flex items-center gap-1 shrink-0">
-                <UIcon
-                  :name="PLATFORM_META[account.platform].icon"
+                <PlatformIcon
+                  :platform="account.platform"
                   class="size-3.5"
                 />
                 <span class="hidden min-[420px]:inline">{{ PLATFORM_META[account.platform].name }}</span>
@@ -200,8 +200,8 @@ async function disconnect(account: Account) {
           class="rounded-lg border border-default p-4 flex flex-col gap-3"
         >
           <div class="flex items-center gap-2">
-            <UIcon
-              :name="PLATFORM_META[entry.platform].icon"
+            <PlatformIcon
+              :platform="entry.platform"
               class="size-6"
             />
             <p class="font-semibold">
@@ -228,6 +228,7 @@ async function disconnect(account: Account) {
           color="neutral"
           variant="subtle"
           :icon="PLATFORM_META[platform].icon"
+          :ui="{ leadingIcon: brandIconClass(platform) }"
           :label="PLATFORM_META[platform].name"
         />
       </div>

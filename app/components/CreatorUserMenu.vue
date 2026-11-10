@@ -7,6 +7,7 @@ const { t, locale, locales, setLocale } = useI18n()
 const localePath = useLocalePath()
 const colorMode = useColorMode()
 const auth = useCreatorAuth()
+const entitlements = useEntitlements()
 
 const user = computed(() => auth.profile.value?.user)
 
@@ -20,6 +21,10 @@ const items = computed<DropdownMenuItem[][]>(() => {
     ]
   ]
   const business: DropdownMenuItem[] = []
+  if (auth.hasAbility('accounts.manage')) business.push({ label: t('nav.accounts'), icon: 'i-lucide-at-sign', to: localePath('/app/accounts') })
+  // Plan-gated entries never hide: a lock, and the page explains the upgrade (docs/blueprint/04 §2.2).
+  const teamLocked = Boolean(entitlements.data.value) && !entitlements.has('teamAccess')
+  if (auth.hasAbility('team.manage')) business.push({ label: t('nav.team'), icon: 'i-lucide-users', to: localePath('/app/team'), slot: teamLocked ? 'locked' as const : undefined })
   if (auth.hasAbility('billing.manage')) business.push({ label: t('nav.billing'), icon: 'i-lucide-credit-card', to: localePath('/app/billing') })
   if (auth.hasAbility('settings.manage')) business.push({ label: t('nav.settings'), icon: 'i-lucide-settings', to: localePath('/app/settings') })
   if (auth.hasAbility('activity.read')) business.push({ label: t('nav.activity'), icon: 'i-lucide-scroll-text', to: localePath('/app/activity') })
@@ -62,6 +67,12 @@ const items = computed<DropdownMenuItem[][]>(() => {
     :content="{ align: 'end', collisionPadding: 12 }"
     :ui="{ content: 'w-60' }"
   >
+    <template #locked-trailing>
+      <UIcon
+        name="i-lucide-lock"
+        class="size-4 text-muted"
+      />
+    </template>
     <UButton
       color="neutral"
       variant="ghost"

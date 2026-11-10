@@ -197,6 +197,7 @@ const tabs = computed(() => [{ value: 'calendar', label: t('calendar.tabCalendar
 
 <template>
   <div class="w-full max-w-7xl mx-auto">
+    <PostsHubTabs />
     <CommandBar
       :title="t('calendar.title')"
       :description="t('calendar.subtitle')"

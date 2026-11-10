@@ -173,6 +173,7 @@ async function makeIdeas() {
     class="w-full max-w-5xl mx-auto"
     :class="selecting ? 'pb-16 lg:pb-0' : ''"
   >
+    <PostsHubTabs />
     <CommandBar
       :title="t('mediaLibrary.title')"
       :description="t('mediaLibrary.subtitle')"

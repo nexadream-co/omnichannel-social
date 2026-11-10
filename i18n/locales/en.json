@@ -57,7 +57,14 @@
     "collapse": "Collapse menu",
     "expand": "Expand menu",
     "media": "Media Gallery",
-    "create": "Create"
+    "create": "Create",
+    "postsHub": "Posts",
+    "hubCalendar": "Calendar",
+    "hubList": "All posts",
+    "addAccount": "Connect another account",
+    "connectAccount": "Connect an account",
+    "moreAccounts": "+{n} more accounts",
+    "needsReauth": "needs reconnecting"
   },
   "auth": {
     "email": "Email",
