@@ -1275,13 +1275,10 @@
       "advanced": "Opsi lanjutan"
     },
     "moments": {
-      "title": "Momen belanja",
-      "hint": "Satu ketukan menaruh ide teaser, review dan hari-H di kalender.",
       "prepare": "Siapkan konten",
       "prepared": "Sudah disiapkan",
       "preparedToast": "Ide untuk {name} sudah ada di kalender.",
       "inDays": "{n} hari lagi",
-      "today": "Hari ini",
       "ongoing": "Sedang berlangsung"
     },
     "rhythm": {
@@ -1294,10 +1291,10 @@
       "progressNode": "{count}/{target} terisi minggu ini"
     },
     "pick": {
-      "title": "Isi {date}",
-      "empty": "Belum ada ide tanpa tanggal.",
-      "newIdea": "Tulis ide untuk hari ini",
-      "newPost": "Langsung buat postingan"
+      "title": "Buat untuk {date}",
+      "newIdea": "Tulis ide",
+      "newPost": "Buat postingan",
+      "fromBank": "Atau pakai ide dari Bank Ide:"
     }
   },
   "links": {

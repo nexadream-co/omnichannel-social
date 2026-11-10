@@ -4,13 +4,12 @@ import { usePreferredReducedMotion } from '@vueuse/core'
 import { haptic } from '~/utils/haptics'
 import type { CalendarEntry, DayPost } from '~/utils/calendar'
 
-/** Kalender = the planner: posts, planned ideas and shopping moments on one calendar, with Bank Ide beside it. */
+/** Kalender = the planner: posts, planned ideas and shopping-moment marks on one calendar, with Bank Ide beside it. */
 interface CalendarWindow { items: CalendarEntry[], ideas: PlannerIdea[], moments: PlannerMoment[], postsPerWeek: number, unplannedIdeas: number }
 type Mode = 'week' | 'month'
 
 definePageMeta({ layout: 'creator' })
 const { t, locale } = useI18n()
-const localePath = useLocalePath()
 const auth = useCreatorAuth()
 const planner = usePlanner()
 useHead({ title: () => t('calendar.title') })
@@ -21,10 +20,11 @@ const today = zonedParts(new Date(), tz.value).date
 
 // The chosen view is a per-viewer convenience; the page works the same without storage.
 const MODE_KEY = 'socialz.calendar.mode'
-const mode = ref<Mode>('week')
+const mode = ref<Mode>('month')
 onMounted(() => {
   try {
-    if (localStorage.getItem(MODE_KEY) === 'month') mode.value = 'month'
+    const saved = localStorage.getItem(MODE_KEY)
+    if (saved === 'week' || saved === 'month') mode.value = saved
   } catch { /* storage blocked: keep the default */ }
 })
 // Minggu ↔ Bulan cross-fades with the View Transitions API where it exists and motion is welcome.
@@ -47,7 +47,7 @@ watch(mode, (value) => {
   } catch { /* ignore */ }
 })
 
-// Any day inside the visible week or month; `?day=` (reminders in the bell) opens on that day's week.
+// Any day inside the visible week or month; `?day=` (reminders in the bell) opens on that day.
 const route = useRoute()
 const cursor = ref(typeof route.query.day === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(route.query.day) ? route.query.day : today)
 const month = computed(() => cursor.value.slice(0, 7))
@@ -162,11 +162,10 @@ async function startContent() {
   starting.value = false
 }
 
-// "+" on a day: with ideas waiting in Bank Ide, offer them; without, go straight to the composer as before.
+// Tap on a day (or its "+"): the create sheet for that date (post, new idea, or an idea waiting in Bank Ide).
 const pickDay = ref<string | null>(null)
 function fill(day: string) {
-  if (data.value.unplannedIdeas > 0) pickDay.value = day
-  else navigateTo(localePath({ path: '/app/compose', query: { date: day } }))
+  pickDay.value = day
 }
 
 const editorOpen = ref(false)
@@ -210,11 +209,6 @@ const tabs = computed(() => [{ value: 'calendar', label: t('calendar.tabCalendar
         @click="newIdea()"
       />
     </CommandBar>
-
-    <MomentStrip
-      :moments="data.moments"
-      :today="today"
-    />
 
     <UTabs
       v-model="tab"
@@ -385,6 +379,7 @@ const tabs = computed(() => [{ value: 'calendar', label: t('calendar.tabCalendar
     />
     <IdeaPickDialog
       :day="pickDay"
+      :waiting="data.unplannedIdeas"
       @close="pickDay = null"
       @new-idea="newIdea"
     />

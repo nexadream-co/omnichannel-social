@@ -1275,13 +1275,10 @@
       "advanced": "More options"
     },
     "moments": {
-      "title": "Shopping moments",
-      "hint": "One tap puts a teaser, a review and a day-of idea on your calendar.",
       "prepare": "Prepare content",
       "prepared": "Prepared",
       "preparedToast": "Ideas for {name} are on your calendar.",
       "inDays": "in {n} days",
-      "today": "Today",
       "ongoing": "Happening now"
     },
     "rhythm": {
@@ -1294,10 +1291,10 @@
       "progressNode": "{count}/{target} filled this week"
     },
     "pick": {
-      "title": "Fill {date}",
-      "empty": "No undated ideas yet.",
-      "newIdea": "Write an idea for this day",
-      "newPost": "Create a post now"
+      "title": "Create for {date}",
+      "newIdea": "Write an idea",
+      "newPost": "Create a post",
+      "fromBank": "Or use an idea from Bank Ide:"
     }
   },
   "links": {

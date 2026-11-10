@@ -11,6 +11,13 @@ const planner = usePlanner()
 const canWrite = computed(() => auth.hasAbility('posts.write'))
 const dnd = usePlannerDrop(() => props.today, day => emit('drop', day))
 
+/** A tap on the empty part of a day opens the create sheet; chips, buttons and drags keep their own behaviour. */
+const fillable = (day: string) => canWrite.value && day >= props.today
+function tapDay(day: string, event: MouseEvent) {
+  if (!fillable(day) || dnd.dragging.value || (event.target as Element).closest('a, button')) return
+  emit('fill', day)
+}
+
 const SHOWN = 3
 const weekdays = computed(() => Array.from({ length: 7 }, (_, i) => new Intl.DateTimeFormat(locale.value === 'en' ? 'en-GB' : 'id-ID', { weekday: 'short', timeZone: 'UTC' }).format(new Date(Date.UTC(2026, 0, 5 + i)))))
 function chips(day: string) {
@@ -38,9 +45,10 @@ function chips(day: string) {
         v-for="day in days"
         :key="day"
         class="min-h-28 motion-safe:transition-colors border-r border-b border-default p-1.5 flex flex-col gap-1"
-        :class="[day.startsWith(month) ? 'bg-default' : 'bg-muted/40', dropCellClass(dnd.state(day), dnd.settled.value === day), marks.has(day) ? 'border-t-2 border-t-primary/40' : '']"
+        :class="[day.startsWith(month) ? 'bg-default' : 'bg-muted/40', dropCellClass(dnd.state(day), dnd.settled.value === day), marks.has(day) ? 'border-t-2 border-t-primary/40' : '', fillable(day) && !dnd.dragging.value ? 'group/day cursor-pointer hover:bg-primary/10 hover:ring-1 hover:ring-inset hover:ring-primary/40' : '']"
         :data-drop-day="day"
         @planner-drop="dnd.drop(day)"
+        @click="tapDay(day, $event)"
       >
         <div class="flex items-center justify-between gap-1 min-w-0">
           <span
@@ -53,12 +61,12 @@ function chips(day: string) {
             class="text-[11px] font-medium text-primary truncate"
           >{{ momentName(mark.moment, locale) }}</span>
           <UButton
-            v-if="canWrite && day >= today"
+            v-if="fillable(day)"
             icon="i-lucide-plus"
             size="xs"
             color="neutral"
             variant="ghost"
-            class="ml-auto opacity-0 hover:opacity-100 focus-visible:opacity-100 shrink-0"
+            class="ml-auto shrink-0 opacity-0 group-hover/day:opacity-100 group-hover/day:text-primary focus-visible:opacity-100 pointer-coarse:opacity-100 motion-safe:transition-opacity"
             :aria-label="t('planner.pick.title', { date: planner.dayLabel(day) })"
             @click="emit('fill', day)"
           />
