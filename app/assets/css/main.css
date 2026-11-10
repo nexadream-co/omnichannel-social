@@ -2,6 +2,25 @@
 @import "@nuxt/ui";
 @plugin "@tailwindcss/typography";
 
+/*
+ * Kalender day cell: the "add to this day" hover shows on the day itself, not while the pointer is on
+ * a post or idea inside it ([data-day-item]), which have their own hover and open something else.
+ */
+@custom-variant day-hover {
+  @media (hover: hover) {
+    &:hover:not(:has([data-day-item]:hover)) {
+      @slot;
+    }
+  }
+}
+@custom-variant group-day-hover {
+  @media (hover: hover) {
+    :where(.group\/day):hover:not(:has([data-day-item]:hover)) & {
+      @slot;
+    }
+  }
+}
+
 @theme static {
   --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
 

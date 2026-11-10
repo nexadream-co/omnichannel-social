@@ -72,7 +72,7 @@ async function upload(file: File) {
 /** Starts an upload for each file that fits; the rest are dropped with one friendly note. */
 function addFiles(files: File[]) {
   const room = (props.max ?? 10) - items.value.length
-  if (files.length > room) toast.add({ title: t('channel.tooManyMedia', { max: props.max ?? 10 }), color: 'warning' })
+  if (files.length > room) toast.add({ title: t('channel.uploadLimit', { max: props.max ?? 10 }), color: 'warning' })
   files.slice(0, Math.max(0, room)).forEach(upload)
 }
 

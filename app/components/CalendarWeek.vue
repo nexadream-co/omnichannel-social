@@ -27,7 +27,7 @@ const weekday = (day: string) => new Intl.DateTimeFormat(locale.value === 'en' ?
       v-for="day in days"
       :key="day"
       class="min-h-72 motion-safe:transition-colors border-r border-b border-default p-1.5 flex flex-col gap-1 bg-default"
-      :class="[day < today ? 'bg-muted/40' : '', dropCellClass(dnd.state(day), dnd.settled.value === day), marks.has(day) ? 'border-t-2 border-t-primary/40' : '', fillable(day) && !dnd.dragging.value ? 'group/day cursor-pointer hover:bg-primary/10 hover:ring-1 hover:ring-inset hover:ring-primary/40' : '']"
+      :class="[day < today ? 'bg-muted/40' : '', dropCellClass(dnd.state(day), dnd.settled.value === day), marks.has(day) ? 'border-t-2 border-t-primary/40' : '', fillable(day) && !dnd.dragging.value ? 'group/day cursor-pointer day-hover:bg-primary/10 day-hover:ring-1 day-hover:ring-inset day-hover:ring-primary/40' : '']"
       :data-drop-day="day"
       @planner-drop="dnd.drop(day)"
       @click="tapDay(day, $event)"
@@ -64,12 +64,14 @@ const weekday = (day: string) => new Intl.DateTimeFormat(locale.value === 'en' ?
       <CalendarPostChip
         v-for="post in posts.get(day) ?? []"
         :key="post.postId"
+        data-day-item
         :post="post"
         wrap
       />
       <IdeaChip
         v-for="idea in ideas.get(day) ?? []"
         :key="idea.id"
+        data-day-item
         :idea="idea"
         wrap
         @open="emit('openIdea', $event)"
@@ -82,7 +84,7 @@ const weekday = (day: string) => new Intl.DateTimeFormat(locale.value === 'en' ?
         icon="i-lucide-plus"
         :label="posts.get(day)?.length || ideas.get(day)?.length ? undefined : t('planner.rhythm.fill')"
         :aria-label="t('planner.pick.title', { date: planner.dayLabel(day) })"
-        class="mt-auto self-start group-hover/day:text-primary group-hover/day:bg-primary/10"
+        class="mt-auto self-start group-day-hover:text-primary group-day-hover:bg-primary/10"
         @click="emit('fill', day)"
       />
     </div>

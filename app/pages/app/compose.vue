@@ -188,6 +188,18 @@ const blocking = computed(() => issues.value.some(i => i.level === 'error'))
 // opening an empty composer isn't greeted by red boxes.
 const attempted = ref(false)
 const visibleIssues = computed(() => issues.value.filter(i => i.level === 'warning' || attempted.value))
+/** Issue params carry enum values (platform, format, media kinds); the message shows their labels. */
+function issueText(issue: Issue) {
+  const params = issue.params ?? {}
+  const count = Number(params.min ?? params.max ?? 2)
+  return t(issue.code, {
+    ...params,
+    ...(params.platform ? { platform: PLATFORM_META[params.platform as Platform].name } : {}),
+    ...(params.format ? { format: t(`format.${params.format}`) } : {}),
+    ...(params.media ? { media: t(`channel.media.${params.media}`, count) } : {}),
+    ...(params.kind ? { kind: t(`channel.kind.${params.kind}`) } : {})
+  })
+}
 /** "Atur potongan" / "Potong video" on a media hint: opens the editor on that item, on the shape the platform keeps. */
 function fixAction(issue: Issue & { account: Account }) {
   const index = Number(issue.field?.split('.')[1])
@@ -620,7 +632,7 @@ async function submit(mode: 'schedule' | 'now' | 'draft') {
               variant="subtle"
               :icon="PLATFORM_META[issue.account.platform].icon"
               :ui="{ icon: brandIconClass(issue.account.platform) }"
-              :title="t(issue.code, issue.params ?? {})"
+              :title="issueText(issue)"
               :actions="fixAction(issue)"
             />
           </li>

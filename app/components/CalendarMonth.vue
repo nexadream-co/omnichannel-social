@@ -45,7 +45,7 @@ function chips(day: string) {
         v-for="day in days"
         :key="day"
         class="min-h-28 motion-safe:transition-colors border-r border-b border-default p-1.5 flex flex-col gap-1"
-        :class="[day.startsWith(month) ? 'bg-default' : 'bg-muted/40', dropCellClass(dnd.state(day), dnd.settled.value === day), marks.has(day) ? 'border-t-2 border-t-primary/40' : '', fillable(day) && !dnd.dragging.value ? 'group/day cursor-pointer hover:bg-primary/10 hover:ring-1 hover:ring-inset hover:ring-primary/40' : '']"
+        :class="[day.startsWith(month) ? 'bg-default' : 'bg-muted/40', dropCellClass(dnd.state(day), dnd.settled.value === day), marks.has(day) ? 'border-t-2 border-t-primary/40' : '', fillable(day) && !dnd.dragging.value ? 'group/day cursor-pointer day-hover:bg-primary/10 day-hover:ring-1 day-hover:ring-inset day-hover:ring-primary/40' : '']"
         :data-drop-day="day"
         @planner-drop="dnd.drop(day)"
         @click="tapDay(day, $event)"
@@ -66,7 +66,7 @@ function chips(day: string) {
             size="xs"
             color="neutral"
             variant="ghost"
-            class="ml-auto shrink-0 opacity-0 group-hover/day:opacity-100 group-hover/day:text-primary focus-visible:opacity-100 pointer-coarse:opacity-100 motion-safe:transition-opacity"
+            class="ml-auto shrink-0 opacity-0 group-day-hover:opacity-100 group-day-hover:text-primary focus-visible:opacity-100 pointer-coarse:opacity-100 motion-safe:transition-opacity"
             :aria-label="t('planner.pick.title', { date: planner.dayLabel(day) })"
             @click="emit('fill', day)"
           />
@@ -87,11 +87,13 @@ function chips(day: string) {
         <CalendarPostChip
           v-for="post in chips(day).posts"
           :key="post.postId"
+          data-day-item
           :post="post"
         />
         <IdeaChip
           v-for="idea in chips(day).ideas"
           :key="idea.id"
+          data-day-item
           :idea="idea"
           @open="emit('openIdea', $event)"
         />

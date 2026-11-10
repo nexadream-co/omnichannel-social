@@ -816,19 +816,29 @@
     "accountDisconnected": "Akun sudah diputuskan."
   },
   "channel": {
-    "captionTooLong": "Caption terlalu panjang ({count}/{max} karakter).",
-    "tooManyHashtags": "Terlalu banyak tagar ({count}, maks {max}). Hapus beberapa supaya bisa diposting.",
-    "tooManyMentions": "Terlalu banyak mention (maks {max}).",
-    "tooManyLinks": "Terlalu banyak link (maks {max}).",
-    "mediaRequired": "Tambahkan minimal {min} foto atau video.",
-    "tooManyMedia": "Maksimal {max} foto/video.",
-    "emptyPost": "Tulis caption atau tambahkan media.",
-    "mediaKindUnsupported": "Jenis media ini tidak didukung untuk format ini.",
-    "imageWillBeConverted": "Foto otomatis kami ubah ke format yang didukung.",
-    "imageWillBeCropped": "Rasio foto di luar batas; Instagram akan memotongnya.",
-    "videoTooShort": "Video terlalu pendek (min {min} detik).",
-    "videoTooLong": "Video terlalu panjang (maks {max} detik).",
-    "formatUnsupported": "Format ini tidak didukung.",
+    "captionTooLong": "Caption terlalu panjang untuk {platform} ({count}/{max} karakter).",
+    "tooManyHashtags": "Terlalu banyak tagar untuk {platform} ({count}, maks {max}). Hapus beberapa supaya bisa diposting.",
+    "tooManyMentions": "Terlalu banyak mention untuk {platform} ({count}, maks {max}).",
+    "tooManyLinks": "Terlalu banyak link untuk {platform} ({count}, maks {max}).",
+    "mediaRequired": "Tambahkan minimal {min} {media} untuk {format} {platform}.",
+    "tooManyMedia": "{format} {platform} maksimal {max} {media}. Hapus sisanya atau ganti format di Opsi lanjutan.",
+    "emptyPost": "Tulis caption atau tambahkan foto/video untuk {platform}.",
+    "mediaKindUnsupported": "{kind} tidak bisa dipakai untuk {format} {platform}. Pakai {media}, atau ganti format di Opsi lanjutan.",
+    "imageWillBeConverted": "Foto otomatis kami ubah ke jenis file yang diterima {platform}.",
+    "imageWillBeCropped": "Rasio foto di luar batas {format} {platform}, jadi {platform} akan memotongnya.",
+    "videoTooShort": "Video terlalu pendek untuk {format} {platform} (min {min} detik).",
+    "videoTooLong": "Video terlalu panjang untuk {format} {platform} (maks {max} detik).",
+    "formatUnsupported": "{platform} tidak mendukung format {format}.",
+    "uploadLimit": "Maksimal {max} foto/video per postingan.",
+    "media": {
+      "any": "foto atau video",
+      "image": "foto",
+      "video": "video"
+    },
+    "kind": {
+      "image": "Foto",
+      "video": "Video"
+    },
     "instagram": {
       "linkNotClickable": "Link di caption Instagram tidak bisa diklik. Taruh di Etalase atau pakai Balas Otomatis.",
       "unavailable": "Instagram belum tersedia."

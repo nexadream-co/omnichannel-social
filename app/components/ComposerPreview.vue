@@ -42,7 +42,9 @@ const ratio = computed(() => {
   return Math.min(Math.max(own, min), max)
 })
 const textOnly = computed(() => current.value?.format === 'text' || !cover.value)
-const dots = computed(() => current.value && current.value.format === 'carousel' ? props.media.length : 0)
+/** A carousel shows every item, swipeable like on the platform; other formats publish only the first one. */
+const slides = computed(() => current.value?.format === 'carousel' ? props.media : props.media.slice(0, 1))
+const slide = ref(0)
 </script>
 
 <template>
@@ -81,34 +83,51 @@ const dots = computed(() => current.value && current.value.format === 'carousel'
         class="relative bg-elevated mx-auto max-h-[28rem]"
         :style="{ aspectRatio: String(ratio) }"
       >
-        <!-- SmartImage's root is `relative` with size containment, so it gets its size from this wrapper. -->
-        <div class="absolute inset-0">
+        <!-- Swipe, drag, trackpad or arrow keys; the arrows only show where there is no touch-first screen. -->
+        <UCarousel
+          v-slot="{ item }"
+          :items="slides"
+          :arrows="slides.length > 1"
+          :prev="{ size: 'xs', color: 'neutral', variant: 'solid' }"
+          :next="{ size: 'xs', color: 'neutral', variant: 'solid' }"
+          class="absolute inset-0"
+          :ui="{
+            root: 'focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary',
+            viewport: 'h-full',
+            container: 'h-full items-stretch ms-0',
+            item: 'relative h-full ps-0',
+            prev: 'start-2 sm:start-2 max-sm:hidden opacity-90 disabled:opacity-0',
+            next: 'end-2 sm:end-2 max-sm:hidden opacity-90 disabled:opacity-0'
+          }"
+          @select="(index: number) => slide = index"
+        >
+          <!-- SmartImage's root is `relative` with size containment, so it gets its size from the slide. -->
           <SmartImage
-            :src="cover!.previewUrl ?? cover!.posterUrl"
+            :src="item.previewUrl ?? item.posterUrl"
             kind="media"
-            class="size-full"
+            class="absolute inset-0"
           />
-        </div>
-        <UIcon
-          v-if="cover!.kind === 'video'"
-          name="i-lucide-play"
-          class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 size-10 text-white drop-shadow"
-        />
+          <UIcon
+            v-if="item.kind === 'video'"
+            name="i-lucide-play"
+            class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 size-10 text-white drop-shadow pointer-events-none"
+          />
+        </UCarousel>
         <span
-          v-if="media.length > 1 && current.format === 'carousel'"
-          class="absolute top-2 right-2 rounded-full bg-black/60 px-2 py-0.5 text-[11px] text-white tabular-nums"
-        >1/{{ media.length }}</span>
+          v-if="slides.length > 1"
+          class="absolute top-2 right-2 rounded-full bg-black/60 px-2 py-0.5 text-[11px] text-white tabular-nums pointer-events-none"
+        >{{ slide + 1 }}/{{ slides.length }}</span>
       </div>
       <div
-        v-if="dots > 1"
-        class="flex justify-center gap-1 pt-2"
+        v-if="!textOnly && slides.length > 1"
+        class="flex flex-wrap justify-center gap-1 pt-2"
         aria-hidden="true"
       >
         <span
-          v-for="n in Math.min(dots, 10)"
+          v-for="(_, n) in slides"
           :key="n"
-          class="size-1.5 rounded-full"
-          :class="n === 1 ? 'bg-primary' : 'bg-accented'"
+          class="size-1.5 rounded-full motion-safe:transition-colors"
+          :class="n === slide ? 'bg-primary' : 'bg-accented'"
         />
       </div>
       <p class="px-3 py-2 text-sm whitespace-pre-line break-words">

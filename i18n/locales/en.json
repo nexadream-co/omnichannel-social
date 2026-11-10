@@ -816,19 +816,29 @@
     "accountDisconnected": "The account was disconnected."
   },
   "channel": {
-    "captionTooLong": "Caption is too long ({count}/{max} characters).",
-    "tooManyHashtags": "Too many hashtags ({count}, max {max}). Remove some so it can be posted.",
-    "tooManyMentions": "Too many mentions (max {max}).",
-    "tooManyLinks": "Too many links (max {max}).",
-    "mediaRequired": "Add at least {min} photo or video.",
-    "tooManyMedia": "At most {max} photos/videos.",
-    "emptyPost": "Write a caption or add media.",
-    "mediaKindUnsupported": "This media type isn't supported for this format.",
-    "imageWillBeConverted": "We convert the photo to a supported format automatically.",
-    "imageWillBeCropped": "The photo ratio is outside the limits; Instagram will crop it.",
-    "videoTooShort": "Video is too short (min {min} seconds).",
-    "videoTooLong": "Video is too long (max {max} seconds).",
-    "formatUnsupported": "This format isn't supported.",
+    "captionTooLong": "Caption is too long for {platform} ({count}/{max} characters).",
+    "tooManyHashtags": "Too many hashtags for {platform} ({count}, max {max}). Remove some so it can be posted.",
+    "tooManyMentions": "Too many mentions for {platform} ({count}, max {max}).",
+    "tooManyLinks": "Too many links for {platform} ({count}, max {max}).",
+    "mediaRequired": "Add at least {min} {media} for {platform} {format}.",
+    "tooManyMedia": "{platform} {format} takes at most {max} {media}. Remove the rest or change the format in Advanced options.",
+    "emptyPost": "Write a caption or add a photo/video for {platform}.",
+    "mediaKindUnsupported": "{kind} can't be used in {platform} {format}. Use {media}, or change the format in Advanced options.",
+    "imageWillBeConverted": "We convert the photo to a file type {platform} accepts automatically.",
+    "imageWillBeCropped": "The photo ratio is outside the {platform} {format} limits, so {platform} will crop it.",
+    "videoTooShort": "Video is too short for {platform} {format} (min {min} seconds).",
+    "videoTooLong": "Video is too long for {platform} {format} (max {max} seconds).",
+    "formatUnsupported": "{platform} doesn't support the {format} format.",
+    "uploadLimit": "At most {max} photos/videos per post.",
+    "media": {
+      "any": "photo or video | photos or videos",
+      "image": "photo | photos",
+      "video": "video | videos"
+    },
+    "kind": {
+      "image": "Photos",
+      "video": "Videos"
+    },
     "instagram": {
       "linkNotClickable": "Links in Instagram captions aren't clickable. Put it in your storefront or use Auto reply.",
       "unavailable": "Instagram isn't available yet."

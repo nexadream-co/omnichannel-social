@@ -23,6 +23,12 @@ describe('validateTarget', () => {
     const png = validateTarget(CHANNELS.instagram, { format: 'feed', caption: '' }, [jpeg('image/png')])
     expect(png.map(i => i.level)).toEqual(['warning'])
   })
+  it('names the platform, format and accepted media on media issues', () => {
+    const [carousel] = validateTarget(CHANNELS.instagram, { format: 'carousel', caption: '' }, [jpeg()])
+    expect(carousel).toMatchObject({ code: 'channel.mediaRequired', params: { platform: 'instagram', format: 'carousel', media: 'any', min: 2 } })
+    const [reel] = validateTarget(CHANNELS.facebook, { format: 'reel', caption: '' }, [jpeg()])
+    expect(reel).toMatchObject({ code: 'channel.mediaKindUnsupported', params: { platform: 'facebook', format: 'reel', media: 'video', kind: 'image' } })
+  })
   it('limits Threads to 5 unique links and rejects unsupported formats', () => {
     const caption = [1, 2, 3, 4, 5, 6].map(n => `https://a.id/${n}`).join(' ')
     expect(validateTarget(CHANNELS.threads, { format: 'text', caption }, []).map(i => i.code)).toContain('channel.tooManyLinks')
