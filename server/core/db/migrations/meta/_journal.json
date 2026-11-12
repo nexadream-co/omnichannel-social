@@ -127,6 +127,13 @@
       "when": 1793799483599,
       "tag": "0017_more_milestones",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1794409970829,
+      "tag": "0018_dm_rule_short_links",
+      "breakpoints": true
     }
   ]
 }

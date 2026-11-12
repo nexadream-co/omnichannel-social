@@ -29,6 +29,11 @@ export const shortLinks = pgTable('short_links', {
   domain: text().notNull(),
   linkId: text().notNull(),
   postTargetId: text(),
+  /**
+   * The auto-reply rule whose DM carries this link. Deliberately no foreign key: `deleteRule` hard-deletes rules,
+   * and links already sent in DMs must keep redirecting (and keep their clicks).
+   */
+  dmRuleId: text(),
   channel: text(),
   source: shortLinkSource().notNull().default('vault'),
   active: boolean().notNull().default(true),
@@ -37,8 +42,10 @@ export const shortLinks = pgTable('short_links', {
   unique().on(t.workspaceId, t.id),
   foreignKey({ columns: [t.workspaceId, t.linkId], foreignColumns: [links.workspaceId, links.id] }),
   foreignKey({ columns: [t.workspaceId, t.postTargetId], foreignColumns: [postTargets.workspaceId, postTargets.id] }).onDelete('cascade'),
-  // One attribution link per post target and product (ARCHITECTURE §10.2).
-  uniqueIndex('short_links_target_link_idx').on(t.postTargetId, t.linkId).where(sql`${t.postTargetId} is not null`),
+  // One caption attribution link per post target and product (ARCHITECTURE §10.2); a DM link for the same pair lives next to it.
+  uniqueIndex('short_links_target_link_idx').on(t.postTargetId, t.linkId).where(sql`${t.postTargetId} is not null and ${t.source} = 'post'`),
+  // One DM link per rule, product and (optional) post target.
+  uniqueIndex('short_links_dm_rule_idx').on(t.dmRuleId, t.linkId, sql`coalesce(${t.postTargetId}, '')`).where(sql`${t.dmRuleId} is not null`),
   index().on(t.linkId),
   index().on(t.workspaceId)
 ])

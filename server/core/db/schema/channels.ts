@@ -121,6 +121,7 @@ export const postTargets = pgTable('post_targets', {
   foreignKey({ columns: [t.workspaceId, t.socialAccountId], foreignColumns: [socialAccounts.workspaceId, socialAccounts.id] }),
   index().on(t.status, t.scheduledAt),
   index().on(t.socialAccountId, t.publishedAt),
+  index().on(t.socialAccountId, t.externalId),
   index().on(t.postId)
 ])
 

@@ -1,5 +1,5 @@
 import { randomBytes } from 'node:crypto'
-import { and, count, desc, eq, gte, inArray, sql } from 'drizzle-orm'
+import { and, count, desc, eq, gte, inArray, isNull, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import { AUTO_SLUG_LENGTH, detectMerchant, hostAllowed, SLUG_PATTERN } from '../../../shared/utils/links'
 import { assertAbility, type WorkspaceContext } from '../context'
@@ -169,13 +169,13 @@ export async function attributeCaption(db: Executor, target: { id: string, works
   const vault = await vaultLinksIn(db, target.workspaceId, caption)
   let result = caption
   for (const entry of vault) {
-    const [existing] = await db.select({ slug: shortLinks.slug }).from(shortLinks).where(and(eq(shortLinks.postTargetId, target.id), eq(shortLinks.linkId, entry.linkId))).limit(1)
+    const [existing] = await db.select({ slug: shortLinks.slug }).from(shortLinks).where(and(eq(shortLinks.postTargetId, target.id), eq(shortLinks.linkId, entry.linkId), eq(shortLinks.source, 'post'))).limit(1)
     let slug = existing?.slug
     if (!slug) {
       slug = randomSlug()
       await db.insert(shortLinks).values({ workspaceId: target.workspaceId, slug, domain: new URL(env().shortUrl).host, linkId: entry.linkId, postTargetId: target.id, channel: target.platform, source: 'post' })
         .onConflictDoNothing()
-      slug = (await db.select({ slug: shortLinks.slug }).from(shortLinks).where(and(eq(shortLinks.postTargetId, target.id), eq(shortLinks.linkId, entry.linkId))).limit(1))[0]?.slug ?? slug
+      slug = (await db.select({ slug: shortLinks.slug }).from(shortLinks).where(and(eq(shortLinks.postTargetId, target.id), eq(shortLinks.linkId, entry.linkId), eq(shortLinks.source, 'post'))).limit(1))[0]?.slug ?? slug
     }
     result = result.replace(new RegExp(`${base}${entry.slug}(?![0-9A-Za-z_-])`, 'g'), shortUrl(slug))
   }
@@ -199,7 +199,7 @@ export async function productLinksOfPost(db: Executor, workspaceId: string, post
   const vault = await vaultLinksIn(db, workspaceId, captions.join('\n'))
   const attributed = await db.select({ linkId: shortLinks.linkId }).from(shortLinks)
     .innerJoin(postTargets, eq(postTargets.id, shortLinks.postTargetId))
-    .where(and(eq(shortLinks.workspaceId, workspaceId), eq(postTargets.postId, postId)))
+    .where(and(eq(shortLinks.workspaceId, workspaceId), eq(shortLinks.source, 'post'), eq(postTargets.postId, postId)))
   return { linkIds: [...new Set([...vault.map(v => v.linkId), ...attributed.map(a => a.linkId)])], vaultUrls: vault.map(v => v.url) }
 }
 
@@ -210,4 +210,34 @@ export async function shortLinkFor(db: Executor, workspaceId: string, linkId: st
   if (existing) return existing
   const [row] = await db.insert(shortLinks).values({ workspaceId, slug: randomSlug(), domain: new URL(env().shortUrl).host, linkId, source }).returning({ id: shortLinks.id, slug: shortLinks.slug })
   return row!
+}
+
+/**
+ * The link one auto-reply rule puts in its DMs, per product and per commented post, so DM clicks can be tied to a rule and a post.
+ * `mediaId` is the platform's id of the commented post; when we published it, the link is tied to that post target.
+ * Concurrent sends are safe: the unique index `short_links_dm_rule_idx` lets only one insert win, the others read it back.
+ */
+export async function dmShortLinkFor(db: Executor, input: { workspaceId: string, ruleId: string, linkId: string, socialAccountId: string, mediaId: string | null, channel: string }): Promise<{ id: string, slug: string }> {
+  let postTargetId: string | null = null
+  if (input.mediaId) {
+    const [target] = await db.select({ id: postTargets.id }).from(postTargets)
+      .where(and(eq(postTargets.workspaceId, input.workspaceId), eq(postTargets.socialAccountId, input.socialAccountId), eq(postTargets.externalId, input.mediaId), eq(postTargets.status, 'published'))).limit(1)
+    postTargetId = target?.id ?? null
+  }
+  const find = async () => (await db.select({ id: shortLinks.id, slug: shortLinks.slug }).from(shortLinks).where(and(
+    eq(shortLinks.workspaceId, input.workspaceId), eq(shortLinks.dmRuleId, input.ruleId), eq(shortLinks.linkId, input.linkId),
+    postTargetId ? eq(shortLinks.postTargetId, postTargetId) : isNull(shortLinks.postTargetId)
+  )).limit(1))[0]
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const existing = await find()
+    if (existing) return existing
+    await db.insert(shortLinks).values({
+      workspaceId: input.workspaceId, slug: randomSlug(), domain: new URL(env().shortUrl).host, linkId: input.linkId,
+      postTargetId, dmRuleId: input.ruleId, channel: input.channel, source: 'dm'
+    }).onConflictDoNothing()
+    // Nothing found after the insert means the slug collided: try again with a new one.
+    const created = await find()
+    if (created) return created
+  }
+  throw appError(500, 'Gagal membuat link pendek. Coba lagi.', 'SERVER_ERROR')
 }

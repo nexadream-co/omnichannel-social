@@ -99,7 +99,8 @@ const fingerprint = computed(() => JSON.stringify([snapshot.value.caption, snaps
 const loadedFingerprint = ref('')
 const submitted = ref(false)
 const dirty = computed(() => !loading.value && !submitted.value && fingerprint.value !== loadedFingerprint.value)
-const { allowNextLeave } = useUnsavedChanges(dirty)
+// Leaving with unsaved work offers "Simpan draf": the post is kept as a draft and the navigation goes on.
+const { allowNextLeave } = useUnsavedChanges(dirty, { saveDraft: () => submit('draft', { leaving: true }) })
 
 watch(snapshot, (value) => {
   if (loading.value || submitted.value || !isFreshComposer({ edit: editId, duplicate: duplicateId, idea: ideaId, media: mediaParam })) return
@@ -316,7 +317,6 @@ function toggle(id: string) {
 const moreActions = computed(() => [
   [
     { label: t('composer.now'), icon: 'i-lucide-send', disabled: !selected.value.length, onSelect: () => submit('now') },
-    { label: t('composer.draft'), icon: 'i-lucide-file-pen-line', onSelect: () => submit('draft') },
     ...(!editId && !fromIdea.value ? [{ label: t('composer.saveIdea'), icon: 'i-lucide-lightbulb', disabled: !caption.value.trim(), onSelect: saveAsIdea }] : [])
   ]
 ])
@@ -348,15 +348,16 @@ function onSuccessDismiss() {
   void navigateTo(localePath({ path: '/app/posts', query: { tab: 'scheduled' } }))
 }
 
-async function submit(mode: 'schedule' | 'now' | 'draft') {
+/** `leaving`: a draft saved from the leave dialog; the navigation already under way goes on instead of opening Postingan. */
+async function submit(mode: 'schedule' | 'now' | 'draft', { leaving = false } = {}): Promise<boolean> {
   serverIssues.value = []
   if (mode !== 'draft') attempted.value = true
   if (mode !== 'draft') {
-    if (mediaBusy.value) return toast.add({ title: t('composer.mediaPending'), color: 'warning' })
-    if (blocking.value || mediaFailed.value) return toast.add({ title: t('composer.fixFirst'), color: 'warning' })
+    if (mediaBusy.value) return warn('composer.mediaPending')
+    if (blocking.value || mediaFailed.value) return warn('composer.fixFirst')
   }
   const scheduledAt = toZonedIso(slot.value.date, slot.value.time, tz.value)
-  if (mode === 'schedule' && new Date(scheduledAt).getTime() < Date.now()) return toast.add({ title: t('composer.pastTime'), color: 'warning' })
+  if (mode === 'schedule' && new Date(scheduledAt).getTime() < Date.now()) return warn('composer.pastTime')
   const wasFirst = !auth.profile.value?.onboarding.postScheduled
   const when = whenLabel.value
   const firstMedia = media.value[0]
@@ -389,6 +390,7 @@ async function submit(mode: 'schedule' | 'now' | 'draft') {
 
     if (mode === 'draft') {
       toast.add({ title: t('composer.savedDraft'), color: 'success' })
+      if (leaving) return true
     } else if (mode === 'now') {
       // The first post sent straight away is the same first-post moment, told as a launch.
       if (!(wasFirst && moments.celebrate('firstPostScheduled', { as: 'firstPostNow' }))) toast.add({ title: t('composer.postingNow'), color: 'success' })
@@ -397,21 +399,27 @@ async function submit(mode: 'schedule' | 'now' | 'draft') {
       // The first scheduled post is a moment: the moment toast and a sheet that says what happens next.
       const hint = await autoReplyHint(saved.postId)
       Object.assign(success, { scheduledAt, caption: caption.value, imageUrl: firstMedia ? (firstMedia.kind === 'image' ? firstMedia.previewUrl : firstMedia.posterUrl ?? null) : null, hintLinkId: hint?.linkId ?? null, open: true })
-      return
+      return true
     } else {
       toast.add({ title: t('composer.scheduledAt', { when }), color: 'success', actions: [{ label: t('composer.seeCalendar'), to: localePath('/app/calendar'), color: 'neutral', variant: 'outline' }] })
       void offerAutoReply(saved.postId)
     }
     allowNextLeave()
     await navigateTo(localePath({ path: '/app/posts', query: { tab: mode === 'draft' ? 'draft' : 'scheduled' } }))
+    return true
   } catch (caught) {
-    if (entitlements.handlePlanError(caught)) return
+    if (entitlements.handlePlanError(caught)) return false
     const data = (caught as { data?: { data?: { issues?: (Issue & { socialAccountId?: string })[] } } }).data?.data
     if (data?.issues) serverIssues.value = data.issues
     toast.add({ title: extractErrorMessage(caught, t('authError.generic')), color: 'error' })
+    return false
   } finally {
     submitting.value = null
   }
+}
+function warn(key: string) {
+  toast.add({ title: t(key), color: 'warning' })
+  return false
 }
 </script>
 
@@ -762,11 +770,23 @@ async function submit(mode: 'schedule' | 'now' | 'draft') {
               color="neutral"
               variant="outline"
               icon="i-lucide-ellipsis"
-              :loading="submitting === 'now' || submitting === 'draft' || savingIdea"
-              :disabled="submitting === 'schedule'"
+              :loading="submitting === 'now' || savingIdea"
+              :disabled="submitting === 'schedule' || submitting === 'draft'"
               :aria-label="t('common.more')"
             />
           </UDropdownMenu>
+          <UButton
+            color="neutral"
+            variant="outline"
+            icon="i-lucide-file-pen-line"
+            :loading="submitting === 'draft'"
+            :disabled="Boolean(submitting) && submitting !== 'draft'"
+            :aria-label="t('composer.draft')"
+            @click="submit('draft')"
+          >
+            <span class="sm:hidden">{{ t('composer.draftShort') }}</span>
+            <span class="hidden sm:inline">{{ t('composer.draft') }}</span>
+          </UButton>
           <SaveButton
             ref="scheduleButton"
             v-spark.manual

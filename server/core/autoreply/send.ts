@@ -6,7 +6,7 @@ import type { Database } from '../db/client'
 import { dmEvents, dmRules, socialAccounts, workspaces } from '../db/schema'
 import { countDmsThisMonth, limit } from '../entitlements'
 import type { JobHandler } from '../jobs/types'
-import { shortLinkFor, shortUrl } from '../links/service'
+import { dmShortLinkFor, shortUrl } from '../links/service'
 import { notifyWorkspaceOwners } from '../notifications'
 import { consumeRateLimit } from '../rate-limit'
 import { getSettingBool, getSettingNumber } from '../settings'
@@ -88,7 +88,7 @@ export const dmSendJob: JobHandler = async (job, ctx) => {
     return
   }
 
-  const link = rule.linkId ? shortUrl((await shortLinkFor(db, event.workspaceId, rule.linkId, 'dm')).slug) : null
+  const link = rule.linkId ? shortUrl((await dmShortLinkFor(db, { workspaceId: event.workspaceId, ruleId: rule.id, linkId: rule.linkId, socialAccountId: event.socialAccountId, mediaId: event.mediaId, channel: account.platform })).slug) : null
   const adapter = getAdapter('instagram')!
   const adapterCtx = { account: decryptAccount(account), fetch, log: ctx.log }
   try {

@@ -1,22 +1,29 @@
 import { useEventListener } from '@vueuse/core'
 import type { MaybeRefOrGetter } from 'vue'
 
+interface UnsavedChangesOptions {
+  /** Offers "Simpan draf" in the leave dialog; resolves true when saved, so the navigation goes on. */
+  saveDraft?: () => Promise<boolean>
+}
+
 /** Asks before leaving a page with unsaved work (route change or closing the tab). */
-export function useUnsavedChanges(dirty: MaybeRefOrGetter<boolean>) {
+export function useUnsavedChanges(dirty: MaybeRefOrGetter<boolean>, options: UnsavedChangesOptions = {}) {
   const { t } = useI18n()
-  const { confirm } = useConfirmDialog()
+  const { choose } = useConfirmDialog()
   let allowed = false
 
   onBeforeRouteLeave(async () => {
     if (allowed || !toValue(dirty)) return true
-    const leave = await confirm({
+    const choice = await choose({
       title: t('unsaved.title'),
-      description: t('unsaved.body'),
+      description: options.saveDraft ? t('unsaved.draftBody') : t('unsaved.body'),
       confirmLabel: t('unsaved.leave'),
       cancelLabel: t('unsaved.stay'),
-      color: 'error'
+      color: 'error',
+      ...(options.saveDraft ? { extraLabel: t('unsaved.saveDraft'), extraIcon: 'i-lucide-file-pen-line' } : {})
     })
-    return leave
+    if (choice === 'extra' && options.saveDraft) return options.saveDraft()
+    return choice === 'confirm'
   })
 
   if (import.meta.client) {

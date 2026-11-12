@@ -314,7 +314,7 @@ These platform tables are specified in [`blueprint/02-database-schema.md`](bluep
 | Table | Key columns and constraints |
 |---|---|
 | `links` | Vault. `destination_url`, `merchant` (shopee / tokopedia / tiktok_shop / lazada / other), `title`, `image_url`, `price_idr bigint`, `tags text[]`, `archived` |
-| `short_links` | `slug` **UNIQUE** (case-sensitive base62, 6 chars), `domain`, `link_id`, `post_target_id NULL`, `channel NULL`, `source` (vault / post / bio / dm), `active` |
+| `short_links` | `slug` **UNIQUE** (case-sensitive base62, 6 chars), `domain`, `link_id`, `post_target_id NULL`, `channel NULL`, `source` (vault / post / bio / dm), `dm_rule_id NULL` (no FK: rules are hard-deleted, sent links keep working), `active` |
 | `link_clicks` | **Range-partitioned by month on `clicked_at`**. `short_link_id`, `workspace_id`, `ip_hash text` (hex), `country`, `region`, `city`, `device`, `os`, `in_app` (ig / threads / fb / none), `referrer_domain`, `is_bot`, `is_unique_day`. BRIN(`clicked_at`), btree(`short_link_id`, `clicked_at`) |
 | `link_click_daily` | PK(`day`, `short_link_id`, `channel`, `country`, `device`, `referrer_domain`), `clicks`, `uniques`. Retention per plan is applied at query time |
 | `bio_pages` | `handle text` (UNIQUE on `lower(handle)`, no citext extension needed), `title`, `bio`, `avatar_media_id`, `theme jsonb`, `seo jsonb`, `published` |
@@ -538,6 +538,14 @@ Click enrichment:
 
 ### 10.2 Attribution
 When a post is scheduled, vault links in the caption are replaced by **one short link per target** (`post_target_id`, `channel`), so clicks can be attributed to a post and channel. For Instagram, where caption links aren't clickable, the composer suggests the bio link or a DM rule instead.
+
+Balas Otomatis DMs get **one short link per rule, product and post** (`dmShortLinkFor`): `dm_rule_id`, plus `post_target_id` when the commented media is a post we published from that account (matched on `post_targets.external_id`), and `channel`. Unique on `(dm_rule_id, link_id, coalesce(post_target_id, ''))`; the caption link's unique index only covers `source = 'post'`, so both can exist for one target. A post's clicks therefore include the clicks from its DMs, which is what makes Instagram posts measurable. DM links made before migration 0018 are per product (`dm_rule_id` null) and show as unattributed in Statistik. The rule editor's "Coba" still uses the per-product link.
+
+### 10.2.1 Statistik (`GET /api/app/analytics`)
+The response type is `WorkspaceAnalytics` in `shared/utils/analytics.ts`, shared by the service and the page. On top of the click totals and breakdowns:
+- **Period before:** the same totals (and DMs sent) for the equally long window just before, or `null` when the plan's `clickRetentionDays` cannot cover twice the window, so a comparison is never made against purged data.
+- **Click rate** ("dari 1.000 orang yang melihat, N klik"): posts published in the window, live ≥ 24 h, with a views number from their latest `insight_snapshots` row (`viewsOf`: views, then impressions, then reach). Shown only from 100 views (`RATE_MIN_VIEWS`). Facebook gives no views yet and is left out with a note. Top posts carry a rate only when the post was published inside the window, so window clicks equal lifetime clicks.
+- **Balas Otomatis:** comments matched (every `dm_events` row; deleting a rule nulls `rule_id`, so totals keep them) → DMs sent (`dm_sent`) → clicks on `source = 'dm'` links, and the same per rule.
 
 ### 10.3 Destination safety
 - Check destinations with Google Web Risk when they're saved.

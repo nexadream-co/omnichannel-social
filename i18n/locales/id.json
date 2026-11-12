@@ -870,6 +870,7 @@
     "schedule": "Jadwalkan",
     "now": "Posting sekarang",
     "draft": "Simpan draf",
+    "draftShort": "Draf",
     "advanced": "Opsi lanjutan",
     "perPlatform": "Caption khusus {platform}",
     "perPlatformHint": "Kosongkan untuk memakai caption utama.",
@@ -1497,7 +1498,36 @@
     "emptyTitle": "Belum ada klik",
     "emptyBody": "Klik akan muncul di sini setelah link-mu dibagikan.",
     "copyBio": "Salin link Etalase",
-    "createBio": "Buat Etalase"
+    "createBio": "Buat Etalase",
+    "dmSent": "DM otomatis terkirim",
+    "vsPrevious": "Dibanding {days} hari sebelumnya",
+    "trend": {
+      "up": "naik {n}% dibanding {days} hari sebelumnya",
+      "down": "turun {n}% dibanding {days} hari sebelumnya",
+      "same": "sama seperti {days} hari sebelumnya",
+      "new": "baru, sebelumnya belum ada"
+    },
+    "trendNew": "Baru",
+    "posting": {
+      "title": "Dari postinganmu",
+      "headline": "Dari 1.000 orang yang melihat postinganmu, {rate} klik produk.",
+      "previous": "Periode sebelumnya: {rate}",
+      "detail": "{measured} postingan dihitung · {views} dilihat · {clicks} klik",
+      "notEnough": "Belum cukup data. Angka ini muncul setelah postingan tayang {days} hari dan dilihat minimal {views} orang.",
+      "noViewsFacebook": "Facebook belum memberi angka dilihat, jadi postingan Facebook tidak dihitung di sini."
+    },
+    "autoReply": {
+      "title": "Balas Otomatis",
+      "matched": "Komentar cocok",
+      "sent": "DM terkirim",
+      "clicks": "Klik dari DM",
+      "inactive": "Nonaktif",
+      "ruleStats": "{sent} DM · {clicks} klik",
+      "unattributed": "{n} klik dari DM lama belum bisa dibagi per aturan.",
+      "activity": "Lihat aktivitas"
+    },
+    "postViews": "{n} dilihat",
+    "postRate": "{n} klik per 1.000 dilihat"
   },
   "autoReply": {
     "title": "Balas Otomatis",
@@ -1852,7 +1882,9 @@
     "title": "Tinggalkan halaman ini?",
     "body": "Perubahan yang belum disimpan akan hilang.",
     "leave": "Tinggalkan",
-    "stay": "Tetap di sini"
+    "stay": "Tetap di sini",
+    "draftBody": "Simpan sebagai draf supaya bisa dilanjutkan nanti. Kalau ditinggalkan, perubahannya hilang.",
+    "saveDraft": "Simpan draf"
   },
   "onboarding": {
     "progress": "{done}/{total} langkah",

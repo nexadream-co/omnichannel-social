@@ -870,6 +870,7 @@
     "schedule": "Schedule",
     "now": "Post now",
     "draft": "Save draft",
+    "draftShort": "Draft",
     "advanced": "Advanced options",
     "perPlatform": "{platform} caption",
     "perPlatformHint": "Leave empty to use the main caption.",
@@ -1497,7 +1498,36 @@
     "emptyTitle": "No clicks yet",
     "emptyBody": "Clicks will show up here once your link is shared.",
     "copyBio": "Copy Etalase link",
-    "createBio": "Create Etalase"
+    "createBio": "Create Etalase",
+    "dmSent": "Auto DMs sent",
+    "vsPrevious": "Compared with the previous {days} days",
+    "trend": {
+      "up": "up {n}% from the previous {days} days",
+      "down": "down {n}% from the previous {days} days",
+      "same": "same as the previous {days} days",
+      "new": "new, there was none before"
+    },
+    "trendNew": "New",
+    "posting": {
+      "title": "From your posts",
+      "headline": "Out of every 1,000 people who saw your posts, {rate} clicked a product.",
+      "previous": "Previous period: {rate}",
+      "detail": "{measured} posts counted · {views} views · {clicks} clicks",
+      "notEnough": "Not enough data yet. This number appears once posts have been live {hours} hours and seen by at least {views} people.",
+      "noViewsFacebook": "Facebook does not share view numbers yet, so Facebook posts are not counted here."
+    },
+    "autoReply": {
+      "title": "Auto reply",
+      "matched": "Matching comments",
+      "sent": "DMs sent",
+      "clicks": "Clicks from DMs",
+      "inactive": "Inactive",
+      "ruleStats": "{sent} DMs · {clicks} clicks",
+      "unattributed": "{n} clicks from older DMs cannot be split by rule.",
+      "activity": "See activity"
+    },
+    "postViews": "{n} views",
+    "postRate": "{n} clicks per 1,000 views"
   },
   "autoReply": {
     "title": "Auto Reply",
@@ -1852,7 +1882,9 @@
     "title": "Leave this page?",
     "body": "Changes you haven't saved will be lost.",
     "leave": "Leave",
-    "stay": "Stay here"
+    "stay": "Stay here",
+    "draftBody": "Save it as a draft to pick it up later. If you leave, your changes are lost.",
+    "saveDraft": "Save draft"
   },
   "onboarding": {
     "progress": "{done}/{total} steps",

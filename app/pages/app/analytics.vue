@@ -1,19 +1,8 @@
 <script setup lang="ts">
 import { PLATFORM_META } from '#shared/channels/registry'
 import type { Platform } from '#shared/channels/types'
-import { MERCHANT_META, type Merchant } from '#shared/utils/links'
-
-interface Analytics {
-  window: { days: number, requestedDays: number, clamped: boolean, today: string }
-  totals: { clicks: number, uniques: number }
-  daily: { day: string, clicks: number }[]
-  topLinks: { linkId: string, title: string | null, merchant: Merchant, imageUrl: string | null, clicks: number }[]
-  bySource: { source: string, clicks: number }[]
-  byChannel: { channel: string, clicks: number }[]
-  topPosts: { postId: string, caption: string, platform: Platform, clicks: number }[]
-  devices: { device: string, clicks: number }[]
-  cities: { city: string, clicks: number }[]
-}
+import { RATE_MIN_AGE_HOURS, RATE_MIN_VIEWS, type WorkspaceAnalytics } from '#shared/utils/analytics'
+import { MERCHANT_META } from '#shared/utils/links'
 
 definePageMeta({ layout: 'creator' })
 const { t, locale } = useI18n()
@@ -37,9 +26,9 @@ async function loadBio() {
 }
 
 const days = ref<7 | 30 | 90>(7)
-const data = ref<Analytics | null>(null)
+const data = ref<WorkspaceAnalytics | null>(null)
 async function load() {
-  data.value = await apiFetch<Analytics>('/api/app/analytics', { query: { days: days.value } })
+  data.value = await apiFetch<WorkspaceAnalytics>('/api/app/analytics', { query: { days: days.value } })
 }
 onMounted(load)
 watch(days, load)
@@ -47,6 +36,9 @@ watch(() => data.value?.totals.clicks === 0, (empty) => {
   if (empty && !bioChecked.value) void loadBio()
 })
 const ranges = computed(() => ([7, 30, 90] as const).map(value => ({ value, label: t(`analytics.range.${value}`) })))
+
+const num = (n: number) => new Intl.NumberFormat(locale.value, { maximumFractionDigits: 1 }).format(n)
+const minDays = RATE_MIN_AGE_HOURS / 24
 
 const channelLabel = (channel: string) => channel in PLATFORM_META ? PLATFORM_META[channel as Platform].name : t('analytics.channel.other')
 const share = (clicks: number) => data.value?.totals.clicks ? Math.round((clicks / data.value.totals.clicks) * 100) : 0
@@ -89,7 +81,7 @@ const breakdowns = computed(() => data.value
         :title="t('analytics.clamped', { days: data.window.days })"
       />
       <UCard>
-        <div class="flex gap-8 mb-4">
+        <div class="flex flex-wrap gap-x-8 gap-y-4 mb-4">
           <div>
             <p class="text-3xl font-semibold text-highlighted">
               <TickNumber
@@ -101,6 +93,11 @@ const breakdowns = computed(() => data.value
             <p class="text-sm text-muted">
               {{ t('analytics.clicks') }}
             </p>
+            <TrendDelta
+              :now="data.totals.clicks"
+              :previous="data.previous?.clicks ?? null"
+              :days="data.window.days"
+            />
           </div>
           <div>
             <p class="text-3xl font-semibold text-highlighted">
@@ -112,8 +109,35 @@ const breakdowns = computed(() => data.value
             <p class="text-sm text-muted">
               {{ t('analytics.uniques') }}
             </p>
+            <TrendDelta
+              :now="data.totals.uniques"
+              :previous="data.previous?.uniques ?? null"
+              :days="data.window.days"
+            />
+          </div>
+          <div>
+            <p class="text-3xl font-semibold text-highlighted">
+              <TickNumber
+                :value="data.autoReply.sent"
+                :format="n => formatCompact(n, locale)"
+              />
+            </p>
+            <p class="text-sm text-muted">
+              {{ t('analytics.dmSent') }}
+            </p>
+            <TrendDelta
+              :now="data.autoReply.sent"
+              :previous="data.previous?.dmSent ?? null"
+              :days="data.window.days"
+            />
           </div>
         </div>
+        <p
+          v-if="data.previous"
+          class="text-xs text-muted mb-4"
+        >
+          {{ t('analytics.vsPrevious', { days: data.window.days }) }}
+        </p>
         <p class="text-sm font-medium mb-2">
           {{ t('analytics.daily') }}
         </p>
@@ -150,6 +174,128 @@ const breakdowns = computed(() => data.value
           />
         </EmptyState>
       </UCard>
+
+      <div
+        v-if="data.posting.published > 0 || data.autoReply.matched > 0 || data.autoReply.clicks > 0"
+        class="grid gap-5 lg:grid-cols-2"
+      >
+        <UCard v-if="data.posting.published > 0">
+          <template #header>
+            <h2 class="font-semibold text-highlighted">
+              {{ t('analytics.posting.title') }}
+            </h2>
+          </template>
+          <i18n-t
+            v-if="data.posting.ratePer1000 !== null"
+            keypath="analytics.posting.headline"
+            tag="p"
+            class="text-lg text-default"
+          >
+            <template #rate>
+              <strong class="text-3xl font-semibold text-highlighted">{{ num(data.posting.ratePer1000) }}</strong>
+            </template>
+          </i18n-t>
+          <p
+            v-else
+            class="text-sm text-muted"
+          >
+            {{ t('analytics.posting.notEnough', { hours: RATE_MIN_AGE_HOURS, days: minDays, views: RATE_MIN_VIEWS }) }}
+          </p>
+          <div
+            v-if="data.posting.ratePer1000 !== null && data.posting.previousRatePer1000 !== null"
+            class="mt-1 flex items-center gap-2 text-sm text-muted"
+          >
+            <span>{{ t('analytics.posting.previous', { rate: num(data.posting.previousRatePer1000) }) }}</span>
+            <TrendDelta
+              :now="data.posting.ratePer1000"
+              :previous="data.posting.previousRatePer1000"
+              :days="data.window.days"
+            />
+          </div>
+          <p class="mt-3 text-xs text-muted">
+            {{ t('analytics.posting.detail', { measured: data.posting.measured, views: formatCompact(data.posting.views, locale), clicks: formatCompact(data.posting.clicks, locale) }) }}
+          </p>
+          <p
+            v-if="data.posting.noViewsPlatforms.includes('facebook')"
+            class="mt-2 text-xs text-muted"
+          >
+            {{ t('analytics.posting.noViewsFacebook') }}
+          </p>
+        </UCard>
+
+        <UCard v-if="data.autoReply.matched > 0 || data.autoReply.clicks > 0">
+          <template #header>
+            <h2 class="font-semibold text-highlighted">
+              {{ t('analytics.autoReply.title') }}
+            </h2>
+          </template>
+          <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+            <template
+              v-for="(step, i) in [
+                { key: 'matched', n: data.autoReply.matched },
+                { key: 'sent', n: data.autoReply.sent },
+                { key: 'clicks', n: data.autoReply.clicks }
+              ]"
+              :key="step.key"
+            >
+              <UIcon
+                v-if="i"
+                name="i-lucide-chevron-right"
+                class="size-5 text-muted shrink-0 rotate-90 sm:rotate-0"
+              />
+              <div class="flex-1 min-w-0">
+                <p class="text-2xl font-semibold text-highlighted">
+                  {{ formatCompact(step.n, locale) }}
+                </p>
+                <p class="text-sm text-muted">
+                  {{ t(`analytics.autoReply.${step.key}`) }}
+                </p>
+              </div>
+            </template>
+          </div>
+          <ul
+            v-if="data.autoReply.rules.length"
+            class="mt-4 space-y-2 border-t border-default pt-3"
+          >
+            <li
+              v-for="rule in data.autoReply.rules"
+              :key="rule.ruleId"
+              class="flex items-center gap-2 text-sm"
+            >
+              <NuxtLink
+                :to="localePath(`/app/auto-reply/${rule.ruleId}`)"
+                class="truncate text-default hover:text-primary min-w-0"
+              >
+                {{ rule.name }}
+              </NuxtLink>
+              <UBadge
+                v-if="!rule.active"
+                color="neutral"
+                variant="subtle"
+                size="sm"
+                :label="t('analytics.autoReply.inactive')"
+              />
+              <span class="ml-auto shrink-0 text-muted">{{ t('analytics.autoReply.ruleStats', { sent: rule.sent, clicks: rule.clicks }) }}</span>
+            </li>
+          </ul>
+          <p
+            v-if="data.autoReply.unattributedClicks > 0"
+            class="mt-3 text-xs text-muted"
+          >
+            {{ t('analytics.autoReply.unattributed', { n: data.autoReply.unattributedClicks }) }}
+          </p>
+          <template #footer>
+            <UButton
+              :to="localePath('/app/auto-reply/activity')"
+              :label="t('analytics.autoReply.activity')"
+              trailing-icon="i-lucide-arrow-right"
+              color="neutral"
+              variant="link"
+              size="sm"
+            />
+          </template>
+        </UCard>
+      </div>
 
       <div
         v-if="data.totals.clicks"
@@ -217,9 +363,17 @@ const breakdowns = computed(() => data.value
                 :platform="row.platform"
                 class="size-5 shrink-0"
               />
-              <p class="text-sm text-default line-clamp-2 flex-1 min-w-0">
-                {{ row.caption }}
-              </p>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm text-default line-clamp-2">
+                  {{ row.caption }}
+                </p>
+                <p
+                  v-if="row.views !== null || row.ratePer1000 !== null"
+                  class="text-xs text-muted"
+                >
+                  {{ [row.views !== null ? t('analytics.postViews', { n: formatCompact(row.views, locale) }) : null, row.ratePer1000 !== null ? t('analytics.postRate', { n: num(row.ratePer1000) }) : null].filter(Boolean).join(' · ') }}
+                </p>
+              </div>
               <span class="text-sm font-semibold text-highlighted">{{ row.clicks }}</span>
               <UButton
                 v-if="canPlan"
