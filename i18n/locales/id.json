@@ -32,6 +32,7 @@
     "compose": "Buat Postingan",
     "calendar": "Kalender",
     "posts": "Postingan",
+    "ideas": "Ide",
     "links": "Link Produk",
     "bio": "Etalase",
     "autoReply": "Balas Otomatis",
@@ -1196,8 +1197,6 @@
     "nextWeek": "Minggu berikutnya",
     "viewWeek": "Minggu",
     "viewMonth": "Bulan",
-    "tabCalendar": "Kalender",
-    "tabIdeas": "Bank Ide",
     "emptyDay": "Kosong",
     "overdue": "Tertunda",
     "dropHere": "Lepas di sini",
@@ -1216,6 +1215,118 @@
     "scheduleIdeaTitle": "Jadwalkan ide ini",
     "weekEmpty": "Minggu ini masih kosong. Mulai dari ide atau momen belanja.",
     "prepareContent": "Siapkan konten"
+  },
+  "ideas": {
+    "title": "Ide konten",
+    "subtitle": "Dari ide mentah sampai tayang. Geser kartu untuk memindahkan atau mengurutkan.",
+    "archive": "Arsip",
+    "archiveTitle": "Ide yang diarsipkan",
+    "archiveHint": "Pulihkan ide dari menu di kartunya.",
+    "archiveEmpty": "Belum ada ide di arsip.",
+    "loadError": "Ide belum bisa dimuat.",
+    "loadMore": "Muat lagi",
+    "dragHint": "Seret kartu ke kolom lain atau ke urutan lain. Tekan Esc untuk membatalkan.",
+    "dragHintTouch": "Tahan kartu, lalu geser. Lepas di antara dua kartu untuk mengurutkan, atau di nama kolom untuk memindahkan.",
+    "needsConfirm": "Perlu konfirmasi",
+    "reordered": "Urutan diubah",
+    "movedTo": "Dipindah ke {stage}",
+    "stage": {
+      "raw": "Ide mentah",
+      "drafting": "Sedang disusun",
+      "scheduled": "Terjadwal",
+      "published": "Tayang",
+      "failed": "Gagal"
+    },
+    "hint": {
+      "raw": "Baru judul",
+      "drafting": "Ada catatan, produk, atau media",
+      "scheduled": "Postingannya sudah dijadwalkan",
+      "published": "Postingannya sudah tayang",
+      "failed": "Postingannya gagal tayang"
+    },
+    "note": {
+      "no_schedule": "Belum ada postingan terjadwal",
+      "not_live": "Belum ada postingan yang tayang",
+      "not_failed": "Tidak ada postingan yang gagal",
+      "post_stays": "Postingannya tidak ikut pindah",
+      "has_detail": "Ide ini sudah punya isi"
+    },
+    "empty": {
+      "raw": {
+        "title": "Belum ada ide mentah",
+        "body": "Tulis satu kalimat di atas. Detailnya menyusul."
+      },
+      "drafting": {
+        "title": "Belum ada yang disusun",
+        "body": "Ide yang sudah diberi catatan, produk, atau media muncul di sini."
+      },
+      "scheduled": {
+        "title": "Belum ada yang terjadwal",
+        "body": "Postingan yang sudah dijadwalkan muncul di sini."
+      },
+      "published": {
+        "title": "Belum ada yang tayang",
+        "body": "Setelah postinganmu terbit, kartunya pindah ke sini sendiri."
+      },
+      "failed": {
+        "title": "Tidak ada yang gagal",
+        "body": "Kalau ada postingan yang gagal terbit, kartunya muncul di sini."
+      }
+    },
+    "card": {
+      "edit": "Ubah",
+      "plan": "Rencana {date}",
+      "publishAt": "Terbit {date} · {time}",
+      "live": "Tayang {when}",
+      "publishing": "Sedang diterbitkan",
+      "failedFix": "Gagal tayang · Perbaiki",
+      "partial": "Sebagian gagal",
+      "draftPost": "Draf postingan",
+      "cancelledPost": "Postingan dibatalkan",
+      "moment": "Momen belanja",
+      "manual": "Dipindah manual",
+      "manualTip": "Kartu ini dipindah manual. Keadaan sebenarnya: {stage}.",
+      "mediaCount": "1/{n}",
+      "checks": {
+        "product": "Produk",
+        "media": "Media",
+        "note": "Catatan"
+      }
+    },
+    "move": {
+      "title": "Pindahkan ke…",
+      "here": "Kartu ada di sini"
+    },
+    "confirm": {
+      "keep": "Tetap pindahkan",
+      "scheduleNow": "Jadwalkan sekarang",
+      "finishPost": "Lanjutkan postingan",
+      "stays": {
+        "scheduled": "Postingannya tetap terjadwal",
+        "published": "Postingannya tetap tayang",
+        "failed": "Postingannya tetap gagal"
+      },
+      "no_schedule": {
+        "title": "Ide ini belum dijadwalkan",
+        "body": "Kartunya bisa dipindah, tapi belum ada postingan yang akan tayang otomatis."
+      },
+      "not_live": {
+        "title": "Ide ini belum tayang",
+        "body": "Kartunya bisa dipindah, tapi belum ada postingan yang sudah tayang."
+      },
+      "not_failed": {
+        "title": "Tidak ada postingan yang gagal",
+        "body": "Kartunya bisa dipindah, tapi tidak ada postingan gagal yang perlu diperbaiki."
+      },
+      "post_stays": {
+        "title": "Postingannya tidak ikut pindah",
+        "body": "{state}. Hanya kartunya yang pindah."
+      },
+      "has_detail": {
+        "title": "Ide ini sudah punya isi",
+        "body": "Catatan, produk, dan medianya tetap ada, tapi kartunya akan tampil sebagai ide mentah."
+      }
+    }
   },
   "planner": {
     "pillarLabel": "Jenis konten",

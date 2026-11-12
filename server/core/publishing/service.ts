@@ -15,6 +15,7 @@ import { countScheduledThisMonth, getEntitlements } from '../entitlements'
 import { appError } from '../errors'
 import { enqueue } from '../jobs/enqueue'
 import { thumbnailOf } from '../media/service'
+import { syncStageForPost } from '../planner/stage'
 import { ideaOfPost, markIdeaUsed, plannerWindow, releaseIdeasOf } from '../planner/ideas'
 import { zonedDateKey } from '../timezone'
 import { refreshPostStatus } from './status'
@@ -163,6 +164,7 @@ export async function updatePost(ctx: WorkspaceContext, postId: string, input: P
     }))).returning({ id: postTargets.id })
     if (status === 'scheduled') await enqueueTargets(tx, ctx.workspaceId, targets.map(t => t.id), scheduledAt!, version)
     if (input.ideaId) await markIdeaUsed(tx, ctx.workspaceId, input.ideaId, postId)
+    await syncStageForPost(tx, postId, status)
     return { postId, jobIds: (await tx.select({ jobId: postTargets.jobId }).from(postTargets).where(eq(postTargets.postId, postId))).map(r => r.jobId) }
   })
   return { ...result, kick: input.mode === 'now' }

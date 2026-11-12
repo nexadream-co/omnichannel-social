@@ -1,11 +1,17 @@
 import { haptic } from '~/utils/haptics'
 import { isPastSlot, zonedParts } from '~/utils/schedule'
-import { momentName, type PlannerMoment } from '#shared/utils/planner'
+import { momentName, type IdeaStage, type PlannerMoment } from '#shared/utils/planner'
 
 /** Local, instant change to the calendar for a move, and how to put it back (undo or a failed save). */
 export interface LocalMove { apply: () => void, rollback: () => void }
-/** What is being dragged on the Kalender: a scheduled post (reschedule) or an idea (move its planned day). */
-export type PlannerDrag = { kind: 'post', postId: string, time: string, scheduledAt: string } | { kind: 'idea', id: string, from: string | null }
+/**
+ * What is being dragged: a scheduled post (reschedule), an idea (move its planned day) or an Ide board card
+ * (`from`: the column it was lifted from, `actual`: the stage the idea and its post really are in).
+ */
+export type PlannerDrag
+  = { kind: 'post', postId: string, time: string, scheduledAt: string }
+    | { kind: 'idea', id: string, from: string | null }
+    | { kind: 'card', id: string, from: IdeaStage, actual: IdeaStage }
 
 /**
  * Shared by the Kalender, Bank Ide and the idea editor. Every write goes through apiFetch, so the calendar
@@ -28,6 +34,7 @@ export function usePlanner() {
    * today that already passed.
    */
   function isPastDrop(day: string, today = zonedParts(new Date(), tzOf()).date) {
+    if (day.startsWith('stage:')) return false
     if (day < today) return true
     const item = drag.value
     return item?.kind === 'post' && isPastSlot(day, item.time, tzOf())
@@ -94,6 +101,26 @@ export function usePlanner() {
     return ok
   }
 
+  /**
+   * Puts an Ide board card in `to`, directly below the card `afterId` (null: the top). The same call reorders within a
+   * column. `origin` is where it was, so the toast's "Urungkan" puts it back. `local`: the board's instant change (the
+   * caller applies it before calling), rolled back on undo or a failed save.
+   */
+  async function moveStage(id: string, to: IdeaStage, afterId: string | null, origin: { from: IdeaStage, afterId: string | null }, local?: { rollback: () => void }) {
+    let ok = true
+    await undoable.run({
+      title: to === origin.from ? t('ideas.reordered') : t('ideas.movedTo', { stage: t(`ideas.stage.${to}`) }),
+      commit: () => apiFetch(`/api/app/planner/ideas/${id}/stage`, { method: 'PATCH', body: { stage: to, afterId } }),
+      undo: () => apiFetch(`/api/app/planner/ideas/${id}/stage`, { method: 'PATCH', body: { stage: origin.from, afterId: origin.afterId } }),
+      rollback: () => {
+        ok = false
+        local?.rollback()
+      }
+    })
+    if (ok) haptic('tick')
+    return ok
+  }
+
   /** One-line capture into Bank Ide (undated). */
   async function captureIdea(title: string) {
     try {
@@ -148,5 +175,5 @@ export function usePlanner() {
     return navigateTo(localePath({ path: '/app/compose', query: { idea: id } }))
   }
 
-  return { drag, dayLabel, tzOf, isPastDrop, planIdea, archiveIdea, movePost, captureIdea, restoreIdea, prepareMoment, repeatPost, toPost, fail }
+  return { drag, dayLabel, tzOf, isPastDrop, planIdea, archiveIdea, movePost, moveStage, captureIdea, restoreIdea, prepareMoment, repeatPost, toPost, fail }
 }

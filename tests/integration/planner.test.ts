@@ -3,7 +3,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { resetFakeChannels } from '../../server/core/channels/fake'
 import type { StaffContext, WorkspaceContext } from '../../server/core/context'
 import { closeDb, getDb } from '../../server/core/db/client'
-import { contentIdeaLinks, contentIdeaMedia, contentIdeas, dmRules, links, mediaAssets, notifications, plans, postMedia, posts, shoppingMoments, shortLinks, subscriptions, users, workspaces } from '../../server/core/db/schema'
+import { auditLogs, contentIdeaLinks, contentIdeaMedia, contentIdeas, dmRules, links, mediaAssets, notifications, plans, postMedia, posts, shoppingMoments, shortLinks, subscriptions, users, workspaces, postTargets } from '../../server/core/db/schema'
 import { autoReplyHint } from '../../server/core/autoreply/rules'
 import type { ClaimedJob } from '../../server/core/jobs'
 import { shortUrl } from '../../server/core/links/service'
@@ -11,9 +11,10 @@ import { plannerRemindersJob, plannerWeeklyJob } from '../../server/core/planner
 import { createIdeasFromMedia, fromMediaSchema, ideaFromPost, weekSummary } from '../../server/core/planner/shortcuts'
 import { resetEnvCache } from '../../server/core/env'
 import { deleteMedia } from '../../server/core/media/service'
-import { archiveIdea, createIdea, getIdea, ideaPatchSchema, ideaSchema, listIdeas, prepareMoment, setRhythm, updateIdea } from '../../server/core/planner/ideas'
+import { archiveIdea, createIdea, getIdea, ideaPatchSchema, ideaSchema, ideaStageSchema, listIdeas, moveIdeaStage, prepareMoment, setRhythm, updateIdea } from '../../server/core/planner/ideas'
 import { createMoment, listMoments, momentPatchSchema, momentSchema, updateMoment } from '../../server/core/planner/moments'
-import { calendarWindow, createPost, deletePost, getPost, reschedulePost } from '../../server/core/publishing/service'
+import { calendarWindow, cancelPost, createPost, deletePost, getPost, reschedulePost } from '../../server/core/publishing/service'
+import { refreshPostStatus } from '../../server/core/publishing/status'
 import { provisionWorkspace } from '../../server/core/registration'
 import { connectAccounts } from '../../server/core/social-accounts'
 import { todayKey } from '../../server/core/timezone'
@@ -280,5 +281,127 @@ describe('planner shortcuts', () => {
     const { postId: plain } = await createPost(ws, { caption: 'Tanpa produk', mediaIds: [], targets: [{ socialAccountId: igId }], mode: 'draft' })
     expect(await autoReplyHint(ws, plain)).toBeNull()
     await expect(autoReplyHint({ ...ws, role: 'viewer' }, postId)).rejects.toMatchObject({ statusCode: 403 })
+  })
+})
+
+describe('Ide board stages', () => {
+  const stageOf = async (id: string) => (await getIdea(ws, id)).stage
+  const mkPost = async (ideaId: string, mode: 'draft' | 'schedule') => createPost(ws, {
+    caption: 'x', mediaIds: [await image(ws)], targets: [{ socialAccountId: igId }], mode, ideaId,
+    ...(mode === 'schedule' && { scheduledAt: new Date(Date.now() + 86_400_000).toISOString() })
+  } as never)
+  const setTargets = async (postId: string, status: 'published' | 'failed') => {
+    await getDb().update(postTargets).set({ status, ...(status === 'published' && { publishedAt: new Date() }) }).where(eq(postTargets.postId, postId))
+    await refreshPostStatus(getDb(), postId)
+  }
+  const move = (id: string, stage: 'raw' | 'drafting' | 'scheduled' | 'published' | 'failed', afterId: string | null = null) =>
+    moveIdeaStage(ws, id, ideaStageSchema.parse({ stage, afterId }))
+  const ids = async (stage: 'raw' | 'drafting') => (await listIdeas(ws, { ...page, view: 'unplanned', stage })).items.map(i => i.id)
+
+  it('follows detail and the post through its life', async () => {
+    const idea = await createIdea(ws, ideaSchema.parse({ title: 'Ide' }))
+    expect(idea).toMatchObject({ stage: 'raw', actualStage: 'raw', post: null })
+    await updateIdea(ws, idea.id, ideaPatchSchema.parse({ note: 'catatan' }))
+    expect(await stageOf(idea.id)).toBe('drafting')
+    await updateIdea(ws, idea.id, ideaPatchSchema.parse({ note: null }))
+    expect(await stageOf(idea.id)).toBe('drafting')
+    expect((await getIdea(ws, idea.id)).actualStage).toBe('raw')
+
+    const { postId } = await mkPost(idea.id, 'schedule')
+    const scheduled = await getIdea(ws, idea.id)
+    expect(scheduled).toMatchObject({ stage: 'scheduled', actualStage: 'scheduled', post: { id: postId, status: 'scheduled', platforms: ['instagram'], mediaCount: 1, mediaKind: 'image', publishedAt: null } })
+    await setTargets(postId, 'published')
+    expect(await getIdea(ws, idea.id)).toMatchObject({ stage: 'published', post: { status: 'published' } })
+    expect((await getIdea(ws, idea.id)).post!.publishedAt).not.toBeNull()
+    await setTargets(postId, 'failed')
+    expect(await stageOf(idea.id)).toBe('failed')
+  })
+
+  it('draft post and cancel give drafting; delete resyncs', async () => {
+    const a = await createIdea(ws, ideaSchema.parse({ title: 'A' }))
+    const { postId } = await mkPost(a.id, 'draft')
+    expect(await stageOf(a.id)).toBe('drafting')
+    await cancelPost(ws, postId).catch(() => null)
+    expect(await stageOf(a.id)).toBe('drafting')
+    const b = await createIdea(ws, ideaSchema.parse({ title: 'B' }))
+    const second = await mkPost(b.id, 'schedule')
+    expect(await stageOf(b.id)).toBe('scheduled')
+    await cancelPost(ws, second.postId)
+    expect(await stageOf(b.id)).toBe('drafting')
+    await deletePost(ws, second.postId)
+    expect(await getIdea(ws, b.id)).toMatchObject({ status: 'open', post: null, stage: 'drafting' })
+  })
+
+  it('partial counts as published', async () => {
+    const idea = await createIdea(ws, ideaSchema.parse({ title: 'P' }))
+    const [ig2] = (await connectAccounts(ws, 'instagram', [fakeAccount('ig-9')])).connected
+    const { postId } = await createPost(ws, { caption: 'x', mediaIds: [await image(ws)], targets: [{ socialAccountId: igId }, { socialAccountId: ig2! }], mode: 'schedule', scheduledAt: new Date(Date.now() + 86_400_000).toISOString(), ideaId: idea.id } as never)
+    const rows = await getDb().select().from(postTargets).where(eq(postTargets.postId, postId))
+    await getDb().update(postTargets).set({ status: 'published', publishedAt: new Date() }).where(eq(postTargets.id, rows[0]!.id))
+    await getDb().update(postTargets).set({ status: 'failed' }).where(eq(postTargets.id, rows[1]!.id))
+    await refreshPostStatus(getDb(), postId)
+    expect(await getIdea(ws, idea.id)).toMatchObject({ stage: 'published', post: { status: 'partial' } })
+  })
+
+  it('moves by hand with an audit row; reorder writes none; archived is 409; other workspace 404', async () => {
+    const idea = await createIdea(ws, ideaSchema.parse({ title: 'M' }))
+    const moved = await move(idea.id, 'scheduled')
+    expect(moved).toMatchObject({ stage: 'scheduled', actualStage: 'raw' })
+    const audits = await getDb().select().from(auditLogs).where(eq(auditLogs.action, 'idea.stage_moved'))
+    expect(audits).toHaveLength(1)
+    expect(audits[0]!.metadata).toMatchObject({ from: 'raw', to: 'scheduled', actual: 'raw' })
+    await move(idea.id, 'scheduled')
+    expect(await getDb().select().from(auditLogs).where(eq(auditLogs.action, 'idea.stage_moved'))).toHaveLength(1)
+    await expect(moveIdeaStage(other, idea.id, ideaStageSchema.parse({ stage: 'raw' }))).rejects.toMatchObject({ statusCode: 404 })
+    await expect(moveIdeaStage({ ...ws, role: 'viewer' }, idea.id, ideaStageSchema.parse({ stage: 'raw' }))).rejects.toMatchObject({ statusCode: 403 })
+    await archiveIdea(ws, idea.id)
+    await expect(move(idea.id, 'raw')).rejects.toMatchObject({ statusCode: 409 })
+  })
+
+  it('stage filter excludes archived and returns the post summary', async () => {
+    const a = await createIdea(ws, ideaSchema.parse({ title: 'A' }))
+    const b = await createIdea(ws, ideaSchema.parse({ title: 'B' }))
+    await mkPost(a.id, 'schedule')
+    await archiveIdea(ws, b.id)
+    const sched = await listIdeas(ws, { ...page, view: 'unplanned', stage: 'scheduled' })
+    expect(sched.items.map(i => i.id)).toEqual([a.id])
+    expect(sched.items[0]!.post).toMatchObject({ status: 'scheduled' })
+    expect((await listIdeas(ws, { ...page, view: 'unplanned', stage: 'raw' })).items).toHaveLength(0)
+  })
+
+  it('orders cards: new on top, drop between, top, bottom, stale afterId, gap renumbering', async () => {
+    const a = await createIdea(ws, ideaSchema.parse({ title: 'A' }))
+    const b = await createIdea(ws, ideaSchema.parse({ title: 'B' }))
+    const c = await createIdea(ws, ideaSchema.parse({ title: 'C' }))
+    expect(await ids('raw')).toEqual([c.id, b.id, a.id])
+    await move(a.id, 'raw', null)
+    expect(await ids('raw')).toEqual([a.id, c.id, b.id])
+    await move(a.id, 'raw', c.id)
+    expect(await ids('raw')).toEqual([c.id, a.id, b.id])
+    await move(c.id, 'raw', b.id)
+    expect(await ids('raw')).toEqual([a.id, b.id, c.id])
+    await move(c.id, 'raw', 'nope')
+    expect(await ids('raw')).toEqual([c.id, a.id, b.id])
+    expect(await getDb().select().from(auditLogs).where(eq(auditLogs.action, 'idea.stage_moved'))).toHaveLength(0)
+    // Cross-column drop below a card, then a stale afterId from another column falls back to the top.
+    const d = await createIdea(ws, ideaSchema.parse({ title: 'D', note: 'n' }))
+    await move(a.id, 'drafting', d.id)
+    expect(await ids('drafting')).toEqual([d.id, a.id])
+    await move(b.id, 'drafting', c.id)
+    expect(await ids('drafting')).toEqual([b.id, d.id, a.id])
+    // Exhaust the gap between neighbours.
+    await getDb().update(contentIdeas).set({ boardOrder: 1 }).where(eq(contentIdeas.id, d.id))
+    await getDb().update(contentIdeas).set({ boardOrder: 1 + 1e-9 }).where(eq(contentIdeas.id, a.id))
+    await getDb().update(contentIdeas).set({ boardOrder: 0 }).where(eq(contentIdeas.id, b.id))
+    await move(c.id, 'drafting', d.id)
+    expect(await ids('drafting')).toEqual([b.id, d.id, c.id, a.id])
+  })
+
+  it('an automatic stage change lands on top of the new column', async () => {
+    const x = await createIdea(ws, ideaSchema.parse({ title: 'X', note: 'n' }))
+    const y = await createIdea(ws, ideaSchema.parse({ title: 'Y' }))
+    expect(await ids('drafting')).toEqual([x.id])
+    await updateIdea(ws, y.id, ideaPatchSchema.parse({ note: 'n' }))
+    expect(await ids('drafting')).toEqual([y.id, x.id])
   })
 })

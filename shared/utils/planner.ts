@@ -1,4 +1,5 @@
 /** Rencana konten (Kalender planner): ideas, content pillars and shopping moments (docs/ARCHITECTURE.md §8.8). */
+import type { Platform } from '../channels/types'
 import type { MediaView } from '../media/types'
 
 export const CONTENT_PILLARS = ['promo', 'review', 'edukasi', 'hiburan', 'cerita'] as const
@@ -39,12 +40,72 @@ export const IDEA_NOTE_MAX = 2000
 export const IDEA_MAX_MEDIA = 10
 export const IDEA_MAX_LINKS = 5
 
+/** Board columns of the Ide page. `stage` is stored; `actualStage` is what the idea and its post really say. */
+export const IDEA_STAGES = ['raw', 'drafting', 'scheduled', 'published', 'failed'] as const
+export type IdeaStage = (typeof IDEA_STAGES)[number]
+
+export type PostStatus = 'draft' | 'scheduled' | 'publishing' | 'published' | 'partial' | 'failed' | 'cancelled'
+
+export function postStage(status: PostStatus): IdeaStage {
+  switch (status) {
+    case 'scheduled':
+    case 'publishing': return 'scheduled'
+    case 'published':
+    case 'partial': return 'published'
+    case 'failed': return 'failed'
+    default: return 'drafting'
+  }
+}
+
+export interface IdeaDetailInput {
+  note: string | null
+  pillar: string | null
+  plannedOn: string | null
+  momentId: string | null
+  linkCount: number
+  mediaCount: number
+}
+
+/** Any detail beyond the title moves a card from raw to drafting. */
+export function ideaHasDetail(idea: IdeaDetailInput): boolean {
+  return Boolean(idea.note?.trim()) || idea.pillar != null || idea.plannedOn != null || idea.momentId != null || idea.linkCount > 0 || idea.mediaCount > 0
+}
+
+export function actualStage(input: { postStatus: PostStatus | null, hasDetail: boolean }): IdeaStage {
+  if (input.postStatus) return postStage(input.postStatus)
+  return input.hasDetail ? 'drafting' : 'raw'
+}
+
+export type MoveReason = 'no_schedule' | 'not_live' | 'not_failed' | 'post_stays' | 'has_detail'
+
+/** null = an honest move; otherwise the reason picks the confirmation copy. The server never blocks a move. */
+export function moveCheck(actual: IdeaStage, to: IdeaStage): MoveReason | null {
+  if (to === actual || (actual === 'raw' && to === 'drafting')) return null
+  if (actual === 'scheduled' || actual === 'published' || actual === 'failed') return 'post_stays'
+  switch (to) {
+    case 'scheduled': return 'no_schedule'
+    case 'published': return 'not_live'
+    case 'failed': return 'not_failed'
+    default: return 'has_detail'
+  }
+}
+
 // ---- Wire shapes (server/core/planner/ideas.ts) ----
 
 /** An open idea on the calendar (GET /api/app/posts/calendar). */
 export interface PlannerIdea { id: string, title: string, pillar: ContentPillar | null, plannedOn: string, momentId: string | null }
 export interface PlannerMoment { id: string, name: string, nameEn: string | null, kind: MomentKind, startsOn: string, endsOn: string, prepDays: number, prepared: boolean }
 export interface IdeaProduct { id: string, title: string | null, merchant: string, imageUrl: string | null, destinationUrl: string, shortUrl: string | null }
+export interface IdeaPostSummary {
+  id: string
+  status: PostStatus
+  scheduledAt: string | null
+  publishedAt: string | null
+  platforms: Platform[]
+  thumb: string | null
+  mediaKind: 'image' | 'video' | null
+  mediaCount: number
+}
 export interface IdeaDetail {
   id: string
   title: string
@@ -52,6 +113,12 @@ export interface IdeaDetail {
   pillar: ContentPillar | null
   plannedOn: string | null
   status: IdeaStatus
+  stage: IdeaStage
+  actualStage: IdeaStage
+  stageChangedAt: string
+  /** Sort key inside the board column: lower sits higher. */
+  boardOrder: number
+  post: IdeaPostSummary | null
   postId: string | null
   momentId: string | null
   createdAt: string

@@ -103,8 +103,8 @@ export interface CreatorNavItem {
 
 /**
  * Code-defined creator rail (docs/blueprint/13 §5), kept short so the console reads as an app, not an admin panel:
- * Beranda · Postingan (Kalender, Semua postingan, Galeri Media as tabs) · Link Produk · Etalase · Balas Otomatis · Statistik.
- * Phone bottom nav: Beranda · Postingan · [Buat] · Link Produk · Lainnya.
+ * Beranda · Postingan (Kalender, Semua postingan, Galeri Media as tabs) · Ide · Link Produk · Etalase · Balas Otomatis · Statistik.
+ * Phone bottom nav: Beranda · Postingan · [Buat] · Link Produk · Lainnya (Ide sits in Lainnya: the bar is full).
  */
 export const CREATOR_NAV: CreatorNavItem[] = [
   { key: 'home', labelKey: 'nav.home', to: '/app', icon: 'i-lucide-house', bottomNav: true },
@@ -112,6 +112,7 @@ export const CREATOR_NAV: CreatorNavItem[] = [
   { key: 'calendar', labelKey: 'nav.postsHub', to: '/app/calendar', icon: 'i-lucide-calendar-days', ability: 'posts.read', bottomNav: true },
   { key: 'posts', labelKey: 'nav.posts', to: '/app/posts', icon: 'i-lucide-list', ability: 'posts.read', hub: 'calendar' },
   { key: 'media', labelKey: 'nav.media', to: '/app/media', icon: 'i-lucide-images', ability: 'posts.read', hub: 'calendar' },
+  { key: 'ideas', labelKey: 'nav.ideas', to: '/app/ideas', icon: 'i-lucide-lightbulb', ability: 'posts.read' },
   { key: 'links', labelKey: 'nav.links', to: '/app/links', icon: 'i-lucide-link', ability: 'links.manage', bottomNav: true },
   { key: 'bio', labelKey: 'nav.bio', to: '/app/bio', icon: 'i-lucide-store', ability: 'bio.manage' },
   { key: 'autoReply', labelKey: 'nav.autoReply', to: '/app/auto-reply', icon: 'i-lucide-message-circle-reply', ability: 'autoreply.manage' },

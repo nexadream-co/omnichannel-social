@@ -4,7 +4,7 @@ import { usePreferredReducedMotion } from '@vueuse/core'
 import { haptic } from '~/utils/haptics'
 import type { CalendarEntry, DayPost } from '~/utils/calendar'
 
-/** Kalender = the planner: posts, planned ideas and shopping-moment marks on one calendar, with Bank Ide beside it. */
+/** Kalender = the planner: posts, planned ideas and shopping-moment marks on one full-width calendar (ideas live on /app/ideas). */
 interface CalendarWindow { items: CalendarEntry[], ideas: PlannerIdea[], moments: PlannerMoment[], postsPerWeek: number, unplannedIdeas: number }
 type Mode = 'week' | 'month'
 
@@ -134,6 +134,7 @@ async function drop(day: string) {
     await planner.planIdea(item.id, day, item.from, moved ? local({ ...before, ideas: before.ideas.map(i => i.id === item.id ? { ...i, plannedOn: day } : i) }) : undefined)
     return
   }
+  if (item.kind !== 'post') return
   const to = toZonedIso(day, item.time, tz.value)
   if (new Date(to).getTime() === new Date(item.scheduledAt).getTime()) return
   await planner.movePost(item.postId, to, item.scheduledAt, local({ ...before, items: before.items.map(i => i.postId === item.postId ? { ...i, scheduledAt: to } : i) }))
@@ -189,9 +190,6 @@ async function openIdeaById(id: string) {
     planner.fail(caught)
   }
 }
-
-const tab = ref<'calendar' | 'ideas'>('calendar')
-const tabs = computed(() => [{ value: 'calendar', label: t('calendar.tabCalendar'), icon: 'i-lucide-calendar' }, { value: 'ideas', label: t('calendar.tabIdeas'), icon: 'i-lucide-lightbulb' }])
 </script>
 
 <template>
@@ -210,19 +208,8 @@ const tabs = computed(() => [{ value: 'calendar', label: t('calendar.tabCalendar
       />
     </CommandBar>
 
-    <UTabs
-      v-model="tab"
-      :items="tabs"
-      :content="false"
-      size="sm"
-      class="lg:hidden mb-4"
-    />
-
-    <div class="lg:grid lg:grid-cols-[1fr_20rem] lg:gap-6 items-start">
-      <div
-        class="min-w-0"
-        :class="tab === 'calendar' ? '' : 'hidden lg:block'"
-      >
+    <div class="min-w-0">
+      <div>
         <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
           <div class="flex items-center gap-1 min-w-0">
             <UButton
@@ -351,16 +338,6 @@ const tabs = computed(() => [{ value: 'calendar', label: t('calendar.tabCalendar
           {{ t('calendar.dragHintTouch') }}
         </p>
       </div>
-
-      <aside
-        class="lg:sticky lg:top-4"
-        :class="tab === 'ideas' ? '' : 'hidden lg:block'"
-      >
-        <h2 class="font-semibold text-highlighted mb-3 hidden lg:block">
-          {{ t('planner.bank.title') }}
-        </h2>
-        <IdeaBankPanel @open="openIdea" />
-      </aside>
     </div>
 
     <IdeaEditor

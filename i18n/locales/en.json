@@ -32,6 +32,7 @@
     "compose": "New post",
     "calendar": "Calendar",
     "posts": "Posts",
+    "ideas": "Ideas",
     "links": "Product links",
     "bio": "Storefront",
     "autoReply": "Auto reply",
@@ -1196,8 +1197,6 @@
     "nextWeek": "Next week",
     "viewWeek": "Week",
     "viewMonth": "Month",
-    "tabCalendar": "Calendar",
-    "tabIdeas": "Idea bank",
     "emptyDay": "Empty",
     "overdue": "Overdue",
     "dropHere": "Drop here",
@@ -1216,6 +1215,118 @@
     "scheduleIdeaTitle": "Schedule this idea",
     "weekEmpty": "This week is still empty. Start from an idea or a shopping moment.",
     "prepareContent": "Prepare content"
+  },
+  "ideas": {
+    "title": "Content ideas",
+    "subtitle": "From a raw idea to a live post. Drag a card to move it or change its order.",
+    "archive": "Archive",
+    "archiveTitle": "Archived ideas",
+    "archiveHint": "Restore an idea from the menu on its card.",
+    "archiveEmpty": "No archived ideas yet.",
+    "loadError": "Couldn't load your ideas.",
+    "loadMore": "Load more",
+    "dragHint": "Drag a card to another column or to another spot. Press Esc to cancel.",
+    "dragHintTouch": "Press and hold a card, then slide. Let go between two cards to reorder, or on a column name to move it.",
+    "needsConfirm": "Needs confirmation",
+    "reordered": "Order changed",
+    "movedTo": "Moved to {stage}",
+    "stage": {
+      "raw": "Raw idea",
+      "drafting": "In progress",
+      "scheduled": "Scheduled",
+      "published": "Live",
+      "failed": "Failed"
+    },
+    "hint": {
+      "raw": "Just a title",
+      "drafting": "Has a note, product or media",
+      "scheduled": "Its post is scheduled",
+      "published": "Its post is live",
+      "failed": "Its post failed to publish"
+    },
+    "note": {
+      "no_schedule": "No post is scheduled yet",
+      "not_live": "No post is live yet",
+      "not_failed": "No post has failed",
+      "post_stays": "Its post won't move",
+      "has_detail": "This idea already has content"
+    },
+    "empty": {
+      "raw": {
+        "title": "No raw ideas yet",
+        "body": "Write one sentence above. Details can come later."
+      },
+      "drafting": {
+        "title": "Nothing in progress",
+        "body": "Ideas with a note, product or media show up here."
+      },
+      "scheduled": {
+        "title": "Nothing scheduled",
+        "body": "Posts you have scheduled show up here."
+      },
+      "published": {
+        "title": "Nothing live yet",
+        "body": "Once your post goes out, its card moves here by itself."
+      },
+      "failed": {
+        "title": "Nothing failed",
+        "body": "If a post fails to publish, its card shows up here."
+      }
+    },
+    "card": {
+      "edit": "Edit",
+      "plan": "Planned {date}",
+      "publishAt": "Goes out {date} · {time}",
+      "live": "Live {when}",
+      "publishing": "Publishing now",
+      "failedFix": "Failed to publish · Fix it",
+      "partial": "Partly failed",
+      "draftPost": "Draft post",
+      "cancelledPost": "Post cancelled",
+      "moment": "Shopping moment",
+      "manual": "Moved by hand",
+      "manualTip": "This card was moved by hand. What is actually true: {stage}.",
+      "mediaCount": "1/{n}",
+      "checks": {
+        "product": "Product",
+        "media": "Media",
+        "note": "Note"
+      }
+    },
+    "move": {
+      "title": "Move to…",
+      "here": "The card is here"
+    },
+    "confirm": {
+      "keep": "Move anyway",
+      "scheduleNow": "Schedule it now",
+      "finishPost": "Continue the post",
+      "stays": {
+        "scheduled": "Its post stays scheduled",
+        "published": "Its post stays live",
+        "failed": "Its post stays failed"
+      },
+      "no_schedule": {
+        "title": "This idea isn't scheduled",
+        "body": "You can move the card, but no post will go out by itself."
+      },
+      "not_live": {
+        "title": "This idea isn't live",
+        "body": "You can move the card, but no post has gone live."
+      },
+      "not_failed": {
+        "title": "No post has failed",
+        "body": "You can move the card, but there is no failed post to fix."
+      },
+      "post_stays": {
+        "title": "Its post won't move",
+        "body": "{state}. Only the card moves."
+      },
+      "has_detail": {
+        "title": "This idea already has content",
+        "body": "Its note, products and media stay, but the card will show as a raw idea."
+      }
+    }
   },
   "planner": {
     "pillarLabel": "Content type",

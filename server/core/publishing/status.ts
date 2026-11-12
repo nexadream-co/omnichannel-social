@@ -1,6 +1,7 @@
 import { eq } from 'drizzle-orm'
 import type { Executor } from '../db/client'
 import { posts, postTargets } from '../db/schema'
+import { syncStageForPost } from '../planner/stage'
 
 const IN_FLIGHT = new Set(['preparing', 'processing', 'publishing', 'publish_unknown', 'retrying'])
 
@@ -18,5 +19,7 @@ export function derivePostStatus(statuses: string[]): 'draft' | 'scheduled' | 'p
 
 export async function refreshPostStatus(db: Executor, postId: string): Promise<void> {
   const rows = await db.select({ status: postTargets.status }).from(postTargets).where(eq(postTargets.postId, postId))
-  await db.update(posts).set({ status: derivePostStatus(rows.map(r => r.status)), updatedAt: new Date() }).where(eq(posts.id, postId))
+  const status = derivePostStatus(rows.map(r => r.status))
+  await db.update(posts).set({ status, updatedAt: new Date() }).where(eq(posts.id, postId))
+  await syncStageForPost(db, postId, status)
 }

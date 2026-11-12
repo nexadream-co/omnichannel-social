@@ -1,16 +1,17 @@
-import { and, asc, count, desc, eq, gte, inArray, isNotNull, isNull, lt, ne, or, sql } from 'drizzle-orm'
+import { and, asc, count, desc, eq, gte, inArray, isNotNull, isNull, lt, min, ne, or, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import {
-  addDays, CONTENT_PILLARS, DEFAULT_POSTS_PER_WEEK, IDEA_MAX_LINKS, IDEA_MAX_MEDIA, IDEA_NOTE_MAX, IDEA_TITLE_MAX, IDEA_VIEWS,
-  MAX_OPEN_IDEAS, MAX_POSTS_PER_WEEK, momentIdeaSkeletons, type MomentKind
+  actualStage, addDays, CONTENT_PILLARS, DEFAULT_POSTS_PER_WEEK, IDEA_MAX_LINKS, IDEA_MAX_MEDIA, IDEA_NOTE_MAX, IDEA_STAGES, IDEA_TITLE_MAX, IDEA_VIEWS, ideaHasDetail, type IdeaPostSummary, type PostStatus,
+  MAX_OPEN_IDEAS, type IdeaStage, MAX_POSTS_PER_WEEK, momentIdeaSkeletons, type MomentKind
 } from '../../../shared/utils/planner'
 import { recordAudit } from '../audit'
 import { assertAbility, type WorkspaceContext } from '../context'
 import type { Executor } from '../db/client'
-import { contentIdeaLinks, contentIdeaMedia, contentIdeas, links, mediaAssets, shoppingMoments, shortLinks, workspaces } from '../db/schema'
+import { contentIdeaLinks, contentIdeaMedia, contentIdeas, links, mediaAssets, postMedia, posts, postTargets, shoppingMoments, shortLinks, workspaces } from '../db/schema'
 import { appError } from '../errors'
 import { shortUrl } from '../links/service'
-import { toMediaView } from '../media/service'
+import { thumbnailOf, toMediaView } from '../media/service'
+import { computeActualStage, ORDER_STEP, renumberColumn, syncIdeaStage, syncStageForPost } from './stage'
 import { isDateKey, todayKey } from '../timezone'
 
 const dayKey = z.string().refine(isDateKey, 'Tanggal tidak valid.')
@@ -36,7 +37,8 @@ export const ideaSchema = z.object({
 export const ideaPatchSchema = z.object({ ...fields, status: z.enum(['open', 'archived']) }).partial()
 export type IdeaInput = z.infer<typeof ideaSchema>
 
-export const ideaListSchema = z.object({ view: z.enum(IDEA_VIEWS).default('unplanned') })
+export const ideaListSchema = z.object({ view: z.enum(IDEA_VIEWS).default('unplanned'), stage: z.enum(IDEA_STAGES).optional() })
+export const ideaStageSchema = z.object({ stage: z.enum(IDEA_STAGES), afterId: z.string().min(1).nullable().optional().default(null) })
 
 type IdeaRow = typeof contentIdeas.$inferSelect
 
@@ -65,12 +67,58 @@ async function attachments(ctx: WorkspaceContext, ideaIds: string[]) {
   return { linkRows, mediaRows }
 }
 
-function toView(row: IdeaRow, extra: Awaited<ReturnType<typeof attachments>>) {
+/** Post cards for a page of ideas in three batched queries: status, earliest publish time, platforms and the first media. */
+async function postSummaries(ctx: WorkspaceContext, postIds: string[]): Promise<Map<string, IdeaPostSummary>> {
+  const map = new Map<string, IdeaPostSummary>()
+  if (!postIds.length) return map
+  const [postRows, targetRows, mediaRows] = await Promise.all([
+    ctx.db.select({ id: posts.id, status: posts.status, scheduledAt: posts.scheduledAt }).from(posts)
+      .where(and(eq(posts.workspaceId, ctx.workspaceId), inArray(posts.id, postIds))),
+    ctx.db.select({ postId: postTargets.postId, platform: postTargets.platform, publishedAt: postTargets.publishedAt }).from(postTargets)
+      .where(and(eq(postTargets.workspaceId, ctx.workspaceId), inArray(postTargets.postId, postIds), ne(postTargets.status, 'cancelled'))),
+    ctx.db.select({ postId: postMedia.postId, position: postMedia.position, kind: mediaAssets.kind, publicUrl: mediaAssets.publicUrl, variants: mediaAssets.variants })
+      .from(postMedia).innerJoin(mediaAssets, eq(mediaAssets.id, postMedia.mediaId))
+      .where(and(eq(postMedia.workspaceId, ctx.workspaceId), inArray(postMedia.postId, postIds)))
+      .orderBy(asc(postMedia.position))
+  ])
+  for (const post of postRows) {
+    const targets = targetRows.filter(t => t.postId === post.id)
+    const media = mediaRows.filter(m => m.postId === post.id)
+    const published = targets.flatMap(t => t.publishedAt ? [t.publishedAt.getTime()] : [])
+    map.set(post.id, {
+      id: post.id, status: post.status, scheduledAt: post.scheduledAt?.toISOString() ?? null,
+      publishedAt: published.length ? new Date(Math.min(...published)).toISOString() : null,
+      platforms: [...new Set(targets.map(t => t.platform))],
+      thumb: media[0] ? thumbnailOf(media[0]) : null,
+      mediaKind: media[0]?.kind ?? null,
+      mediaCount: media.length
+    })
+  }
+  return map
+}
+
+async function viewExtra(ctx: WorkspaceContext, rows: IdeaRow[]) {
+  const [att, summaries] = await Promise.all([
+    attachments(ctx, rows.map(r => r.id)),
+    postSummaries(ctx, rows.flatMap(r => r.postId ? [r.postId] : []))
+  ])
+  return { ...att, summaries }
+}
+
+function toView(row: IdeaRow, extra: Awaited<ReturnType<typeof viewExtra>>) {
+  const linkRows = extra.linkRows.filter(l => l.ideaId === row.id)
+  const mediaRows = extra.mediaRows.filter(m => m.ideaId === row.id)
+  const post = row.postId ? extra.summaries.get(row.postId) ?? null : null
   return {
+    stage: row.stage, boardOrder: row.boardOrder, stageChangedAt: row.stageChangedAt.toISOString(), post,
+    actualStage: actualStage({
+      postStatus: (post?.status as PostStatus | undefined) ?? null,
+      hasDetail: ideaHasDetail({ note: row.note, pillar: row.pillar, plannedOn: row.plannedOn, momentId: row.momentId, linkCount: linkRows.length, mediaCount: mediaRows.length })
+    }),
     id: row.id, title: row.title, note: row.note, pillar: row.pillar, plannedOn: row.plannedOn, status: row.status,
     postId: row.postId, momentId: row.momentId, createdAt: row.createdAt.toISOString(), updatedAt: row.updatedAt.toISOString(),
-    links: extra.linkRows.filter(l => l.ideaId === row.id).map(({ ideaId: _, slug, ...link }) => ({ ...link, shortUrl: slug ? shortUrl(slug) : null })),
-    media: extra.mediaRows.filter(m => m.ideaId === row.id).map(m => toMediaView(m.media))
+    links: linkRows.map(({ ideaId: _, slug, ...link }) => ({ ...link, shortUrl: slug ? shortUrl(slug) : null })),
+    media: mediaRows.map(m => toMediaView(m.media))
   }
 }
 export type IdeaView = ReturnType<typeof toView>
@@ -114,28 +162,30 @@ async function findIdea(ctx: WorkspaceContext, id: string) {
 export async function getIdea(ctx: WorkspaceContext, id: string) {
   assertAbility(ctx, 'posts.read')
   const row = await findIdea(ctx, id)
-  return toView(row, await attachments(ctx, [id]))
+  return toView(row, await viewExtra(ctx, [row]))
 }
 
 export async function listIdeas(ctx: WorkspaceContext, query: { page: number, limit: number, offset: number, search: string } & z.infer<typeof ideaListSchema>) {
   assertAbility(ctx, 'posts.read')
-  const byView = {
-    unplanned: and(eq(contentIdeas.status, 'open'), isNull(contentIdeas.plannedOn)),
-    planned: and(eq(contentIdeas.status, 'open'), isNotNull(contentIdeas.plannedOn)),
-    used: eq(contentIdeas.status, 'used'),
-    archived: eq(contentIdeas.status, 'archived')
-  }[query.view]
+  const byView = query.stage
+    ? and(eq(contentIdeas.stage, query.stage), ne(contentIdeas.status, 'archived'))
+    : {
+        unplanned: and(eq(contentIdeas.status, 'open'), isNull(contentIdeas.plannedOn)),
+        planned: and(eq(contentIdeas.status, 'open'), isNotNull(contentIdeas.plannedOn)),
+        used: eq(contentIdeas.status, 'used'),
+        archived: eq(contentIdeas.status, 'archived')
+      }[query.view]
   const where = and(
     eq(contentIdeas.workspaceId, ctx.workspaceId),
     byView,
     query.search ? sql`(${contentIdeas.title} ilike ${`%${query.search}%`} or ${contentIdeas.note} ilike ${`%${query.search}%`})` : undefined
   )
-  const order = query.view === 'planned' ? [asc(contentIdeas.plannedOn), asc(contentIdeas.createdAt)] : query.view === 'unplanned' ? [desc(contentIdeas.createdAt)] : [desc(contentIdeas.updatedAt)]
+  const order = query.stage ? [asc(contentIdeas.boardOrder), asc(contentIdeas.id)] : query.view === 'planned' ? [asc(contentIdeas.plannedOn), asc(contentIdeas.createdAt)] : query.view === 'unplanned' ? [desc(contentIdeas.createdAt)] : [desc(contentIdeas.updatedAt)]
   const [rows, [total]] = await Promise.all([
     ctx.db.select().from(contentIdeas).where(where).orderBy(...order).limit(query.limit).offset(query.offset),
     ctx.db.select({ n: count() }).from(contentIdeas).where(where)
   ])
-  const extra = await attachments(ctx, rows.map(r => r.id))
+  const extra = await viewExtra(ctx, rows)
   const n = total?.n ?? 0
   return { items: rows.map(row => toView(row, extra)), meta: { page: query.page, limit: query.limit, total: n, pageCount: Math.max(1, Math.ceil(n / query.limit)) } }
 }
@@ -149,6 +199,7 @@ export async function createIdea(ctx: WorkspaceContext, input: IdeaInput) {
       workspaceId: ctx.workspaceId, authorUserId: ctx.userId, title: input.title, note: input.note || null, pillar: input.pillar, plannedOn: input.plannedOn
     }).returning({ id: contentIdeas.id })
     await replaceAttachments(tx, ctx.workspaceId, row!.id, input)
+    await syncIdeaStage(tx, ctx.workspaceId, row!.id, { isNew: true })
     return row!.id
   })
   await audit(ctx, 'idea.create', id)
@@ -166,6 +217,7 @@ export async function updateIdea(ctx: WorkspaceContext, id: string, input: z.inf
   await ctx.db.transaction(async (tx) => {
     await tx.update(contentIdeas).set({ ...values, ...(values.note !== undefined && { note: values.note || null }), updatedAt: new Date() }).where(eq(contentIdeas.id, id))
     await replaceAttachments(tx, ctx.workspaceId, id, { linkIds, mediaIds })
+    await syncIdeaStage(tx, ctx.workspaceId, id)
   })
   await audit(ctx, input.status === 'archived' ? 'idea.archive' : 'idea.update', id, { fields: Object.keys(input) })
   return getIdea(ctx, id)
@@ -180,14 +232,61 @@ export async function archiveIdea(ctx: WorkspaceContext, id: string) {
 
 /** The composer saved a post from an idea: the idea leaves Bank Ide. A used or archived idea is left alone. */
 export async function markIdeaUsed(tx: Executor, workspaceId: string, ideaId: string, postId: string) {
-  await tx.update(contentIdeas).set({ status: 'used', postId, updatedAt: new Date() })
+  const linked = await tx.update(contentIdeas).set({ status: 'used', postId, updatedAt: new Date() })
     .where(and(eq(contentIdeas.id, ideaId), eq(contentIdeas.workspaceId, workspaceId), eq(contentIdeas.status, 'open')))
+    .returning({ id: contentIdeas.id })
+  if (!linked.length) return
+  const [post] = await tx.select({ status: posts.status }).from(posts).where(eq(posts.id, postId))
+  if (post) await syncStageForPost(tx, postId, post.status)
 }
 
 /** The post was deleted: its idea goes back to Bank Ide, on the same planned day. */
 export async function releaseIdeasOf(tx: Executor, workspaceId: string, postId: string) {
-  await tx.update(contentIdeas).set({ status: 'open', postId: null, updatedAt: new Date() })
+  const released = await tx.update(contentIdeas).set({ status: 'open', postId: null, updatedAt: new Date() })
     .where(and(eq(contentIdeas.workspaceId, workspaceId), eq(contentIdeas.postId, postId)))
+    .returning({ id: contentIdeas.id })
+  for (const row of released) await syncIdeaStage(tx, workspaceId, row.id)
+}
+
+/**
+ * Board move. `afterId` is the card the moved one sits directly below in the target column (null = top; a stale
+ * id falls back to the top). A move never blocks on honesty: the UI confirms. Audit only when the stage changes.
+ */
+export async function moveIdeaStage(ctx: WorkspaceContext, id: string, input: z.infer<typeof ideaStageSchema>) {
+  assertAbility(ctx, 'posts.write')
+  const row = await findIdea(ctx, id)
+  if (row.status === 'archived') throw appError(409, 'Ide ini sudah diarsipkan. Pulihkan dulu sebelum dipindah.', 'CONFLICT')
+  const target = input.stage
+  const stageChanged = row.stage !== target
+  let actual: IdeaStage | null = null
+  if (stageChanged) actual = (await computeActualStage(ctx.db, ctx.workspaceId, id))?.actual ?? target
+  await ctx.db.transaction(async (tx) => {
+    const column = and(eq(contentIdeas.workspaceId, ctx.workspaceId), eq(contentIdeas.stage, target), ne(contentIdeas.status, 'archived'), ne(contentIdeas.id, id))
+    const neighbours = async () => {
+      if (!input.afterId) return null
+      const [after] = await tx.select({ order: contentIdeas.boardOrder, id: contentIdeas.id }).from(contentIdeas).where(and(column, eq(contentIdeas.id, input.afterId))).limit(1)
+      if (!after) return null
+      const [next] = await tx.select({ order: contentIdeas.boardOrder }).from(contentIdeas)
+        .where(and(column, sql`(${contentIdeas.boardOrder}, ${contentIdeas.id}) > (${after.order}, ${after.id})`))
+        .orderBy(asc(contentIdeas.boardOrder), asc(contentIdeas.id)).limit(1)
+      return { after: after.order, next: next?.order ?? null }
+    }
+    let spot = await neighbours()
+    if (spot && spot.next !== null && spot.next - spot.after < 1e-6) {
+      await renumberColumn(tx, ctx.workspaceId, target)
+      spot = await neighbours()
+    }
+    let boardOrder: number
+    if (!spot) {
+      const [top] = await tx.select({ lowest: min(contentIdeas.boardOrder) }).from(contentIdeas).where(column)
+      boardOrder = top?.lowest == null ? 0 : top.lowest - ORDER_STEP
+    } else {
+      boardOrder = spot.next === null ? spot.after + ORDER_STEP : (spot.after + spot.next) / 2
+    }
+    await tx.update(contentIdeas).set({ boardOrder, ...(stageChanged && { stage: target, stageChangedAt: new Date() }) }).where(eq(contentIdeas.id, id))
+  })
+  if (stageChanged) await audit(ctx, 'idea.stage_moved', id, { from: row.stage, to: target, actual })
+  return getIdea(ctx, id)
 }
 
 export async function ideaOfPost(db: Executor, workspaceId: string, postId: string) {
@@ -263,6 +362,7 @@ export async function prepareMoment(ctx: WorkspaceContext, momentId: string, inp
   const rows = await ctx.db.insert(contentIdeas).values(skeletons.map(s => ({
     workspaceId: ctx.workspaceId, authorUserId: ctx.userId, title: s.title, pillar: s.pillar, plannedOn: s.plannedOn, momentId
   }))).returning({ id: contentIdeas.id, plannedOn: contentIdeas.plannedOn })
+  for (const row of rows) await syncIdeaStage(ctx.db, ctx.workspaceId, row.id, { isNew: true })
   await recordAudit(ctx, { audience: 'creator', action: 'planner.prepare_moment', workspaceId: ctx.workspaceId, actorId: ctx.userId, impersonatorId: ctx.impersonatorId, targetType: 'shopping_moment', targetId: momentId, metadata: { ideas: rows.length } })
   return { items: rows }
 }

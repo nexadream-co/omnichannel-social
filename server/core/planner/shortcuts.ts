@@ -8,6 +8,7 @@ import { contentIdeaLinks, contentIdeaMedia, contentIdeas, postMedia, posts, pos
 import { appError } from '../errors'
 import { productLinksOfPost } from '../links/service'
 import { startOfZonedDay, todayKey, zonedDateKey } from '../timezone'
+import { syncIdeaStage } from './stage'
 import { assertOwned, assertRoomForIdeas, getIdea, plannerWindow, workspaceTimezone } from './ideas'
 
 /** Ideas started from elsewhere in the app: Galeri Media, a post that worked, and the Beranda week card. */
@@ -59,6 +60,7 @@ export async function createIdeasFromMedia(ctx: WorkspaceContext, input: z.infer
       title: input.mode === 'each' ? text.gallery(i + 1, groups.length) : text.carousel
     }))).returning({ id: contentIdeas.id, plannedOn: contentIdeas.plannedOn })
     await tx.insert(contentIdeaMedia).values(rows.flatMap((row, i) => groups[i]!.map((mediaId, position) => ({ workspaceId: ctx.workspaceId, ideaId: row.id, mediaId, position }))))
+    for (const row of rows) await syncIdeaStage(tx, ctx.workspaceId, row.id, { isNew: true })
     return rows
   })
   await audit(ctx, 'idea.from_media', null, { ideas: items.length, media: input.mediaIds.length })
@@ -94,6 +96,7 @@ export async function ideaFromPost(ctx: WorkspaceContext, postId: string, input:
     const mediaIds = [...new Set(media.map(m => m.mediaId))].slice(0, IDEA_MAX_MEDIA)
     if (linkIds.length) await tx.insert(contentIdeaLinks).values(linkIds.map((linkId, position) => ({ workspaceId: ctx.workspaceId, ideaId: row!.id, linkId, position })))
     if (mediaIds.length) await tx.insert(contentIdeaMedia).values(mediaIds.map((mediaId, position) => ({ workspaceId: ctx.workspaceId, ideaId: row!.id, mediaId, position })))
+    await syncIdeaStage(tx, ctx.workspaceId, row!.id, { isNew: true })
     return row!.id
   })
   await audit(ctx, 'idea.from_post', id, { postId })

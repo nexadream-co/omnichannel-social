@@ -1,4 +1,4 @@
-import { boolean, date, foreignKey, index, integer, pgEnum, pgTable, primaryKey, text, unique } from 'drizzle-orm/pg-core'
+import { boolean, date, doublePrecision, foreignKey, index, integer, pgEnum, pgTable, primaryKey, text, unique } from 'drizzle-orm/pg-core'
 import { contentPillar, createdAt, id, updatedAt } from './_shared'
 import { mediaAssets, posts } from './channels'
 import { users } from './creators'
@@ -6,6 +6,7 @@ import { links } from './links'
 import { workspaces } from './tenancy'
 
 export const ideaStatus = pgEnum('idea_status', ['open', 'used', 'archived'])
+export const ideaStage = pgEnum('idea_stage', ['raw', 'drafting', 'scheduled', 'published', 'failed'])
 export const momentKind = pgEnum('moment_kind', ['twin_date', 'payday', 'holiday', 'campaign'])
 
 /**
@@ -37,6 +38,9 @@ export const contentIdeas = pgTable('content_ideas', {
   pillar: contentPillar(),
   plannedOn: date(), // a local day on the workspace clock; null = not on the calendar yet
   status: ideaStatus().notNull().default('open'),
+  stage: ideaStage().notNull().default('raw'), // board column; see shared/utils/planner.ts
+  stageChangedAt: createdAt(),
+  boardOrder: doublePrecision().notNull().default(0), // sort key inside a column; lower sits higher
   postId: text().references(() => posts.id, { onDelete: 'set null' }),
   momentId: text().references(() => shoppingMoments.id),
   createdAt: createdAt(), updatedAt: updatedAt()
@@ -44,6 +48,7 @@ export const contentIdeas = pgTable('content_ideas', {
   unique().on(t.workspaceId, t.id),
   index().on(t.workspaceId, t.plannedOn),
   index().on(t.workspaceId, t.status, t.createdAt),
+  index().on(t.workspaceId, t.stage, t.boardOrder),
   index().on(t.postId)
 ])
 

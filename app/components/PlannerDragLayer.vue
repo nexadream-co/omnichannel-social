@@ -1,17 +1,26 @@
 <script setup lang="ts">
+import { moveCheck, type IdeaStage } from '#shared/utils/planner'
+
 /**
- * The card that follows the pointer while a post or idea is dragged on the Kalender (see useDragSource), with a
- * pill that names the day it will land on, or says why it cannot. Position comes from the --drag-x / --drag-y
- * custom properties, so moving the pointer never re-renders Vue. On touch the card floats above the finger, kept
- * inside the screen (it is w-56 = 14rem wide).
+ * The card that follows the pointer while a post or idea is dragged on the Kalender, or a card on the Ide board (see
+ * useDragSource), with a pill that names where it will land, or says why it cannot. Position, tilt and scale come
+ * from the --drag-* custom properties, so moving the pointer never re-renders Vue. A board card floats at its own
+ * size, hanging from the point it was grabbed; a post or idea on touch floats above the finger, kept inside the
+ * screen (it is w-56 = 14rem wide).
  */
 const { t } = useI18n()
 const planner = usePlanner()
 const { preview, over } = usePlannerDragState()
 
-const past = computed(() => over.value !== null && planner.isPastDrop(over.value))
+const stageOver = computed(() => over.value?.startsWith('stage:') ? over.value.slice(6) as IdeaStage : null)
+const confirmNeeded = computed(() => {
+  const item = planner.drag.value
+  return item?.kind === 'card' && stageOver.value !== null && stageOver.value !== item.from && moveCheck(item.actual, stageOver.value) !== null
+})
+
+const past = computed(() => over.value !== null && !stageOver.value && planner.isPastDrop(over.value))
 const label = computed(() => {
-  if (!over.value || !preview.value) return null
+  if (!over.value || !preview.value || stageOver.value) return null
   if (past.value) return t('calendar.dropPast')
   const day = planner.dayLabel(over.value)
   return preview.value.time ? `${day} · ${preview.value.time}` : day
@@ -20,15 +29,45 @@ const label = computed(() => {
 
 <template>
   <Teleport to="body">
+    <template v-if="preview?.kind === 'card' && preview.idea">
+      <div
+        class="fixed left-0 top-0 z-[100] pointer-events-none"
+        :style="{ width: `${preview.size?.w ?? 260}px`, transform: 'translate(calc(var(--drag-x) - var(--drag-ox)), calc(var(--drag-y) - var(--drag-oy)))' }"
+        aria-hidden="true"
+      >
+        <div :style="{ transformOrigin: 'var(--drag-ox) var(--drag-oy)', transform: 'rotate(var(--drag-tilt)) scale(var(--drag-scale))' }">
+          <div class="rounded-lg shadow-2xl motion-safe:animate-drag-lift">
+            <IdeaBoardCard
+              :idea="preview.idea"
+              floating
+            />
+          </div>
+        </div>
+      </div>
+      <div
+        v-if="stageOver"
+        class="fixed left-0 top-0 z-[101] pointer-events-none inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium shadow-md"
+        :class="confirmNeeded ? 'bg-warning text-inverted' : 'bg-primary text-inverted'"
+        :style="{ transform: `translate(calc(var(--drag-x) + 14px), calc(var(--drag-y) + ${preview.touch ? '-56px' : '16px'}))` }"
+        aria-hidden="true"
+      >
+        <UIcon
+          :name="confirmNeeded ? 'i-lucide-triangle-alert' : 'i-lucide-check'"
+          class="size-3.5"
+        />
+        {{ confirmNeeded ? t('ideas.needsConfirm') : t(`ideas.stage.${stageOver}`) }}
+      </div>
+    </template>
     <div
-      v-if="preview"
+      v-else-if="preview"
       class="fixed left-0 top-0 z-[100] pointer-events-none"
       :style="{ transform: preview.touch ? 'translate(clamp(8px, calc(var(--drag-x) - 7rem), calc(100vw - 14rem - 8px)), calc(var(--drag-y) - 100% - 28px))' : 'translate(calc(var(--drag-x) - 20px), calc(var(--drag-y) - 18px))' }"
       aria-hidden="true"
     >
       <div
-        class="w-56 rounded-lg bg-default shadow-xl ring-1 ring-default p-2 flex gap-2 rotate-2 motion-safe:animate-drag-lift"
+        class="w-56 rounded-lg bg-default shadow-xl ring-1 ring-default p-2 flex gap-2 motion-safe:animate-drag-lift"
         :class="preview.kind === 'idea' ? 'border border-dashed border-accented' : ''"
+        :style="{ transformOrigin: preview.touch ? '7rem calc(100% + 28px)' : '20px 18px', transform: 'rotate(var(--drag-tilt, 0deg)) scale(var(--drag-scale, 1))' }"
       >
         <div
           v-if="preview.kind === 'post'"
