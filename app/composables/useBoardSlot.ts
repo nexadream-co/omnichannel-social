@@ -1,4 +1,4 @@
-import { moveCheck, type IdeaStage } from '#shared/utils/planner'
+import { moveBlocked, moveCheck, type IdeaStage } from '#shared/utils/planner'
 
 /** The empty slot on the Ide board: where the carried card would land, in which column, and whether it needs confirming. */
 export interface BoardSlot {
@@ -23,6 +23,8 @@ export function useBoardSlot() {
     const item = planner.drag.value
     if (item?.kind === 'card' && over.value?.startsWith('stage:')) {
       const stage = over.value.slice(6) as IdeaStage
+      // No landing slot where the card can't go (Terjadwal, Tayang, Gagal follow the post); the pill says why.
+      if (stage !== item.from && moveBlocked(item.actual, stage)) return null
       return {
         id: item.id,
         from: item.from,

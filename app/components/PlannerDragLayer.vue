@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { moveCheck, type IdeaStage } from '#shared/utils/planner'
+import { moveBlocked, moveCheck, type IdeaStage } from '#shared/utils/planner'
 
 /**
  * The card that follows the pointer while a post or idea is dragged on the Kalender, or a card on the Ide board (see
@@ -16,6 +16,11 @@ const stageOver = computed(() => over.value?.startsWith('stage:') ? over.value.s
 const confirmNeeded = computed(() => {
   const item = planner.drag.value
   return item?.kind === 'card' && stageOver.value !== null && stageOver.value !== item.from && moveCheck(item.actual, stageOver.value) !== null
+})
+// Terjadwal, Tayang and Gagal follow the post: the pill says so before the card is let go.
+const blocked = computed(() => {
+  const item = planner.drag.value
+  return item?.kind === 'card' && stageOver.value !== null && stageOver.value !== item.from && moveBlocked(item.actual, stageOver.value)
 })
 
 const past = computed(() => over.value !== null && !stageOver.value && planner.isPastDrop(over.value))
@@ -47,15 +52,15 @@ const label = computed(() => {
       <div
         v-if="stageOver"
         class="fixed left-0 top-0 z-[101] pointer-events-none inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium shadow-md"
-        :class="confirmNeeded ? 'bg-warning text-inverted' : 'bg-primary text-inverted'"
+        :class="blocked ? 'bg-inverted text-inverted' : confirmNeeded ? 'bg-warning text-inverted' : 'bg-primary text-inverted'"
         :style="{ transform: `translate(calc(var(--drag-x) + 14px), calc(var(--drag-y) + ${preview.touch ? '-56px' : '16px'}))` }"
         aria-hidden="true"
       >
         <UIcon
-          :name="confirmNeeded ? 'i-lucide-triangle-alert' : 'i-lucide-check'"
+          :name="blocked ? 'i-lucide-lock' : confirmNeeded ? 'i-lucide-triangle-alert' : 'i-lucide-check'"
           class="size-3.5"
         />
-        {{ confirmNeeded ? t('ideas.needsConfirm') : t(`ideas.stage.${stageOver}`) }}
+        {{ blocked ? t('ideas.dropBlocked') : confirmNeeded ? t('ideas.needsConfirm') : t(`ideas.stage.${stageOver}`) }}
       </div>
     </template>
     <div

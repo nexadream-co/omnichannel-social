@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { IDEA_STAGES, moveCheck, type IdeaDetail, type IdeaStage } from '#shared/utils/planner'
+import { IDEA_STAGES, moveBlocked, moveCheck, type IdeaDetail, type IdeaStage } from '#shared/utils/planner'
 import { STAGE_STYLE } from '~/utils/ideaBoard'
 
 /**
@@ -14,7 +14,8 @@ const { t } = useI18n()
 const rows = computed(() => IDEA_STAGES.map((stage) => {
   const idea = props.idea
   const reason = idea && stage !== idea.stage ? moveCheck(idea.actualStage, stage) : null
-  return { stage, here: idea?.stage === stage, reason }
+  const blocked = Boolean(idea && stage !== idea.stage && moveBlocked(idea.actualStage, stage))
+  return { stage, here: idea?.stage === stage, reason, blocked }
 }))
 
 function pick(stage: IdeaStage) {
@@ -38,8 +39,8 @@ function pick(stage: IdeaStage) {
           <button
             type="button"
             class="w-full min-h-12 flex items-center gap-3 rounded-lg border px-3 py-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-60"
-            :class="row.reason ? 'border-warning/50 bg-warning/5' : 'border-default hover:bg-elevated'"
-            :disabled="row.here"
+            :class="row.blocked ? 'border-default bg-elevated/40' : row.reason ? 'border-warning/50 bg-warning/5' : 'border-default hover:bg-elevated'"
+            :disabled="row.here || row.blocked"
             @click="pick(row.stage)"
           >
             <span
@@ -54,6 +55,10 @@ function pick(stage: IdeaStage) {
                 class="block text-xs text-muted"
               >{{ t('ideas.move.here') }}</span>
               <span
+                v-else-if="row.blocked"
+                class="block text-xs text-muted"
+              >{{ t(`ideas.blocked.${row.reason}.short`) }}</span>
+              <span
                 v-else-if="row.reason"
                 class="block text-xs text-warning"
               >{{ t(`ideas.note.${row.reason}`) }}</span>
@@ -63,7 +68,12 @@ function pick(stage: IdeaStage) {
               >{{ t(`ideas.hint.${row.stage}`) }}</span>
             </span>
             <UIcon
-              v-if="row.reason"
+              v-if="row.blocked"
+              name="i-lucide-lock"
+              class="size-4 text-muted shrink-0"
+            />
+            <UIcon
+              v-else-if="row.reason"
               name="i-lucide-triangle-alert"
               class="size-4 text-warning shrink-0"
             />

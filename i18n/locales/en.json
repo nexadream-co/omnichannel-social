@@ -1252,10 +1252,6 @@
       "failed": "Its post failed to publish"
     },
     "note": {
-      "no_schedule": "No post is scheduled yet",
-      "not_live": "No post is live yet",
-      "not_failed": "No post has failed",
-      "post_stays": "Its post won't move",
       "has_detail": "This idea already has content"
     },
     "empty": {
@@ -1313,27 +1309,35 @@
         "published": "Its post stays live",
         "failed": "Its post stays failed"
       },
-      "no_schedule": {
-        "title": "This idea isn't scheduled",
-        "body": "You can move the card, but no post will go out by itself."
-      },
-      "not_live": {
-        "title": "This idea isn't live",
-        "body": "You can move the card, but no post has gone live."
-      },
-      "not_failed": {
-        "title": "No post has failed",
-        "body": "You can move the card, but there is no failed post to fix."
-      },
-      "post_stays": {
-        "title": "Its post won't move",
-        "body": "{state}. Only the card moves."
-      },
       "has_detail": {
         "title": "This idea already has content",
         "body": "Its note, products and media stay, but the card will show as a raw idea."
       }
-    }
+    },
+    "blocked": {
+      "later": "Not now",
+      "no_schedule": {
+        "title": "Scheduled follows the post",
+        "body": "The card moves to Scheduled by itself once its post is scheduled. Schedule it now?",
+        "short": "Moves here once its post is scheduled"
+      },
+      "not_live": {
+        "title": "Live follows the post",
+        "body": "The card moves to Live by itself once its post is really live, so your board stays true.",
+        "short": "Moves here once its post is live"
+      },
+      "not_failed": {
+        "title": "Failed follows the post",
+        "body": "The card moves to Failed by itself if its post fails to go live.",
+        "short": "Moves here if its post fails"
+      },
+      "post_stays": {
+        "title": "This card follows its post",
+        "body": "{state}, so the card stays here. Change the post to move the card.",
+        "short": "The card follows its post"
+      }
+    },
+    "dropBlocked": "Follows the post"
   },
   "planner": {
     "pillarLabel": "Content type",
@@ -2152,5 +2156,49 @@
       "empty": "Nothing is scheduled for today yet.",
       "action": "Create a post"
     }
+  },
+  "news": {
+    "title": "Trending now",
+    "rangeLabel": "Period",
+    "regionLabel": "Region",
+    "region": {
+      "id": "Indonesia",
+      "world": "World"
+    },
+    "range": {
+      "today": "Today",
+      "week": "This week"
+    },
+    "empty": "No news yet. Check back in a moment.",
+    "makeIdea": "Make it an idea",
+    "added": "Added",
+    "ideaNote": "From {source} news:",
+    "sourceUnknown": "online",
+    "ideaAdded": "Added to your idea bank. Now find your content angle.",
+    "openIdeas": "Open Ideas",
+    "stillHot": "Still trending",
+    "footer": "From Google News, updated every hour. Tap a headline to read it."
+  },
+  "postTemplates": {
+    "open": "My templates",
+    "title": "My templates",
+    "description": "Captions you use often, with their hashtags and product links.",
+    "saveTitle": "Save this caption as a template",
+    "saveEmpty": "Write a caption first, then save it here to reuse it.",
+    "namePlaceholder": "Name, e.g. \"Skincare review\"",
+    "save": "Save",
+    "saved": "Template \"{name}\" saved.",
+    "empty": "No templates yet. Save a favourite caption so it is one tap away next time.",
+    "use": "Use",
+    "used": "Template \"{name}\" applied.",
+    "tags": "{n} hashtag(s)",
+    "links": "{n} product link(s)",
+    "replaceTitle": "The caption already has text",
+    "replaceBody": "Replace it with this template, or add the template below the current caption?",
+    "replace": "Replace caption",
+    "append": "Add below",
+    "deleteTitle": "Delete template \"{name}\"?",
+    "deleteBody": "Posts that already used this template stay as they are.",
+    "delete": "Delete"
   }
 }

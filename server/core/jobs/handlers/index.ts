@@ -7,6 +7,7 @@ import { webhookMetaJob } from '../../autoreply/webhook'
 import { unfurlLinkJob } from '../../links/unfurl-job'
 import { hashtagSignalsJob } from '../../hashtags/research'
 import { dataDeletionJob } from '../../meta-callbacks'
+import { newsRefreshJob } from '../../news/service'
 import { plannerRemindersJob, plannerWeeklyJob } from '../../planner/jobs'
 import { publishPollJob, publishReconcileJob, publishTargetJob } from '../../publishing/pipeline'
 import { purge } from './maintenance'
@@ -36,5 +37,6 @@ export const handlers: Record<string, JobHandler> = {
   'engagement.inactivity': inactivityJob,
   'hashtags.signals': hashtagSignalsJob,
   'planner.weekly': plannerWeeklyJob,
-  'planner.reminders': plannerRemindersJob
+  'planner.reminders': plannerRemindersJob,
+  'news.refresh': newsRefreshJob
 }

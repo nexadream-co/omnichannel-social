@@ -2,7 +2,7 @@ import { and, asc, count, desc, eq, gte, inArray, isNotNull, isNull, lt, min, ne
 import { z } from 'zod'
 import {
   actualStage, addDays, CONTENT_PILLARS, DEFAULT_POSTS_PER_WEEK, IDEA_MAX_LINKS, IDEA_MAX_MEDIA, IDEA_NOTE_MAX, IDEA_STAGES, IDEA_TITLE_MAX, IDEA_VIEWS, ideaHasDetail, type IdeaPostSummary, type PostStatus,
-  MAX_OPEN_IDEAS, type IdeaStage, MAX_POSTS_PER_WEEK, momentIdeaSkeletons, type MomentKind
+  BLOCKED_MOVE_COPY, MAX_OPEN_IDEAS, type IdeaStage, MAX_POSTS_PER_WEEK, momentIdeaSkeletons, type MomentKind, moveBlocked, moveCheck, type MoveReason
 } from '../../../shared/utils/planner'
 import { recordAudit } from '../audit'
 import { assertAbility, type WorkspaceContext } from '../context'
@@ -259,7 +259,14 @@ export async function moveIdeaStage(ctx: WorkspaceContext, id: string, input: z.
   const target = input.stage
   const stageChanged = row.stage !== target
   let actual: IdeaStage | null = null
-  if (stageChanged) actual = (await computeActualStage(ctx.db, ctx.workspaceId, id))?.actual ?? target
+  if (stageChanged) {
+    actual = (await computeActualStage(ctx.db, ctx.workspaceId, id))?.actual ?? target
+    // Terjadwal, Tayang and Gagal follow the post: a hand move there (or out of there) would put the card out of step.
+    if (moveBlocked(actual, target)) {
+      const reason = moveCheck(actual, target) as Exclude<MoveReason, 'has_detail'>
+      throw appError(409, BLOCKED_MOVE_COPY[reason], 'CONFLICT', { reason })
+    }
+  }
   await ctx.db.transaction(async (tx) => {
     const column = and(eq(contentIdeas.workspaceId, ctx.workspaceId), eq(contentIdeas.stage, target), ne(contentIdeas.status, 'archived'), ne(contentIdeas.id, id))
     const neighbours = async () => {

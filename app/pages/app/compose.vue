@@ -308,6 +308,8 @@ const counterTone = (c: { count: number, max: number }) => c.count > c.max ? 'te
 
 // Caption starters: dropped in at the cursor (or at the end when the box is not focused).
 const TEMPLATE_KEYS = ['discount', 'review', 'unboxing'] as const
+// "Template saya": the creator's own saved captions (PostTemplatesSheet).
+const templatesOpen = ref(false)
 function insertTemplate(key: typeof TEMPLATE_KEYS[number]) {
   const text = t(`composer.templates.${key}`)
   const el = captionField.value?.textareaRef
@@ -570,6 +572,14 @@ function warn(key: string) {
                 class="w-full"
               />
               <div class="flex flex-wrap items-center gap-1.5 mt-2">
+                <UButton
+                  size="xs"
+                  color="primary"
+                  variant="soft"
+                  icon="i-lucide-bookmark"
+                  :label="t('postTemplates.open')"
+                  @click="templatesOpen = true"
+                />
                 <UButton
                   v-for="key in TEMPLATE_KEYS"
                   :key="key"
@@ -847,6 +857,10 @@ function warn(key: string) {
         </UCard>
       </div>
     </div>
+    <PostTemplatesSheet
+      v-model:open="templatesOpen"
+      v-model:caption="caption"
+    />
     <ProductLinkPicker
       v-model:open="linkPickerOpen"
       @pick="insertLink"

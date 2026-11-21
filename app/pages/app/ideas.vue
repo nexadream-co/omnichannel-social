@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { IDEA_STAGES, moveCheck, type IdeaDetail, type IdeaStage, type MoveReason } from '#shared/utils/planner'
+import { IDEA_STAGES, moveBlocked, moveCheck, type IdeaDetail, type IdeaStage, type MoveReason } from '#shared/utils/planner'
 import type IdeaBoardColumn from '~/components/IdeaBoardColumn.vue'
 import { flipFrom, takeDragFlight, type DragFlight } from '~/utils/flip'
 import { haptic } from '~/utils/haptics'
@@ -18,6 +18,7 @@ const localePath = useLocalePath()
 const auth = useCreatorAuth()
 const planner = usePlanner()
 const confirmDialog = useConfirmDialog()
+const toast = useToast()
 const { pending, hovering } = useBoardSlot()
 const { slotIndex } = usePlannerDragState()
 const landing = useState<string | null>('board-landing', () => null)
@@ -91,6 +92,24 @@ function askMove(reason: MoveReason, idea: IdeaDetail) {
 }
 
 /**
+ * Terjadwal, Tayang and Gagal follow the post, so a hand move there is refused: the card springs back and the
+ * creator learns how the card gets there for real, with the step that does it (schedule, finish or open the post).
+ */
+async function explainBlocked(reason: MoveReason, idea: IdeaDetail) {
+  haptic('warn')
+  const extra = extraFor(reason, idea)
+  const state = reason === 'post_stays' && idea.actualStage in STAYS ? t(`ideas.confirm.stays.${idea.actualStage}`) : ''
+  const title = t(`ideas.blocked.${reason}.title`)
+  const description = t(`ideas.blocked.${reason}.body`, { state })
+  if (!extra) {
+    toast.add({ title, description, icon: 'i-lucide-lock', color: 'warning' })
+    return
+  }
+  const answer = await confirmDialog.choose({ title, description, confirmLabel: extra.label, cancelLabel: t('ideas.blocked.later'), color: 'primary' })
+  if (answer === 'confirm') await extra.go()
+}
+
+/**
  * Places `idea` in `to` at `index` (among the cards already there, null: the top). The card moves at once; the save
  * follows with an "Urungkan" toast. Nothing changes if it is dropped where it already is. A move that does not match
  * the idea's real state keeps its slot open while the dialog asks.
@@ -113,6 +132,11 @@ async function performMove(idea: IdeaDetail, to: IdeaStage, index: number | null
   if (same && (index === null || target.afterId === before())) return settle(idea.id, flight)
 
   const reason = same ? null : moveCheck(idea.actualStage, to)
+  if (reason && moveBlocked(idea.actualStage, to)) {
+    settle(idea.id, flight)
+    await explainBlocked(reason, idea)
+    return
+  }
   if (reason) {
     pending.value = { id: idea.id, from: idea.stage, stage: to, index: target.at, height: Math.max(flight?.height ?? 0, 56), honest: false }
     const answer = await askMove(reason, idea)

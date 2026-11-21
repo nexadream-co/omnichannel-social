@@ -75,6 +75,7 @@ export const SETTINGS_CATALOG: SettingDef[] = [
   { key: 'app.registrationOpen', group: 'app', type: 'boolean', label: 'Pendaftaran dibuka', default: 'true' },
   { key: 'app.contactRateLimitPerHour', group: 'app', type: 'number', label: 'Batas formulir kontak per jam (per IP)', default: '5' },
   { key: 'display.timezone', group: 'app', type: 'select', label: 'Zona waktu back-office', default: 'Asia/Jakarta', options: TIMEZONE_OPTIONS },
+  { key: 'app.news.enabled', group: 'app', type: 'boolean', label: 'Kartu "Lagi rame" di Beranda', hint: 'Berita terkini Indonesia dan dunia dari Google News, diperbarui tiap jam. Matikan untuk menyembunyikan kartunya dan berhenti mengambil berita.', default: 'true' },
   // channels
   { key: 'channels.publishing.paused', group: 'channels', type: 'boolean', label: 'Jeda semua publikasi', hint: 'Postingan tetap terjadwal dan terbit setelah jeda dicabut.', default: 'false' },
   { key: 'channels.publishing.pausedMessage', group: 'channels', type: 'text', label: 'Pesan saat publikasi dijeda', default: 'Publikasi sedang dijeda sementara karena gangguan dari platform. Postingan kamu tetap terjadwal.' },

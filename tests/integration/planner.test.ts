@@ -345,17 +345,36 @@ describe('Ide board stages', () => {
 
   it('moves by hand with an audit row; reorder writes none; archived is 409; other workspace 404', async () => {
     const idea = await createIdea(ws, ideaSchema.parse({ title: 'M' }))
-    const moved = await move(idea.id, 'scheduled')
-    expect(moved).toMatchObject({ stage: 'scheduled', actualStage: 'raw' })
+    const moved = await move(idea.id, 'drafting')
+    expect(moved).toMatchObject({ stage: 'drafting', actualStage: 'raw' })
     const audits = await getDb().select().from(auditLogs).where(eq(auditLogs.action, 'idea.stage_moved'))
     expect(audits).toHaveLength(1)
-    expect(audits[0]!.metadata).toMatchObject({ from: 'raw', to: 'scheduled', actual: 'raw' })
-    await move(idea.id, 'scheduled')
+    expect(audits[0]!.metadata).toMatchObject({ from: 'raw', to: 'drafting', actual: 'raw' })
+    await move(idea.id, 'drafting')
     expect(await getDb().select().from(auditLogs).where(eq(auditLogs.action, 'idea.stage_moved'))).toHaveLength(1)
     await expect(moveIdeaStage(other, idea.id, ideaStageSchema.parse({ stage: 'raw' }))).rejects.toMatchObject({ statusCode: 404 })
     await expect(moveIdeaStage({ ...ws, role: 'viewer' }, idea.id, ideaStageSchema.parse({ stage: 'raw' }))).rejects.toMatchObject({ statusCode: 403 })
     await archiveIdea(ws, idea.id)
     await expect(move(idea.id, 'raw')).rejects.toMatchObject({ statusCode: 409 })
+  })
+
+  it('refuses hand moves into or out of the columns that follow the post', async () => {
+    const idea = await createIdea(ws, ideaSchema.parse({ title: 'Belum tayang' }))
+    for (const stage of ['scheduled', 'published', 'failed'] as const) {
+      await expect(move(idea.id, stage)).rejects.toMatchObject({ statusCode: 409, data: { code: 'CONFLICT' } })
+    }
+    expect(await stageOf(idea.id)).toBe('raw')
+    const live = await createIdea(ws, ideaSchema.parse({ title: 'Tayang' }))
+    const { postId } = await mkPost(live.id, 'schedule')
+    await expect(move(live.id, 'published')).rejects.toMatchObject({ statusCode: 409, data: { reason: 'post_stays' } })
+    await expect(move(live.id, 'drafting')).rejects.toMatchObject({ statusCode: 409, data: { reason: 'post_stays' } })
+    await setTargets(postId, 'published')
+    expect(await stageOf(live.id)).toBe('published')
+    // A card already out of step (moved by hand before this rule) may still go back to an honest column.
+    const stuck = await createIdea(ws, ideaSchema.parse({ title: 'Nyasar' }))
+    await getDb().update(contentIdeas).set({ stage: 'published' }).where(eq(contentIdeas.id, stuck.id))
+    await expect(move(stuck.id, 'raw')).resolves.toMatchObject({ stage: 'raw' })
+    expect(await getDb().select().from(auditLogs).where(eq(auditLogs.action, 'idea.stage_moved'))).toHaveLength(1)
   })
 
   it('stage filter excludes archived and returns the post summary', async () => {

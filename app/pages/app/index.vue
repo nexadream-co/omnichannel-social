@@ -411,6 +411,9 @@ async function dismiss() {
         <!-- Rencana konten: only once the onboarding checklist is done or hidden, so the newcomer path stays as it is. -->
         <WeekCard v-if="canRead && !showChecklist" />
 
+        <!-- "Lagi rame": content ideas from today's news, also only after the checklist (ARCHITECTURE §8.9). -->
+        <NewsCard v-if="canRead && !showChecklist" />
+
         <div
           v-if="tip"
           class="flex gap-3 rounded-lg bg-primary/5 border border-primary/20 p-4"

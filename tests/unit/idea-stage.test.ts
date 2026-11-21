@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { actualStage, ideaHasDetail, IDEA_STAGES, moveCheck, postStage, type PostStatus } from '../../shared/utils/planner'
+import { actualStage, ideaHasDetail, IDEA_STAGES, moveBlocked, moveCheck, postStage, type PostStatus } from '../../shared/utils/planner'
 
 const none = { note: null, pillar: null, plannedOn: null, momentId: null, linkCount: 0, mediaCount: 0 }
 
@@ -40,6 +40,23 @@ describe('moveCheck', () => {
     expect(moveCheck('drafting', 'raw')).toBe('has_detail')
     for (const actual of ['scheduled', 'published', 'failed'] as const) {
       for (const to of IDEA_STAGES.filter(s => s !== actual)) expect(moveCheck(actual, to)).toBe('post_stays')
+    }
+  })
+})
+
+describe('moveBlocked', () => {
+  it('lets only raw and drafting be chosen by hand', () => {
+    expect(moveBlocked('raw', 'drafting')).toBe(false)
+    expect(moveBlocked('drafting', 'raw')).toBe(false) // confirmed, not refused
+    for (const to of ['scheduled', 'published', 'failed'] as const) {
+      expect(moveBlocked('raw', to)).toBe(true)
+      expect(moveBlocked('drafting', to)).toBe(true)
+    }
+  })
+  it('keeps a card with a post where the post says', () => {
+    for (const actual of ['scheduled', 'published', 'failed'] as const) {
+      expect(moveBlocked(actual, actual)).toBe(false)
+      for (const to of IDEA_STAGES.filter(s => s !== actual)) expect(moveBlocked(actual, to)).toBe(true)
     }
   })
 })

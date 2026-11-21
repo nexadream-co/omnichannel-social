@@ -1252,10 +1252,6 @@
       "failed": "Postingannya gagal tayang"
     },
     "note": {
-      "no_schedule": "Belum ada postingan terjadwal",
-      "not_live": "Belum ada postingan yang tayang",
-      "not_failed": "Tidak ada postingan yang gagal",
-      "post_stays": "Postingannya tidak ikut pindah",
       "has_detail": "Ide ini sudah punya isi"
     },
     "empty": {
@@ -1313,27 +1309,35 @@
         "published": "Postingannya tetap tayang",
         "failed": "Postingannya tetap gagal"
       },
-      "no_schedule": {
-        "title": "Ide ini belum dijadwalkan",
-        "body": "Kartunya bisa dipindah, tapi belum ada postingan yang akan tayang otomatis."
-      },
-      "not_live": {
-        "title": "Ide ini belum tayang",
-        "body": "Kartunya bisa dipindah, tapi belum ada postingan yang sudah tayang."
-      },
-      "not_failed": {
-        "title": "Tidak ada postingan yang gagal",
-        "body": "Kartunya bisa dipindah, tapi tidak ada postingan gagal yang perlu diperbaiki."
-      },
-      "post_stays": {
-        "title": "Postingannya tidak ikut pindah",
-        "body": "{state}. Hanya kartunya yang pindah."
-      },
       "has_detail": {
         "title": "Ide ini sudah punya isi",
         "body": "Catatan, produk, dan medianya tetap ada, tapi kartunya akan tampil sebagai ide mentah."
       }
-    }
+    },
+    "blocked": {
+      "later": "Nanti saja",
+      "no_schedule": {
+        "title": "Terjadwal mengikuti postingan",
+        "body": "Kartu masuk Terjadwal sendiri begitu postingannya dijadwalkan. Mau jadwalkan sekarang?",
+        "short": "Masuk sendiri setelah postingannya dijadwalkan"
+      },
+      "not_live": {
+        "title": "Tayang mengikuti postingan",
+        "body": "Kartu masuk Tayang sendiri begitu postingannya benar-benar tayang, supaya papanmu selalu jujur.",
+        "short": "Masuk sendiri setelah postingannya tayang"
+      },
+      "not_failed": {
+        "title": "Gagal mengikuti postingan",
+        "body": "Kartu masuk Gagal sendiri kalau postingannya gagal tayang.",
+        "short": "Masuk sendiri kalau postingannya gagal tayang"
+      },
+      "post_stays": {
+        "title": "Kartu ini mengikuti postingannya",
+        "body": "{state}, jadi kartunya tetap di sini. Ubah postingannya untuk memindahkan kartu.",
+        "short": "Kartu mengikuti postingannya"
+      }
+    },
+    "dropBlocked": "Mengikuti postingan"
   },
   "planner": {
     "pillarLabel": "Jenis konten",
@@ -2152,5 +2156,49 @@
       "empty": "Belum ada postingan terjadwal hari ini.",
       "action": "Buat postingan"
     }
+  },
+  "news": {
+    "title": "Lagi rame",
+    "rangeLabel": "Periode",
+    "regionLabel": "Wilayah",
+    "region": {
+      "id": "Indonesia",
+      "world": "Dunia"
+    },
+    "range": {
+      "today": "Hari ini",
+      "week": "Minggu ini"
+    },
+    "empty": "Berita belum masuk. Coba lagi sebentar lagi.",
+    "makeIdea": "Jadikan ide",
+    "added": "Jadi ide",
+    "ideaNote": "Dari berita {source}:",
+    "sourceUnknown": "online",
+    "ideaAdded": "Masuk ke Bank Ide. Tinggal pikirkan sudut kontennya.",
+    "openIdeas": "Buka Ide",
+    "stillHot": "Masih rame",
+    "footer": "Dari Google News, diperbarui tiap jam. Ketuk judul untuk membaca beritanya."
+  },
+  "postTemplates": {
+    "open": "Template saya",
+    "title": "Template saya",
+    "description": "Caption yang sering kamu pakai, lengkap dengan tagar dan link produknya.",
+    "saveTitle": "Simpan caption ini sebagai template",
+    "saveEmpty": "Tulis caption dulu, lalu simpan di sini supaya bisa dipakai lagi.",
+    "namePlaceholder": "Nama, misalnya \"Review skincare\"",
+    "save": "Simpan",
+    "saved": "Template \"{name}\" tersimpan.",
+    "empty": "Belum ada template. Simpan caption favoritmu supaya tinggal pakai lain kali.",
+    "use": "Pakai",
+    "used": "Template \"{name}\" dipakai.",
+    "tags": "{n} tagar",
+    "links": "{n} link produk",
+    "replaceTitle": "Caption sudah ada isinya",
+    "replaceBody": "Ganti dengan template ini, atau tambahkan template di bawah caption yang sekarang?",
+    "replace": "Ganti caption",
+    "append": "Tambahkan di bawah",
+    "deleteTitle": "Hapus template \"{name}\"?",
+    "deleteBody": "Postingan yang sudah memakai template ini tidak berubah.",
+    "delete": "Hapus"
   }
 }

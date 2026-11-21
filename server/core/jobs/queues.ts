@@ -38,6 +38,8 @@ export const QUEUES = {
   // Planner reminders (bell only): pages of 200 workspaces, re-enqueued with a cursor.
   'planner.weekly': queue('planner.weekly', { maxAttempts: 2, leaseSeconds: 300, expectedMs: 30_000, concurrency: 1 }),
   'planner.reminders': queue('planner.reminders', { maxAttempts: 2, leaseSeconds: 300, expectedMs: 30_000, concurrency: 1 }),
+  // Beranda "Lagi rame": two feed reads an hour; a missed hour is simply skipped (the next one catches up).
+  'news.refresh': queue('news.refresh', { maxAttempts: 1, leaseSeconds: 120, expectedMs: 20_000, concurrency: 1 }),
   // Best effort: a failed lookup leaves the tag without numbers, so one attempt is enough.
   'hashtags.signals': queue('hashtags.signals', { maxAttempts: 1, expectedMs: 15_000, concurrency: 3 })
 } as const satisfies Record<string, QueueDef>

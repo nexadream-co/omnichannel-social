@@ -54,3 +54,16 @@ export const hashtagSignals = pgTable('hashtag_signals', {
   data: jsonb().notNull(),
   fetchedAt: tstz().notNull().defaultNow()
 }, t => [primaryKey({ columns: [t.platform, t.tag] })])
+
+/**
+ * Template postingan: a saved caption (its hashtags and product short links included, as written) the composer can
+ * start from. Free on every plan; MAX_POST_TEMPLATES is a sanity cap, not a plan limit.
+ */
+export const postTemplates = pgTable('post_templates', {
+  id: id(),
+  workspaceId: text().notNull().references(() => workspaces.id),
+  name: text().notNull(),
+  caption: text().notNull(),
+  createdBy: text(),
+  createdAt: createdAt(), updatedAt: updatedAt()
+}, t => [unique().on(t.workspaceId, t.id), index().on(t.workspaceId, t.updatedAt)])

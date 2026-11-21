@@ -78,7 +78,11 @@ export function actualStage(input: { postStatus: PostStatus | null, hasDetail: b
 
 export type MoveReason = 'no_schedule' | 'not_live' | 'not_failed' | 'post_stays' | 'has_detail'
 
-/** null = an honest move; otherwise the reason picks the confirmation copy. The server never blocks a move. */
+/**
+ * null = an honest move; otherwise the reason says what is off. Only `has_detail` (drafting → raw) can be confirmed:
+ * Terjadwal, Tayang and Gagal follow the real post, so moving a card into or out of them by hand is refused
+ * (`moveBlocked`), here and on the server.
+ */
 export function moveCheck(actual: IdeaStage, to: IdeaStage): MoveReason | null {
   if (to === actual || (actual === 'raw' && to === 'drafting')) return null
   if (actual === 'scheduled' || actual === 'published' || actual === 'failed') return 'post_stays'
@@ -88,6 +92,23 @@ export function moveCheck(actual: IdeaStage, to: IdeaStage): MoveReason | null {
     case 'failed': return 'not_failed'
     default: return 'has_detail'
   }
+}
+
+/** Columns a card only reaches through its post. */
+export const POST_DRIVEN_STAGES: readonly IdeaStage[] = ['scheduled', 'published', 'failed']
+
+/** A hand move the board refuses: it would make the card say something its post doesn't. */
+export function moveBlocked(actual: IdeaStage, to: IdeaStage): boolean {
+  const reason = moveCheck(actual, to)
+  return reason !== null && reason !== 'has_detail'
+}
+
+/** The server's refusal, in plain words, per reason (`moveCheck`). */
+export const BLOCKED_MOVE_COPY: Record<Exclude<MoveReason, 'has_detail'>, string> = {
+  no_schedule: 'Kartu masuk Terjadwal sendiri setelah postingannya dijadwalkan.',
+  not_live: 'Kartu masuk Tayang sendiri setelah postingannya benar-benar tayang.',
+  not_failed: 'Kartu masuk Gagal sendiri kalau postingannya gagal tayang.',
+  post_stays: 'Kartu ini mengikuti postingannya. Ubah postingannya untuk memindahkan kartu.'
 }
 
 // ---- Wire shapes (server/core/planner/ideas.ts) ----
