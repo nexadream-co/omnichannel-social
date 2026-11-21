@@ -138,8 +138,30 @@ export interface ProcessRequest {
 export interface ProcessResult {
   assetId: string
   ref: string
-  status: 'done' | 'failed'
+  /** `progress` is a best-effort update while a video converts (`progress` 0–99); only `done` / `failed` finish it. */
+  status: 'done' | 'failed' | 'progress'
+  progress?: number
   probe?: ProbeResult
   outputs?: { variant: string, bytes: number, width: number | null, height: number | null, durationMs: number | null, codec: string | null }[]
   error?: { code: 'unreadable' | 'too_long' | 'unsupported' | 'failed', message: string }
+}
+
+/** Global ffmpeg options that make it print `key=value` progress lines on stdout (and nothing else there). */
+export const PROGRESS_ARGS = ['-progress', 'pipe:1', '-nostats']
+
+/** Milliseconds of output written so far, from one `-progress` line (`out_time_us`, or `out_time_ms`, also µs). */
+export function parseProgressLine(line: string): number | null {
+  const match = /^out_time_(?:us|ms)=(\d+)$/.exec(line.trim())
+  return match ? Math.floor(Number(match[1]) / 1000) : null
+}
+
+/**
+ * Overall progress of one job, 0–99: the download is the first 5, converting 5–90, checking and uploading the rest.
+ * 100 is never reported: only the `done` callback makes a file ready.
+ */
+export function jobPercent(stage: 'downloaded' | 'converting' | 'uploading', doneMs = 0, totalMs: number | null = null): number {
+  if (stage === 'downloaded') return 5
+  if (stage === 'uploading') return 95
+  if (!totalMs || totalMs <= 0) return 5
+  return Math.min(90, Math.max(5, Math.round(5 + (Math.min(doneMs, totalMs) / totalMs) * 85)))
 }

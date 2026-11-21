@@ -14,6 +14,8 @@ export interface UploadItem {
   bytes: number
   status: 'uploading' | 'processing' | 'ready' | 'failed'
   progress: number
+  /** Server-side video conversion, 0–99, once the processor reports it. */
+  processing?: number | null
   error: string | null
   width?: number | null
   height?: number | null
@@ -46,7 +48,7 @@ function fromView(media: MediaView): Partial<UploadItem> {
 }
 
 async function waitReady(key: string, mediaId: string) {
-  const media = await uploads.waitReady(mediaId)
+  const media = await uploads.waitReady(mediaId, percent => patch(key, { processing: percent }))
   if (!media) return
   const current = items.value.find(i => i.key === key)
   patch(key, { ...fromView(media), previewUrl: media.url ?? current?.previewUrl ?? null })
@@ -195,12 +197,21 @@ defineExpose({ edit, addFromLibrary, addFiles })
             class="text-primary"
             :label="t('composer.uploading', { percent: item.progress })"
           />
+          <!-- Converting on the server: a ring once the processor reports how far it is, the loader before that. -->
+          <ProgressRing
+            v-else-if="typeof item.processing === 'number'"
+            :value="item.processing"
+            :size="32"
+            :stroke="3"
+            class="text-success"
+            :label="t('composer.processingPercent', { percent: item.processing })"
+          />
           <UIcon
             v-else
             name="i-socialz-loader"
             class="size-6 text-primary"
           />
-          <span class="tabular-nums">{{ item.status === 'uploading' ? `${item.progress}%` : t('composer.processing') }}</span>
+          <span class="tabular-nums">{{ item.status === 'uploading' ? `${item.progress}%` : typeof item.processing === 'number' ? t('composer.processingPercent', { percent: item.processing }) : t('composer.processing') }}</span>
         </div>
         <div
           v-if="item.status === 'failed'"

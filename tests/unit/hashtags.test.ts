@@ -115,4 +115,13 @@ describe('checkTags', () => {
     expect(run(['fyp', 'viral', 'skincare']).issues.map(i => i.code)).toContain('allBroad')
     expect(run(['a', 'b', 'c', 'd'], ['facebook']).issues.map(i => i.code)).toContain('facebookMany')
   })
+  it('counts a repeated tag toward the limit, like validateTarget does', () => {
+    const five = ['sunscreen', 'kulitberminyak', 'jerawat', 'skincare', 'skincareindonesia']
+    const caption = five.map(tag => `#${tag}`).join(' ') + ' #sunscreen'
+    expect(countTags(caption)).toBe(6)
+    const result = run([...five, 'sunscreen'])
+    expect(result.tags[5]!.codes).toEqual(expect.arrayContaining(['duplicate', 'overLimit']))
+    expect(result.issues.find(i => i.code === 'overLimit')?.params).toEqual({ max: 5, count: 6 })
+    expect(validateTarget(CHANNELS.instagram, { format: 'feed', caption }, [jpeg]).map(i => i.code)).toContain('channel.tooManyHashtags')
+  })
 })

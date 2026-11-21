@@ -1,5 +1,5 @@
 import { randomBytes } from 'node:crypto'
-import { and, desc, eq, inArray, ne, sql } from 'drizzle-orm'
+import { and, desc, eq, inArray, isNull, lt, ne, or, sql } from 'drizzle-orm'
 import { uuidv7 } from 'uuidv7'
 import { z } from 'zod'
 import { editedDurationMs, editSpecSchema, isNoopSpec, type EditSpec } from '../../../shared/media/edit-spec'
@@ -46,7 +46,8 @@ export function toMediaView(row: MediaRow) {
     posterUrl: variants.poster ? storage().publicUrl(variants.poster) : null,
     sourceMediaId: row.sourceMediaId,
     editSpec: row.editSpec ?? null,
-    coverMs: row.editSpec?.coverMs ?? null
+    coverMs: row.editSpec?.coverMs ?? null,
+    progress: row.status === 'processing' ? row.processingProgress ?? null : null
   }
 }
 export type MediaView = ReturnType<typeof toMediaView>
@@ -264,7 +265,7 @@ async function submit(db: Database, row: MediaRow) {
   const posterKey = isVideo ? `${outKey}.poster.jpg` : undefined
   const contentType = isVideo ? 'video/mp4' : 'image/jpeg'
   const overlay = variantsOf(row).overlay
-  await db.update(mediaAssets).set({ processorRef: ref, processorSubmittedAt: new Date(), variants: { ...variantsOf(row), pendingKey: outKey, posterKey }, updatedAt: new Date() }).where(eq(mediaAssets.id, row.id))
+  await db.update(mediaAssets).set({ processorRef: ref, processorSubmittedAt: new Date(), processingProgress: null, variants: { ...variantsOf(row), pendingKey: outKey, posterKey }, updatedAt: new Date() }).where(eq(mediaAssets.id, row.id))
   const output = async (variant: string, key: string, type: string) => {
     const put = await storage().presignPut({ key, contentType: type, contentLength: 0, ttlSeconds: 3600 })
     return { variant, putUrl: put.url, putHeaders: put.headers, contentType: type }
@@ -308,6 +309,7 @@ export const processMediaJob: JobHandler = async (job, ctx) => {
 /** The signed callback from the processor. Applies the result only if the submission still matches. */
 export async function applyMediaResult(ctx: Pick<CoreContext, 'db' | 'log'>, result: ProcessResult) {
   const db = ctx.db as Database
+  if (result.status === 'progress') return applyMediaProgress(db, result)
   await db.insert(systemHeartbeat).values({ name: 'media_processor', beatAt: new Date(), info: { assetId: result.assetId, status: result.status } })
     .onConflictDoUpdate({ target: systemHeartbeat.name, set: { beatAt: new Date(), info: { assetId: result.assetId, status: result.status } } })
   const [row] = await db.select().from(mediaAssets).where(eq(mediaAssets.id, result.assetId)).limit(1)
@@ -335,6 +337,20 @@ export async function applyMediaResult(ctx: Pick<CoreContext, 'db' | 'log'>, res
     error: null,
     updatedAt: new Date()
   }).where(match).returning({ id: mediaAssets.id })
+  return { applied: rows.length > 0 }
+}
+
+/**
+ * A progress nudge: one guarded write, only forward, only for the submission still running. Late or out-of-order
+ * nudges (or ones after done / failed) change nothing.
+ */
+async function applyMediaProgress(db: Database, result: ProcessResult) {
+  const progress = Math.round(Number(result.progress))
+  if (!Number.isFinite(progress) || progress < 0) return { applied: false }
+  const value = Math.min(99, progress)
+  const rows = await db.update(mediaAssets).set({ processingProgress: value })
+    .where(and(eq(mediaAssets.id, result.assetId), eq(mediaAssets.status, 'processing'), eq(mediaAssets.processorRef, result.ref), or(isNull(mediaAssets.processingProgress), lt(mediaAssets.processingProgress, value))))
+    .returning({ id: mediaAssets.id })
   return { applied: rows.length > 0 }
 }
 

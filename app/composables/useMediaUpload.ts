@@ -46,11 +46,15 @@ export function useMediaUpload() {
     return mediaId
   }
 
-  /** Polls until the server has finished (1 s at first, then every 3 s; videos can take minutes). */
-  async function waitReady(mediaId: string) {
+  /**
+   * Polls until the server has finished (1 s at first, then every 3 s; videos can take minutes). `onProgress` gets the
+   * video conversion percentage when the processor has reported one.
+   */
+  async function waitReady(mediaId: string, onProgress?: (percent: number) => void) {
     for (let attempt = 0; attempt < 600; attempt++) {
       const media = await apiFetch<MediaView>(`/api/app/media/${mediaId}`)
       if (media.status === 'ready' || media.status === 'failed') return media
+      if (typeof media.progress === 'number') onProgress?.(media.progress)
       await new Promise(resolve => setTimeout(resolve, attempt < 10 ? 1000 : 3000))
     }
     return null

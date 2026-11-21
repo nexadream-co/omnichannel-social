@@ -12,6 +12,7 @@ import type { SuccessChoice } from '~/components/ComposeSuccessSheet.vue'
 import type { UploadItem } from '~/components/MediaUploader.vue'
 import { slotLabel } from '~/utils/compose-when'
 import type { ComposeDraft } from '~/utils/compose-draft'
+import { newAccountIds, rememberComposeReturn, takeComposeReturn } from '~/utils/compose-return'
 import type { LinkRow } from '~/pages/app/links/index.vue'
 
 interface Account { id: string, platform: Platform, username: string | null, avatarUrl: string | null, status: string }
@@ -127,6 +128,16 @@ async function restoreDraft() {
   if (draft.slot.date && new Date(toZonedIso(draft.slot.date, draft.slot.time, tz.value)).getTime() > Date.now()) slot.value = { ...draft.slot }
   media.value = await readyMedia(draft.mediaIds)
 }
+// "Tambah akun": Akun Sosial brings the creator back here once the account is connected. A blank composer keeps its
+// work in the local draft (restored without asking on the way back); any other composer asks "Simpan draf?" on leaving.
+const canManageAccounts = computed(() => auth.hasAbility('accounts.manage'))
+function goAddAccount() {
+  const fresh = isFreshComposer({ edit: editId, duplicate: duplicateId, idea: ideaId, media: mediaParam })
+  rememberComposeReturn(route.fullPath, accounts.value.map(a => a.id))
+  if (fresh) allowNextLeave()
+  return navigateTo(localePath('/app/accounts'))
+}
+
 function discardDraft() {
   pendingDraft.value = null
   draftStore.clear()
@@ -162,6 +173,16 @@ onMounted(async () => {
     media.value = await readyMedia(mediaParam.split(',').filter(Boolean).slice(0, 10))
   } else {
     pendingDraft.value = draftStore.read()
+  }
+  // Back from "Tambah akun": the draft comes back as it was, plus the accounts connected meanwhile.
+  const back = takeComposeReturn()
+  if (back) {
+    if (pendingDraft.value) await restoreDraft()
+    const added = newAccountIds(activeAccounts.value.map(a => a.id), back.knownAccountIds)
+    if (added.length) {
+      selected.value = [...new Set([...selected.value, ...added])]
+      toast.add({ title: t('composer.accountAdded', { count: added.length }), icon: 'i-lucide-circle-check', color: 'success' })
+    }
   }
   loadedFingerprint.value = fingerprint.value
   loading.value = false
@@ -447,9 +468,9 @@ function warn(key: string) {
         {{ t('composer.noAccounts') }}
       </p>
       <UButton
-        :to="localePath('/app/accounts')"
         :label="t('composer.connect')"
         class="mt-4"
+        @click="goAddAccount"
       />
     </UCard>
 
@@ -515,16 +536,27 @@ function warn(key: string) {
                     />
                     <span class="max-w-36 truncate opacity-70">{{ account.username || PLATFORM_META[account.platform].name }}</span>
                     <UButton
-                      :to="localePath('/app/accounts')"
                       size="xs"
                       color="warning"
                       variant="solid"
                       class="rounded-full"
                       :label="t('composer.reconnect')"
-                      @click="allowNextLeave()"
+                      @click="goAddAccount"
                     />
                   </div>
                 </template>
+                <button
+                  v-if="canManageAccounts"
+                  type="button"
+                  class="flex items-center gap-1.5 rounded-full border border-dashed border-accented px-3 py-1.5 text-sm text-muted motion-safe:transition-colors hover:border-primary hover:text-primary focus-visible:outline-2 focus-visible:outline-primary"
+                  @click="goAddAccount"
+                >
+                  <UIcon
+                    name="i-lucide-plus"
+                    class="size-4"
+                  />
+                  {{ t('composer.addAccount') }}
+                </button>
               </div>
             </div>
 

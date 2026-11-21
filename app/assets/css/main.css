@@ -135,6 +135,12 @@
   .fade-enter-from,
   .fade-leave-to { opacity: 0; }
 
+  /* <Transition name="banner">: a strip under the top bar folds away (TrialBanner). */
+  .banner-enter-active,
+  .banner-leave-active { transition: opacity 200ms ease, max-height 250ms ease, padding 250ms ease; overflow: hidden; max-height: 6rem; }
+  .banner-enter-from,
+  .banner-leave-to { opacity: 0; max-height: 0; padding-block: 0; }
+
   .animate-nav-pop { animation: nav-pop 180ms ease-out; }
   .animate-shake { animation: shake-x 240ms ease-in-out; }
   .animate-drag-lift { animation: drag-lift 160ms ease-out; }

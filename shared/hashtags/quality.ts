@@ -67,10 +67,10 @@ export function checkTags(input: { tags: string[], caption: string, platforms: P
     if (!isValidTagBody(tag)) codes.push('invalidChars')
     else if (/^\d+$/.test(tag)) codes.push('numbersOnly')
     if (tag.length > MAX_TAG_LENGTH) codes.push('tooLong')
-    if (seen.has(key)) {
-      codes.push('duplicate')
-    } else if (linked) {
-      seen.add(key)
+    if (seen.has(key)) codes.push('duplicate')
+    else if (linked) seen.add(key)
+    // Every linked tag counts toward the limit, a repeated one too: that's how validateTarget (and the server) count.
+    if (linked) {
       linkedCount++
       if (limit !== undefined && linkedCount > limit) codes.push('overLimit')
     }
@@ -85,7 +85,7 @@ export function checkTags(input: { tags: string[], caption: string, platforms: P
 
   const issues: SetIssue[] = []
   const count = seen.size
-  if (limit !== undefined && count > limit) issues.push({ code: 'overLimit', level: 'error', params: { max: limit, count } })
+  if (limit !== undefined && linkedCount > limit) issues.push({ code: 'overLimit', level: 'error', params: { max: limit, count: linkedCount } })
   if (platforms.includes('threads') && platforms.length > 1 && count > 1) issues.push({ code: 'threadsOneTag', level: 'warning' })
   if (platforms.includes('facebook') && count > FACEBOOK_COMFORT) issues.push({ code: 'facebookMany', level: 'warning', params: { max: FACEBOOK_COMFORT } })
   const known = [...seen].map(key => byTag.get(key)).filter(Boolean)

@@ -2,6 +2,7 @@
 import { PLATFORM_META } from '#shared/channels/registry'
 import type { Platform } from '#shared/channels/types'
 import { SOCIAL_ACCOUNT_STATUS_META } from '#shared/utils/status'
+import { forgetComposeReturn, peekComposeReturn, type ComposeReturn } from '~/utils/compose-return'
 
 interface Account { id: string, platform: Platform, username: string | null, avatarUrl: string | null, status: string, createdAt: string, upcomingPosts: number, activeRules: number }
 interface Channels { items: Account[], platforms: { platform: Platform, configured: boolean }[] }
@@ -21,11 +22,23 @@ const data = ref<Channels | null>(null)
 const selectionOpen = ref(false)
 const justConnected = ref<{ platform: string } | null>(null)
 const avatars = ref<Record<string, HTMLElement | null>>({})
+// Came from "Tambah akun" in Buat Postingan: a way back, and the trip back happens by itself after connecting.
+const composeReturn = ref<ComposeReturn | null>(null)
+function backToCompose() {
+  const target = composeReturn.value
+  composeReturn.value = null
+  return target ? navigateTo(target.path) : undefined
+}
+function stayHere() {
+  composeReturn.value = null
+  forgetComposeReturn()
+}
 async function load() {
   data.value = await apiFetch<Channels>('/api/app/channels', { query: { usage: 1 } })
 }
 onMounted(async () => {
   await load()
+  composeReturn.value = peekComposeReturn()
   selectionOpen.value = Boolean(auth.workspace.value?.needsAccountSelection)
   // Results of the OAuth round trip arrive as query params (the callback is a browser redirect).
   const error = route.query.error ? String(route.query.error) : null
@@ -36,7 +49,8 @@ onMounted(async () => {
   else if (error) toast.add({ title: t(`accounts.error.${error}`, t('accounts.error.unknown')), color: 'error', duration: 8000 })
   else if (connected) {
     const first = moments.celebrate('firstAccountConnected', { params: { platform: platform || t('moments.accountFallback') }, platformIcon: meta?.icon, action: { to: localePath('/app/compose') } })
-    if (!first) toast.add({ title: t('accounts.connected', { count: connected, platform }), color: 'success' })
+    // Going back to Buat Postingan: the composer says it once ("…sudah dipilih").
+    if (!first && !composeReturn.value) toast.add({ title: t('accounts.connected', { count: connected, platform }), color: 'success' })
     if (first) {
       justConnected.value = { platform }
       const newest = [...(data.value?.items ?? [])].sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0]
@@ -44,6 +58,10 @@ onMounted(async () => {
       const el = newest ? avatars.value[newest.id] : null
       if (el) spark(el)
     }
+  }
+  if (connected && composeReturn.value) {
+    await backToCompose()
+    return
   }
   if (error || connected) await navigateTo({ query: {} }, { replace: true })
 })
@@ -95,6 +113,17 @@ async function disconnect(account: Account) {
       icon="i-lucide-party-popper"
       :title="t('accounts.firstConnected', { platform: justConnected.platform })"
       :actions="[{ label: t('accounts.firstPost'), to: localePath('/app/compose'), color: 'success' }]"
+    />
+
+    <UAlert
+      v-if="composeReturn && canManage"
+      color="primary"
+      variant="subtle"
+      icon="i-lucide-pen-line"
+      :title="t('accounts.composeReturn')"
+      close
+      :actions="[{ label: t('accounts.composeReturnBack'), icon: 'i-lucide-arrow-left', color: 'primary', variant: 'outline', size: 'xs', onClick: backToCompose }]"
+      @update:open="stayHere"
     />
 
     <UAlert

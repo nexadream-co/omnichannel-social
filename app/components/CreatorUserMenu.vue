@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import type { DropdownMenuItem } from '@nuxt/ui'
 
-defineProps<{ collapsed?: boolean }>()
+/** `sidebar`: the card at the bottom of the desktop rail. `navbar`: the avatar in the phone / tablet top bar. */
+const props = withDefaults(defineProps<{ collapsed?: boolean, placement?: 'navbar' | 'sidebar' }>(), { placement: 'navbar' })
 
 const { t, locale, locales, setLocale } = useI18n()
 const localePath = useLocalePath()
@@ -10,6 +11,20 @@ const auth = useCreatorAuth()
 const entitlements = useEntitlements()
 
 const user = computed(() => auth.profile.value?.user)
+const subscription = computed(() => auth.profile.value?.subscription)
+const planLine = computed(() => {
+  const sub = subscription.value
+  if (!sub) return user.value?.email ?? ''
+  return sub.status === 'trialing' ? t('nav.planTrial', { plan: sub.planName }) : sub.planName
+})
+const inSidebar = computed(() => props.placement === 'sidebar')
+// The rail card opens upward (or to the right when the rail is collapsed); the top bar avatar opens downward.
+const content = computed(() => {
+  if (!inSidebar.value) return { align: 'end' as const, collisionPadding: 12 }
+  return props.collapsed
+    ? { side: 'right' as const, align: 'end' as const, sideOffset: 8, collisionPadding: 12 }
+    : { side: 'top' as const, align: 'start' as const, sideOffset: 6, collisionPadding: 12 }
+})
 
 // Fixed account chrome, grouped under captions (docs/blueprint/13 §5). A caption with no rows is not drawn.
 const items = computed<DropdownMenuItem[][]>(() => {
@@ -64,8 +79,8 @@ const items = computed<DropdownMenuItem[][]>(() => {
 <template>
   <UDropdownMenu
     :items="items"
-    :content="{ align: 'end', collisionPadding: 12 }"
-    :ui="{ content: 'w-60' }"
+    :content="content"
+    :ui="{ content: inSidebar && !collapsed ? 'w-(--reka-dropdown-menu-trigger-width) min-w-60' : 'w-60' }"
   >
     <template #locked-trailing>
       <UIcon
@@ -73,7 +88,40 @@ const items = computed<DropdownMenuItem[][]>(() => {
         class="size-4 text-muted"
       />
     </template>
+    <button
+      v-if="inSidebar"
+      type="button"
+      :aria-label="user?.name"
+      class="group/user flex w-full min-w-0 items-center gap-2.5 rounded-lg p-1.5 text-left motion-safe:transition-colors hover:bg-elevated/70 data-[state=open]:bg-elevated focus-visible:outline-2 focus-visible:outline-primary"
+      :class="collapsed ? 'justify-center' : ''"
+    >
+      <span class="relative shrink-0">
+        <UAvatar
+          :src="user?.image ?? undefined"
+          :alt="user?.name"
+          size="md"
+          class="ring-2 ring-primary/20 motion-safe:transition-shadow group-hover/user:ring-primary/50"
+        />
+        <span
+          class="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full bg-success ring-2 ring-(--ui-bg)"
+          aria-hidden="true"
+        />
+      </span>
+      <span
+        v-if="!collapsed"
+        class="min-w-0 flex-1 leading-tight"
+      >
+        <span class="block truncate text-sm font-semibold text-highlighted">{{ user?.name }}</span>
+        <span class="block truncate text-xs text-muted">{{ planLine }}</span>
+      </span>
+      <UIcon
+        v-if="!collapsed"
+        name="i-lucide-chevrons-up-down"
+        class="size-4 shrink-0 text-dimmed motion-safe:transition-colors group-hover/user:text-default"
+      />
+    </button>
     <UButton
+      v-else
       color="neutral"
       variant="ghost"
       :square="collapsed"

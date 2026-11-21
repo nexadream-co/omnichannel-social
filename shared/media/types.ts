@@ -17,6 +17,8 @@ export interface MediaView {
   sourceMediaId: string | null
   editSpec: EditSpec | null
   coverMs: number | null
+  /** 0–99 while a video converts on the server, when the processor has said; null otherwise. */
+  progress?: number | null
 }
 
 export interface MediaList {

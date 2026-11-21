@@ -38,11 +38,20 @@ const { t } = useI18n()
       v-if="media.status === 'processing'"
       class="absolute inset-0 bg-default/70 flex flex-col items-center justify-center gap-1 text-xs text-default pointer-events-none"
     >
+      <ProgressRing
+        v-if="typeof media.progress === 'number'"
+        :value="media.progress"
+        :size="28"
+        :stroke="3"
+        class="text-success"
+        :label="t('composer.processingPercent', { percent: media.progress })"
+      />
       <UIcon
+        v-else
         name="i-socialz-loader"
         class="size-5"
       />
-      {{ t('composer.processing') }}
+      <span class="tabular-nums">{{ typeof media.progress === 'number' ? t('composer.processingPercent', { percent: media.progress }) : t('composer.processing') }}</span>
     </div>
     <span
       v-if="selected"

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { NavigationMenuItem } from '@nuxt/ui'
+import { useResizeObserver } from '@vueuse/core'
 import { CREATOR_NAV, type CreatorNavItem } from '#shared/utils/menus'
 
 const { t } = useI18n()
@@ -47,7 +48,9 @@ const railItems = computed<NavigationMenuItem[]>(() => visibleNav.value
     to: localePath(item.to),
     exact: item.to === '/app',
     active: isActive(item),
-    trailingIcon: lockIcon(item)
+    trailingIcon: lockIcon(item),
+    // The sliding pill below draws the active background, so the link's own one is turned off.
+    class: isActive(item) ? 'before:bg-transparent!' : undefined
   })))
 
 const bottomItems = computed(() => visibleNav.value.filter(item => item.bottomNav))
@@ -75,6 +78,24 @@ const onPath = (to: string) => to === '/app' ? route.path === localePath(to) : r
 function isActive(item: CreatorNavItem) {
   return onPath(item.to) || CREATOR_NAV.some(tab => tab.hub === item.key && onPath(tab.to))
 }
+// One pill slides between rail entries instead of each entry lighting up on its own (#5).
+const railMenu = ref<HTMLElement | null>(null)
+const pill = ref<{ top: number, height: number } | null>(null)
+const pillReady = ref(false)
+function placePill() {
+  const index = railItems.value.findIndex(item => item.active)
+  const link = index < 0 ? null : railMenu.value?.querySelectorAll<HTMLElement>('nav > div > ul > li > a, nav > ul > li > a')[index]
+  pill.value = link ? { top: link.offsetTop, height: link.offsetHeight } : null
+}
+watch([() => route.path, railItems], () => nextTick(placePill), { flush: 'post' })
+onMounted(() => {
+  placePill()
+  // First paint lands without sliding in from the top.
+  requestAnimationFrame(() => {
+    pillReady.value = true
+  })
+})
+useResizeObserver(railMenu, placePill)
 </script>
 
 <template>
@@ -88,7 +109,7 @@ function isActive(item: CreatorNavItem) {
       collapsible
       :default-size="16"
       :collapsed-size="4.5"
-      :ui="{ root: 'hidden lg:flex', footer: 'border-t border-default flex-col items-stretch' }"
+      :ui="{ root: 'hidden lg:flex overflow-hidden motion-safe:transition-[width] motion-safe:duration-300 motion-safe:ease-out', body: 'overflow-x-hidden', footer: 'border-t border-default flex-col items-stretch gap-2 py-3' }"
     >
       <template #header="{ collapsed }">
         <NuxtLink
@@ -114,12 +135,26 @@ function isActive(item: CreatorNavItem) {
           block
           class="mb-2"
         />
-        <UNavigationMenu
-          :items="railItems"
-          orientation="vertical"
-          :collapsed="collapsed"
-          tooltip
-        />
+        <div
+          ref="railMenu"
+          class="relative"
+        >
+          <span
+            v-if="pill"
+            aria-hidden="true"
+            class="absolute inset-x-0 top-0 rounded-md bg-elevated motion-safe:ease-[cubic-bezier(0.34,1.3,0.64,1)] after:absolute after:left-0 after:top-1/2 after:h-4 after:w-1 after:-translate-y-1/2 after:rounded-full after:bg-primary"
+            :class="pillReady ? 'motion-safe:transition-[transform,height] motion-safe:duration-300' : ''"
+            :style="{ transform: `translateY(${pill.top}px)`, height: `${pill.height}px` }"
+          />
+          <UNavigationMenu
+            :items="railItems"
+            orientation="vertical"
+            :collapsed="collapsed"
+            tooltip
+            class="relative isolate"
+            :ui="{ linkLeadingIcon: 'motion-safe:transition-transform motion-safe:duration-200 group-hover:scale-110' }"
+          />
+        </div>
         <RailAccounts :collapsed="collapsed" />
       </template>
 
@@ -141,24 +176,18 @@ function isActive(item: CreatorNavItem) {
             class="justify-start"
           />
         </UTooltip>
-        <UTooltip
-          :text="t('nav.help')"
-          :disabled="!collapsed"
-          :content="{ side: 'right' }"
+        <div
+          class="flex gap-1"
+          :class="collapsed ? 'flex-col-reverse items-center' : 'items-center'"
         >
-          <UButton
-            :to="localePath('/app/help')"
-            icon="i-lucide-life-buoy"
-            :label="collapsed ? undefined : t('nav.help')"
-            :aria-label="t('nav.help')"
-            color="neutral"
-            variant="ghost"
-            :square="collapsed"
-            block
-            class="justify-start"
-          />
-        </UTooltip>
-        <UDashboardSidebarCollapse />
+          <div class="min-w-0 flex-1">
+            <CreatorUserMenu
+              placement="sidebar"
+              :collapsed="collapsed"
+            />
+          </div>
+          <UDashboardSidebarCollapse />
+        </div>
       </template>
     </UDashboardSidebar>
 
@@ -190,7 +219,10 @@ function isActive(item: CreatorNavItem) {
           </template>
           <template #right>
             <NotificationMenu audience="creator" />
-            <CreatorUserMenu />
+            <!-- Desktop: the account card sits at the bottom of the rail instead (#4). -->
+            <div class="lg:hidden">
+              <CreatorUserMenu />
+            </div>
           </template>
         </UDashboardNavbar>
         <ImpersonationBanner />

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { CHANNELS, PLATFORM_META } from '#shared/channels/registry'
 import type { Platform } from '#shared/channels/types'
-import { extractRawTags, extractTags, insertTags, keepTags, normalizeTag, removeTag } from '#shared/hashtags/parse'
+import { countTags, extractRawTags, extractTags, insertTags, keepTags, normalizeTag, removeTag } from '#shared/hashtags/parse'
 import { checkTags, tagLimitFor, type TagCheck } from '#shared/hashtags/quality'
 import { suggestFromLibrary } from '#shared/hashtags/relevance'
 import { activityLevel, type LibraryTag, type TagActivity, type TagNiche } from '#shared/hashtags/types'
@@ -52,6 +52,14 @@ const sharing = computed(() => props.platforms.length > 1 ? props.platforms.filt
 const limit = computed(() => tagLimitFor(sharing.value))
 const limitPlatform = computed(() => sharing.value.find(p => CHANNELS[p].maxHashtags === limit.value))
 const inCaption = computed(() => new Set(extractTags(caption.value).map(normalizeTag)))
+// Counted like the platform and validateTarget count them: every linked tag, a repeated one too.
+const tagCount = computed(() => countTags(caption.value))
+/** Room left under the strictest platform's limit (Instagram 5); Infinity when no chosen platform has one. */
+const room = computed(() => limit.value === undefined ? Infinity : Math.max(0, limit.value - tagCount.value))
+const limitName = computed(() => limitPlatform.value ? PLATFORM_META[limitPlatform.value].name : '')
+function tellFull() {
+  toast.add({ title: t('hashtags.full', { max: limit.value ?? 0, platform: limitName.value }), icon: 'i-lucide-hash', color: 'warning' })
+}
 
 /** The tag that hurts the most is the one to drop first: worst level wins, the last one written on a tie. */
 const worstTag = computed(() => {
@@ -73,8 +81,15 @@ function reasons(check: Pick<TagCheck, 'codes'> & { linked?: string }): string[]
   return check.codes.map(code => code === 'invalidChars' && !check.linked ? t('hashtags.code.invalidCharsNone') : t(`hashtags.code.${code}`, { linked: check.linked ?? '' }))
 }
 
-function add(tag: string) {
+/** Adds a tag unless the caption already has as many as the strictest platform allows (it explains instead). */
+function add(tag: string): boolean {
+  if (inCaption.value.has(normalizeTag(tag))) return true
+  if (room.value <= 0) {
+    tellFull()
+    return false
+  }
   caption.value = insertTags(caption.value, [tag])
+  return true
 }
 function remove(tag: string) {
   caption.value = removeTag(caption.value, tag)
@@ -111,7 +126,7 @@ const ownCheck = computed(() => {
 })
 function addOwn() {
   if (!ownCheck.value || ownCheck.value.level === 'error') return
-  add(ownCheck.value.tag)
+  if (!add(ownCheck.value.tag)) return
   toast.add({ title: t('hashtags.added', { tag: ownCheck.value.tag }), color: 'success' })
   own.value = ''
 }
@@ -163,8 +178,14 @@ async function loadSets() {
 watch([open, tab], ([isOpen, current]) => {
   if (isOpen && current === 'sets' && !sets.value) loadSets()
 })
+/** A saved set may hold up to 30 tags (Facebook has no limit): only as many as fit go in, and it says so. */
 function useSet(set: HashtagSet) {
-  caption.value = insertTags(caption.value, set.tags)
+  const fresh = set.tags.filter(tag => !inCaption.value.has(normalizeTag(tag.replace(/^#+/, ''))))
+  if (!fresh.length) return
+  if (room.value <= 0) return tellFull()
+  const fits = fresh.slice(0, room.value === Infinity ? undefined : room.value)
+  caption.value = insertTags(caption.value, fits)
+  if (fits.length < fresh.length) toast.add({ title: t('hashtags.setTrimmed', { used: fits.length, left: fresh.length - fits.length, max: limit.value ?? 0, platform: limitName.value }), icon: 'i-lucide-hash', color: 'warning' })
 }
 async function saveSet() {
   savingSet.value = true
@@ -287,9 +308,9 @@ async function deleteSet(set: HashtagSet) {
             <span
               v-if="limit !== undefined"
               class="text-xs"
-              :class="inCaption.size > limit ? (attempted ? 'text-error' : 'text-warning') : 'text-muted'"
+              :class="tagCount > limit ? (attempted ? 'text-error' : 'text-warning') : tagCount === limit ? 'text-success' : 'text-muted'"
             >
-              {{ t('hashtags.count', { count: inCaption.size, max: limit }) }}
+              {{ t('hashtags.count', { count: tagCount, max: limit }) }}
               <template v-if="limitPlatform">{{ t('hashtags.countFor', { platform: PLATFORM_META[limitPlatform].name }) }}</template>
             </span>
           </div>

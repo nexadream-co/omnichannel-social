@@ -102,6 +102,26 @@ describe('media editor', () => {
     expect(view.posterUrl).toMatch(/\.poster\.jpg$/)
   })
 
+  it('shows conversion progress, only forward and only for the running submission', async () => {
+    const { mediaId } = await createVideoEdit(ctx, videoId, { spec: { ...defaultSpec('video'), mute: true }, hasOverlay: false })
+    await run()
+    const { ref } = processor.submitted.at(-1)!
+    expect((await getMedia(ctx, mediaId)).progress).toBeNull()
+    expect((await applyMediaResult(testContext(), { assetId: mediaId, ref, status: 'progress', progress: 40 })).applied).toBe(true)
+    expect((await getMedia(ctx, mediaId)).progress).toBe(40)
+    // A late nudge, a stale submission or a bogus number changes nothing.
+    expect((await applyMediaResult(testContext(), { assetId: mediaId, ref, status: 'progress', progress: 20 })).applied).toBe(false)
+    expect((await applyMediaResult(testContext(), { assetId: mediaId, ref: 'old-ref', status: 'progress', progress: 80 })).applied).toBe(false)
+    expect((await applyMediaResult(testContext(), { assetId: mediaId, ref, status: 'progress', progress: Number.NaN })).applied).toBe(false)
+    // 100 is the done callback's job: progress stops at 99.
+    await applyMediaResult(testContext(), { assetId: mediaId, ref, status: 'progress', progress: 140 })
+    expect((await getMedia(ctx, mediaId)).progress).toBe(99)
+    await applyMediaResult(testContext(), { assetId: mediaId, ref, status: 'done', outputs: [{ variant: 'main', bytes: 1, width: 1080, height: 1920, durationMs: 10_000, codec: 'h264' }] })
+    const ready = await getMedia(ctx, mediaId)
+    expect(ready).toMatchObject({ status: 'ready', progress: null })
+    expect((await applyMediaResult(testContext(), { assetId: mediaId, ref, status: 'progress', progress: 99 })).applied).toBe(false)
+  })
+
   it('waits for the overlay PNG before rendering', async () => {
     const { mediaId, overlayUploadUrl } = await createVideoEdit(ctx, videoId, { spec: defaultSpec('video'), hasOverlay: true })
     expect(overlayUploadUrl).toContain('.overlay.png')
