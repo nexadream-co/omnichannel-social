@@ -289,7 +289,7 @@ async function makeIdeas() {
         >
           <div
             v-if="canManage"
-            class="w-full max-w-sm rounded-lg border-2 border-dashed border-default px-4 py-5 text-center text-sm text-muted"
+            class="w-full max-w-sm rounded-2xl bg-(--app-tint) px-4 py-5 text-center text-sm text-muted"
           >
             <UIcon
               name="i-lucide-image-plus"

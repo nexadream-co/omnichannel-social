@@ -37,7 +37,7 @@ async function resend() {
         :name="status === 'done' ? 'i-lucide-badge-check' : 'i-lucide-mail'"
         class="size-12 text-primary mx-auto"
       />
-      <h1 class="text-xl font-semibold text-highlighted">
+      <h1 class="app-display text-2xl sm:text-3xl text-highlighted">
         {{ t('auth.verifyTitle') }}
       </h1>
       <p class="text-muted">

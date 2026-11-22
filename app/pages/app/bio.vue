@@ -520,8 +520,8 @@ const previewOpen = ref(false)
                     v-for="(preset, key) in BIO_THEMES"
                     :key="key"
                     type="button"
-                    class="rounded-lg border-2 p-2 text-left transition-colors"
-                    :class="form.theme === key ? 'border-primary' : 'border-default'"
+                    class="rounded-xl p-2 text-left transition-colors"
+                    :class="form.theme === key ? 'bg-primary/15 font-semibold' : 'bg-elevated/70 hover:bg-elevated'"
                     :aria-pressed="form.theme === key"
                     @click="pickTheme(key, $event)"
                   >
@@ -818,7 +818,7 @@ const previewOpen = ref(false)
 
       <button
         type="button"
-        class="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] left-1/2 z-30 flex -translate-x-1/2 items-center gap-2 rounded-full bg-inverted px-4 py-2 text-sm font-medium text-inverted shadow-lg lg:hidden"
+        class="fixed bottom-[calc(6.75rem+env(safe-area-inset-bottom))] left-1/2 z-30 flex -translate-x-1/2 items-center gap-2 rounded-full bg-inverted px-4 py-2 text-sm font-medium text-inverted shadow-lg lg:hidden"
         @click="previewOpen = true"
       >
         <UIcon

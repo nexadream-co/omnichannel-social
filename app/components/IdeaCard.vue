@@ -43,7 +43,7 @@ const menu = computed<DropdownMenuItem[][]>(() => {
 <template>
   <div
     ref="el"
-    class="group rounded-md border border-dashed border-accented bg-default p-2.5 flex gap-2.5 select-none [-webkit-touch-callout:none] motion-safe:transition-[opacity,transform]"
+    class="group rounded-xl bg-default shadow-(--app-shadow-card) p-2.5 flex gap-2.5 select-none [-webkit-touch-callout:none] motion-safe:transition-[opacity,transform]"
     :class="lifted ? 'opacity-30 scale-95' : draggable ? 'cursor-grab active:cursor-grabbing touch-pan-y' : ''"
   >
     <SmartImage

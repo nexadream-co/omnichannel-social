@@ -55,7 +55,7 @@ const positions = computed(() => WATERMARK_POSITIONS.map(value => ({ value, labe
     </template>
     <div class="space-y-4">
       <div class="flex flex-wrap items-center gap-3">
-        <div class="size-16 rounded-md border border-default bg-elevated flex items-center justify-center p-1.5">
+        <div class="size-16 rounded-xl bg-elevated flex items-center justify-center p-1.5">
           <img
             v-if="watermark"
             :src="watermark.url"

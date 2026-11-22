@@ -266,7 +266,7 @@ async function openIdeaById(id: string) {
 
         <div
           v-if="weekEmpty"
-          class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 rounded-md border border-dashed border-primary/40 bg-primary/5 p-3 mb-4"
+          class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 rounded-2xl bg-primary/10 p-3 mb-4"
         >
           <p class="flex-1 text-sm text-default flex items-center gap-2">
             <UIcon

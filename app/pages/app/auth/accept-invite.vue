@@ -58,7 +58,7 @@ async function accept() {
 <template>
   <UCard>
     <div class="space-y-6">
-      <h1 class="text-xl font-semibold text-highlighted">
+      <h1 class="app-display text-2xl sm:text-3xl text-highlighted">
         {{ t('invite.title') }}
       </h1>
       <UAlert

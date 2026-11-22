@@ -70,8 +70,8 @@ const label = computed(() => {
       aria-hidden="true"
     >
       <div
-        class="w-56 rounded-lg bg-default shadow-xl ring-1 ring-default p-2 flex gap-2 motion-safe:animate-drag-lift"
-        :class="preview.kind === 'idea' ? 'border border-dashed border-accented' : ''"
+        class="w-56 rounded-xl bg-default shadow-(--app-shadow-lift) p-2 flex gap-2 motion-safe:animate-drag-lift"
+        :class="preview.kind === 'idea' ? 'border-l-4 border-l-primary/40' : ''"
         :style="{ transformOrigin: preview.touch ? '7rem calc(100% + 28px)' : '20px 18px', transform: 'rotate(var(--drag-tilt, 0deg)) scale(var(--drag-scale, 1))' }"
       >
         <div

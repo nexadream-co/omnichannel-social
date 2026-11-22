@@ -88,7 +88,7 @@ async function remove(template: PostTemplate) {
   >
     <template #body>
       <form
-        class="rounded-lg border border-dashed border-accented p-3 space-y-2"
+        class="rounded-xl bg-primary/8 p-3 space-y-2"
         @submit.prevent="save"
       >
         <p class="text-sm font-medium text-highlighted">

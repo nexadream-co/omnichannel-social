@@ -85,7 +85,7 @@ async function pick(idea: IdeaDetail) {
             >
               <button
                 type="button"
-                class="w-full text-left rounded-md border border-dashed border-accented px-3 py-2.5 hover:bg-elevated hover:border-primary/50 motion-safe:transition-colors flex items-center gap-2"
+                class="w-full text-left rounded-xl bg-elevated/70 px-3 py-2.5 hover:bg-primary/10 motion-safe:transition-colors flex items-center gap-2"
                 @click="pick(idea)"
               >
                 <UIcon

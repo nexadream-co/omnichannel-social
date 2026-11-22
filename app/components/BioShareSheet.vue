@@ -34,7 +34,7 @@ const display = computed(() => props.url.replace(/^https?:\/\//, ''))
   >
     <template #body>
       <div class="space-y-5">
-        <div class="mx-auto w-full max-w-60 rounded-xl border border-default bg-default p-2">
+        <div class="mx-auto w-full max-w-60 rounded-xl bg-default p-2 shadow-(--app-shadow-card)">
           <img
             v-if="qr"
             :src="qr"

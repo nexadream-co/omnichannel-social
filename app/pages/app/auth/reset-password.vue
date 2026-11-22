@@ -30,7 +30,7 @@ async function onSubmit() {
 <template>
   <UCard>
     <div class="space-y-6">
-      <h1 class="text-xl font-semibold text-highlighted">
+      <h1 class="app-display text-2xl sm:text-3xl text-highlighted">
         {{ t('auth.resetTitle') }}
       </h1>
       <UAlert

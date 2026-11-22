@@ -49,7 +49,7 @@ function fromProduct(item: { priceIdr?: number | null, title?: string | null }) 
         v-for="sticker in STICKERS"
         :key="sticker.id"
         type="button"
-        class="h-12 rounded-md border border-default hover:border-accented flex items-center justify-center px-1"
+        class="h-12 rounded-lg bg-(--app-tint) hover:bg-(--app-tint-strong) flex items-center justify-center px-1"
         @click="emit('add', sticker.id)"
       >
         <span

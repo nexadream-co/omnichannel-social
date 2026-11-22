@@ -9,7 +9,7 @@ const { t } = useI18n()
     aria-hidden="true"
   >
     <div class="absolute inset-x-6 inset-y-2 rounded-full bg-primary/15 blur-2xl" />
-    <div class="art-float absolute top-0 left-0 flex items-center gap-2 rounded-xl border border-default bg-default p-2 shadow-lg">
+    <div class="art-float absolute top-0 left-0 flex items-center gap-2 rounded-xl bg-default p-2 shadow-lg">
       <span class="flex size-7 shrink-0 items-center justify-center rounded-lg bg-primary/10 art-ink">
         <UIcon
           name="i-lucide-calendar-clock"
@@ -23,7 +23,7 @@ const { t } = useI18n()
       />
     </div>
     <div
-      class="art-float absolute right-0 bottom-0 rounded-xl border border-default bg-default p-2 shadow-lg"
+      class="art-float absolute right-0 bottom-0 rounded-xl bg-default p-2 shadow-lg"
       style="animation-delay: -3s"
     >
       <div class="flex items-center gap-1.5">

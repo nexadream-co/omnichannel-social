@@ -23,7 +23,7 @@ const { lifted } = useDragSource(el, {
   <button
     ref="el"
     type="button"
-    class="w-full text-left text-xs rounded-md px-1.5 py-1 border border-dashed border-accented text-muted hover:text-default hover:bg-elevated/60 flex gap-1 min-w-0 select-none [-webkit-touch-callout:none] motion-safe:transition-[opacity,transform]"
+    class="w-full text-left text-xs rounded-md px-1.5 py-1 bg-(--app-tint) text-muted hover:text-default hover:bg-(--app-tint-strong) flex gap-1 min-w-0 select-none [-webkit-touch-callout:none] motion-safe:transition-[opacity,transform]"
     :class="[wrap ? 'items-start' : 'items-center', lifted ? 'opacity-30 scale-95' : '', draggable ? 'cursor-grab active:cursor-grabbing touch-pan-y' : '']"
     :title="t('planner.idea.chip')"
     @click="emit('open', idea.id)"

@@ -36,7 +36,7 @@ function onChange(event: Event) {
     />
     <span
       v-else
-      class="absolute inset-0 flex flex-col items-center justify-center gap-0.5 rounded-md border border-dashed border-accented bg-elevated/50 text-muted hover:text-primary hover:border-primary"
+      class="absolute inset-0 flex flex-col items-center justify-center gap-0.5 rounded-md bg-elevated text-muted hover:bg-primary/10 hover:text-primary"
     >
       <UIcon
         name="i-lucide-camera"

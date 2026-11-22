@@ -131,7 +131,7 @@ defineExpose({ edit, addFromLibrary, addFiles })
   <div
     ref="root"
     class="relative space-y-2"
-    :class="card ? 'rounded-lg bg-default ring ring-default p-4 sm:p-6' : ''"
+    :class="card ? 'rounded-lg bg-default shadow-(--app-shadow-card) p-4 sm:p-6' : ''"
   >
     <p
       v-if="title"
@@ -146,7 +146,7 @@ defineExpose({ edit, addFromLibrary, addFiles })
       <div
         v-for="(item, index) in items"
         :key="item.key"
-        class="sortable-item relative aspect-square rounded-md overflow-hidden bg-elevated border border-default"
+        class="sortable-item relative aspect-square rounded-lg overflow-hidden bg-elevated"
       >
         <div class="sort-thumb absolute inset-0 touch-manipulation motion-safe:cursor-grab">
           <SmartImage
@@ -242,7 +242,7 @@ defineExpose({ edit, addFromLibrary, addFiles })
       <button
         v-if="items.length < (max ?? 10)"
         type="button"
-        class="aspect-square rounded-md border-2 border-dashed border-default text-muted hover:text-default hover:border-accented flex flex-col items-center justify-center gap-1 text-xs"
+        class="aspect-square rounded-xl bg-(--app-tint) text-muted hover:text-highlighted hover:bg-(--app-tint-strong) flex flex-col items-center justify-center gap-1 text-xs"
         @click="input?.click()"
       >
         <UIcon

@@ -530,7 +530,7 @@ function warn(key: string) {
                   </button>
                   <div
                     v-else
-                    class="flex items-center gap-2 rounded-full border border-dashed border-default pl-3 pr-1.5 py-1 text-sm text-muted"
+                    class="flex items-center gap-2 rounded-full bg-elevated pl-3 pr-1.5 py-1 text-sm text-muted"
                   >
                     <PlatformIcon
                       :platform="account.platform"
@@ -550,7 +550,7 @@ function warn(key: string) {
                 <button
                   v-if="canManageAccounts"
                   type="button"
-                  class="flex items-center gap-1.5 rounded-full border border-dashed border-accented px-3 py-1.5 text-sm text-muted motion-safe:transition-colors hover:border-primary hover:text-primary focus-visible:outline-2 focus-visible:outline-primary"
+                  class="flex items-center gap-1.5 rounded-full bg-(--app-tint) px-3 py-1.5 text-sm text-muted motion-safe:transition-colors hover:bg-primary/10 hover:text-primary focus-visible:outline-2 focus-visible:outline-primary"
                   @click="goAddAccount"
                 >
                   <UIcon

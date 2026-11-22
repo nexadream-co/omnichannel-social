@@ -452,13 +452,16 @@
   --ui-border-muted: #272125;
   --ui-border-accented: #3d3439;
 }
-/* The rail is ink in both themes: one step darker than the dark paper. */
+/* The rail is ink in both themes: one step darker than the dark paper, with a faint light edge in dark mode. */
 .creator-app .app-rail {
   --ui-bg: var(--app-ink-rail);
   --ui-bg-elevated: #2b2329;
   --ui-bg-accented: #382e35;
   --ui-border: #2e262c;
   background-color: var(--ui-bg);
+}
+.creator-app.dark .app-rail {
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.07), 0 18px 40px -12px rgb(0 0 0 / 0.6);
 }
 .creator-app body {
   background-color: var(--app-canvas);
@@ -482,6 +485,26 @@
   .creator-app .app-field {
     box-shadow: none;
     background-color: var(--app-tint);
+  }
+  /* Menus, popovers and select lists float like a card held up; sheets and dialogs lift without a ring. */
+  .creator-app .app-pop {
+    border-radius: 0.875rem;
+    box-shadow: var(--app-shadow-lift);
+  }
+  .creator-app .app-sheet {
+    box-shadow: var(--app-shadow-lift);
+  }
+  /* Radio / checkbox "card" choices: a tinted tile, pink-tinted once picked, never an outline. */
+  .creator-app .app-choice.app-choice {
+    border-color: transparent;
+    background-color: var(--app-tint);
+  }
+  .creator-app .app-choice.app-choice:hover {
+    background-color: var(--app-tint-strong);
+  }
+  .creator-app .app-choice.app-choice:has([data-state="checked"]),
+  .creator-app .app-choice.app-choice[data-state="checked"] {
+    background-color: color-mix(in srgb, var(--ui-primary) 14%, transparent);
   }
   .creator-app .app-field:focus-visible,
   .creator-app .app-field:focus-within {

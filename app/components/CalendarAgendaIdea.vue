@@ -20,7 +20,7 @@ const { lifted } = useDragSource(el, {
   <button
     ref="el"
     type="button"
-    class="w-full text-left flex items-center gap-3 rounded-md border border-dashed border-accented p-3 select-none [-webkit-touch-callout:none] motion-safe:transition-[opacity,transform]"
+    class="w-full text-left flex items-center gap-3 rounded-xl bg-(--app-tint) p-3 select-none [-webkit-touch-callout:none] motion-safe:transition-[opacity,transform]"
     :class="lifted ? 'opacity-30 scale-95' : ''"
     @click="emit('open', idea.id)"
   >

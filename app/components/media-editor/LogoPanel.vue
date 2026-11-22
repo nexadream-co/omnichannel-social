@@ -37,7 +37,7 @@ async function onFile(event: Event) {
     <div class="flex flex-wrap items-center gap-3">
       <div
         v-if="watermark"
-        class="size-12 rounded-md border border-default bg-[conic-gradient(var(--ui-bg-elevated)_25%,transparent_0_50%,var(--ui-bg-elevated)_0_75%,transparent_0)] bg-[length:12px_12px] flex items-center justify-center p-1"
+        class="size-12 rounded-lg bg-[conic-gradient(var(--ui-bg-elevated)_25%,transparent_0_50%,var(--ui-bg-elevated)_0_75%,transparent_0)] bg-[length:12px_12px] flex items-center justify-center p-1"
       >
         <img
           :src="watermark.url"

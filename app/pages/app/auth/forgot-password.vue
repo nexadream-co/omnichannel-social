@@ -29,7 +29,7 @@ async function onSubmit() {
   <UCard>
     <div class="space-y-6">
       <div class="space-y-1">
-        <h1 class="text-xl font-semibold text-highlighted">
+        <h1 class="app-display text-2xl sm:text-3xl text-highlighted">
           {{ t('auth.forgotTitle') }}
         </h1>
         <p class="text-sm text-muted">

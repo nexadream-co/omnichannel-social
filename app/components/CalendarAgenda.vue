@@ -70,14 +70,14 @@ const listed = computed(() => props.days.filter(day => (props.showEmpty && day >
         </li>
         <li
           v-if="dnd.state(day) === 'ok'"
-          class="rounded-md border border-dashed border-primary/60 p-3 text-center text-sm text-primary"
+          class="rounded-xl bg-primary/10 p-3 text-center text-sm text-primary"
         >
           {{ t('calendar.dropHere') }}
         </li>
         <li v-else-if="canWrite && day >= today && !posts.has(day) && !ideas.has(day)">
           <button
             type="button"
-            class="w-full flex items-center gap-2 rounded-md border border-dashed border-default p-3 text-sm text-muted"
+            class="w-full flex items-center gap-2 rounded-xl bg-(--app-tint) p-3 text-sm text-muted hover:text-highlighted"
             @click="emit('fill', day)"
           >
             <UIcon

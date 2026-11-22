@@ -1,6 +1,8 @@
 // Hook classes (app-card, app-fill, app-field, app-chip) restyle these variants inside the creator console only; see the
 // "ink rail + paper desk" block in app/assets/css/main.css. Outside `.creator-app` they match nothing.
 const field = { variants: { variant: { outline: 'app-field', subtle: 'app-field' } } }
+const pop = { slots: { content: 'app-pop' } }
+const sheet = { slots: { content: 'app-sheet' } }
 
 export default defineAppConfig({
   ui: {
@@ -24,12 +26,20 @@ export default defineAppConfig({
       variants: { variant: { outline: { root: 'app-card' }, subtle: { root: 'app-card' } } }
     },
     badge: { variants: { variant: { outline: 'app-chip', subtle: 'app-chip' } } },
-    alert: { variants: { variant: { outline: { root: 'app-chip' }, subtle: { root: 'app-chip' } } } },
+    alert: { compoundVariants: [{ variant: ['outline', 'subtle'], class: { root: 'app-chip' } }] },
+    radioGroup: { variants: { variant: { card: { item: 'app-choice' } } } },
+    checkbox: { variants: { variant: { card: { root: 'app-choice' } } } },
+    dropdownMenu: pop,
+    contextMenu: pop,
+    popover: pop,
+    select: { ...field, ...pop },
+    selectMenu: { ...field, ...pop },
+    inputMenu: { ...field, ...pop },
+    modal: sheet,
+    slideover: sheet,
+    drawer: sheet,
     input: field,
     textarea: field,
-    select: field,
-    selectMenu: field,
-    inputMenu: field,
     inputNumber: field,
     inputTags: field
   }
