@@ -481,7 +481,7 @@ const previewOpen = ref(false)
                       class="sr-only"
                       @change="uploadAvatar"
                     >
-                    <span class="inline-flex items-center gap-1.5 rounded-md border border-default px-3 py-1.5 text-sm hover:bg-elevated">
+                    <span class="inline-flex items-center gap-1.5 rounded-full bg-elevated px-3 py-1.5 text-sm hover:bg-accented">
                       <UIcon
                         :name="uploading ? 'i-socialz-loader' : 'i-lucide-upload'"
                         class="size-4"

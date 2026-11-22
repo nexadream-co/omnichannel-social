@@ -21,14 +21,14 @@ onBeforeUnmount(() => {
     <div class="min-w-0">
       <h1
         ref="heading"
-        class="font-semibold text-highlighted"
-        :class="compact ? 'text-xl' : 'text-2xl'"
+        class="app-display text-highlighted"
+        :class="compact ? 'text-2xl' : 'text-3xl sm:text-4xl'"
       >
         {{ title }}
       </h1>
       <p
         v-if="description"
-        class="text-muted mt-1"
+        class="text-muted mt-2 max-w-2xl text-pretty"
       >
         {{ description }}
       </p>

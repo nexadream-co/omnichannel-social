@@ -11,6 +11,8 @@ const entitlements = useEntitlements()
 onMounted(() => entitlements.load())
 // Moments that happened while the creator was away, and the greeting after sign-in.
 useMomentWatch()
+// The "ink rail + paper desk" tokens (main.css) hang on <html>, so menus and sheets teleported to <body> follow them.
+useHead({ htmlAttrs: { class: 'creator-app' } })
 // Hidden when the plan already has every feature, or when this role can't buy (docs/blueprint/06 §6).
 const showUpgrade = computed(() => Boolean(entitlements.data.value) && !entitlements.hasEveryFeature.value && auth.hasAbility('billing.manage'))
 
@@ -49,8 +51,9 @@ const railItems = computed<NavigationMenuItem[]>(() => visibleNav.value
     exact: item.to === '/app',
     active: isActive(item),
     trailingIcon: lockIcon(item),
-    // The sliding pill below draws the active background, so the link's own one is turned off.
-    class: isActive(item) ? 'before:bg-transparent!' : undefined
+    // The sliding pill below draws the active background, so the link's own one is turned off; ink on the white pill.
+    class: isActive(item) ? 'before:bg-transparent! text-inverted! font-semibold' : 'text-muted hover:text-highlighted',
+    ui: isActive(item) ? { linkLeadingIcon: 'text-inverted!', linkTrailingIcon: 'text-inverted/60!' } : { linkLeadingIcon: 'text-dimmed group-hover:text-highlighted' }
   })))
 
 const bottomItems = computed(() => visibleNav.value.filter(item => item.bottomNav))
@@ -109,18 +112,19 @@ useResizeObserver(railMenu, placePill)
       collapsible
       :default-size="16"
       :collapsed-size="4.5"
-      :ui="{ root: 'hidden lg:flex overflow-hidden motion-safe:transition-[width] motion-safe:duration-300 motion-safe:ease-out', body: 'overflow-x-hidden', footer: 'border-t border-default flex-col items-stretch gap-2 py-3' }"
+      class="app-rail dark"
+      :ui="{ root: 'hidden lg:flex overflow-hidden border-e-0 lg:m-2 lg:me-0 lg:min-h-0 lg:h-[calc(100svh-1rem)] lg:rounded-[1.75rem] text-default motion-safe:transition-[width] motion-safe:duration-300 motion-safe:ease-out', header: 'h-18', body: 'overflow-x-hidden', footer: 'flex-col items-stretch gap-2 py-3' }"
     >
       <template #header="{ collapsed }">
         <NuxtLink
           :to="localePath('/app')"
           :aria-label="collapsed ? t('app.name') : undefined"
-          class="group flex items-center gap-2 min-w-0 font-bold text-lg text-primary"
+          class="group flex items-center gap-2.5 min-w-0 text-lg text-highlighted"
         >
           <BrandMark class="size-8" />
           <span
             v-if="!collapsed"
-            class="truncate"
+            class="app-display truncate"
           >{{ t('app.name') }}</span>
         </NuxtLink>
       </template>
@@ -133,7 +137,8 @@ useResizeObserver(railMenu, placePill)
           :label="collapsed ? undefined : t('nav.compose')"
           :square="collapsed"
           block
-          class="mb-2"
+          size="lg"
+          class="mb-3 rounded-full bg-brand-600 text-white hover:bg-brand-500 active:bg-brand-500 shadow-[0_10px_24px_-10px_var(--color-brand-500)]"
         />
         <div
           ref="railMenu"
@@ -142,7 +147,7 @@ useResizeObserver(railMenu, placePill)
           <span
             v-if="pill"
             aria-hidden="true"
-            class="absolute inset-x-0 top-0 rounded-md bg-elevated motion-safe:ease-[cubic-bezier(0.34,1.3,0.64,1)] after:absolute after:left-0 after:top-1/2 after:h-4 after:w-1 after:-translate-y-1/2 after:rounded-full after:bg-primary"
+            class="absolute inset-x-0 top-0 rounded-full bg-inverted motion-safe:ease-[cubic-bezier(0.34,1.3,0.64,1)]"
             :class="pillReady ? 'motion-safe:transition-[transform,height] motion-safe:duration-300' : ''"
             :style="{ transform: `translateY(${pill.top}px)`, height: `${pill.height}px` }"
           />
@@ -152,7 +157,7 @@ useResizeObserver(railMenu, placePill)
             :collapsed="collapsed"
             tooltip
             class="relative isolate"
-            :ui="{ linkLeadingIcon: 'motion-safe:transition-transform motion-safe:duration-200 group-hover:scale-110' }"
+            :ui="{ link: 'rounded-full px-3 py-2', linkLeadingIcon: 'motion-safe:transition-transform motion-safe:duration-200 group-hover:scale-110' }"
           />
         </div>
         <RailAccounts :collapsed="collapsed" />
@@ -173,7 +178,7 @@ useResizeObserver(railMenu, placePill)
             variant="soft"
             :square="collapsed"
             block
-            class="justify-start"
+            class="justify-start rounded-full"
           />
         </UTooltip>
         <div
@@ -193,26 +198,26 @@ useResizeObserver(railMenu, placePill)
 
     <UDashboardPanel
       id="creator-main"
-      :ui="{ body: 'pb-24 lg:pb-6' }"
+      :ui="{ root: 'lg:not-last:border-e-0', body: 'pb-28 lg:pb-8 sm:px-6 lg:px-8' }"
     >
       <template #header>
         <UDashboardNavbar
           :toggle="false"
-          :ui="{ right: 'gap-1' }"
+          :ui="{ root: 'border-b-0 lg:px-8', right: 'gap-1' }"
         >
           <template #left>
             <div class="flex min-w-0 items-center gap-2 lg:hidden">
               <NuxtLink
                 :to="localePath('/app')"
-                class="group flex items-center gap-1.5 font-bold text-primary shrink-0"
+                class="group flex items-center gap-1.5 text-highlighted shrink-0"
               >
-                <BrandMark class="size-6" />
-                {{ t('app.name') }}
+                <BrandMark class="size-7" />
+                <span class="app-display text-lg">{{ t('app.name') }}</span>
               </NuxtLink>
               <Transition name="fade">
                 <span
                   v-if="pageTitle.title && !pageTitle.visible"
-                  class="truncate border-l border-default pl-2 text-sm font-semibold text-highlighted"
+                  class="truncate border-l border-accented pl-2 text-sm font-semibold text-highlighted"
                 >{{ pageTitle.title }}</span>
               </Transition>
             </div>
@@ -234,10 +239,10 @@ useResizeObserver(railMenu, placePill)
       </template>
     </UDashboardPanel>
 
-    <!-- Phone: bottom nav with a raised "Buat" in the centre (docs/blueprint/13 §5) -->
+    <!-- Phone: a floating ink dock with a raised "Buat" in the centre (docs/blueprint/13 §5) -->
     <nav
       v-show="actionBars === 0"
-      class="lg:hidden fixed inset-x-0 bottom-0 z-40 border-t border-default bg-default/95 backdrop-blur pb-[env(safe-area-inset-bottom)]"
+      class="app-rail dark lg:hidden fixed inset-x-3 bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] z-40 mx-auto max-w-lg rounded-[1.75rem] text-default shadow-[0_18px_40px_-12px_rgb(0_0_0/0.45)]"
       :aria-label="t('shell.mainNav')"
     >
       <ul
@@ -250,13 +255,13 @@ useResizeObserver(railMenu, placePill)
         >
           <NuxtLink
             :to="localePath(item.to)"
-            class="flex flex-col items-center gap-0.5 py-2 text-xs"
-            :class="isActive(item) ? 'text-primary' : 'text-muted'"
+            class="flex flex-col items-center gap-0.5 py-2.5 text-[11px]"
+            :class="isActive(item) ? 'text-highlighted font-semibold' : 'text-dimmed'"
           >
             <UIcon
               :name="item.icon"
               class="size-5"
-              :class="isActive(item) ? 'motion-safe:animate-nav-pop' : ''"
+              :class="isActive(item) ? 'text-primary motion-safe:animate-nav-pop' : ''"
             />
             <span class="truncate max-w-full px-1">{{ t(item.labelKey) }}</span>
           </NuxtLink>
@@ -264,11 +269,11 @@ useResizeObserver(railMenu, placePill)
         <li v-if="canCompose">
           <NuxtLink
             :to="localePath('/app/compose')"
-            class="flex flex-col items-center gap-0.5 pb-2 text-xs"
-            :class="onPath('/app/compose') ? 'text-primary' : 'text-muted'"
+            class="flex flex-col items-center gap-0.5 pb-2.5 text-[11px]"
+            :class="onPath('/app/compose') ? 'text-highlighted' : 'text-dimmed'"
             :aria-label="t('nav.compose')"
           >
-            <span class="-mt-5 grid size-14 place-items-center rounded-full bg-primary text-inverted shadow-lg ring-4 ring-(--ui-bg)">
+            <span class="-mt-6 grid size-14 place-items-center rounded-full bg-brand-600 text-white shadow-[0_10px_24px_-8px_var(--color-brand-500)] ring-[5px] ring-(--app-canvas)">
               <UIcon
                 name="i-lucide-plus"
                 class="size-6"
@@ -284,13 +289,13 @@ useResizeObserver(railMenu, placePill)
         >
           <NuxtLink
             :to="localePath(item.to)"
-            class="flex flex-col items-center gap-0.5 py-2 text-xs"
-            :class="isActive(item) ? 'text-primary' : 'text-muted'"
+            class="flex flex-col items-center gap-0.5 py-2.5 text-[11px]"
+            :class="isActive(item) ? 'text-highlighted font-semibold' : 'text-dimmed'"
           >
             <UIcon
               :name="item.icon"
               class="size-5"
-              :class="isActive(item) ? 'motion-safe:animate-nav-pop' : ''"
+              :class="isActive(item) ? 'text-primary motion-safe:animate-nav-pop' : ''"
             />
             <span class="truncate max-w-full px-1">{{ t(item.labelKey) }}</span>
           </NuxtLink>
@@ -298,7 +303,7 @@ useResizeObserver(railMenu, placePill)
         <li>
           <button
             type="button"
-            class="w-full flex flex-col items-center gap-0.5 py-2 text-xs text-muted"
+            class="w-full flex flex-col items-center gap-0.5 py-2.5 text-[11px] text-dimmed"
             @click="moreOpen = true"
           >
             <UIcon
@@ -322,12 +327,14 @@ useResizeObserver(railMenu, placePill)
           >
             <NuxtLink
               :to="localePath(item.to)"
-              class="relative flex min-h-16 flex-col items-center justify-center gap-1.5 rounded-lg border border-default p-2 text-center text-xs text-highlighted motion-safe:transition-colors hover:bg-elevated/60 active:bg-elevated"
+              class="relative flex min-h-20 flex-col items-center justify-center gap-2 rounded-2xl bg-elevated p-2 text-center text-xs font-medium text-highlighted motion-safe:transition-colors hover:bg-accented active:bg-accented"
             >
-              <UIcon
-                :name="item.icon"
-                class="size-6 text-primary"
-              />
+              <span class="grid size-9 place-items-center rounded-full bg-default text-primary shadow-(--app-shadow-card)">
+                <UIcon
+                  :name="item.icon"
+                  class="size-5"
+                />
+              </span>
               <span class="max-w-full break-words">{{ t(item.labelKey) }}</span>
               <Transition name="fade">
                 <UIcon

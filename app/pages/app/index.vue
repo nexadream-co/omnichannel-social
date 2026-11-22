@@ -118,8 +118,8 @@ async function dismiss() {
     v-if="profile"
     class="w-full max-w-3xl lg:max-w-6xl mx-auto space-y-6"
   >
-    <div class="space-y-1">
-      <h1 class="text-2xl font-semibold text-highlighted">
+    <div class="space-y-2">
+      <h1 class="app-display text-3xl sm:text-4xl text-highlighted">
         {{ t('home.greeting', { name: profile.user.name.split(' ')[0] }) }}
       </h1>
       <p class="text-muted">
@@ -174,7 +174,7 @@ async function dismiss() {
 
         <div
           v-else-if="showDoneChip"
-          class="flex items-center justify-between gap-3 rounded-lg border border-success/30 bg-success/10 px-4 py-3"
+          class="flex items-center justify-between gap-3 rounded-2xl bg-success/10 px-4 py-3"
         >
           <p class="text-sm font-medium text-success">
             {{ t('onboarding.doneChip') }}
@@ -308,27 +308,32 @@ async function dismiss() {
           v-if="summary"
           class="grid grid-cols-2 gap-3 lg:grid-cols-1"
         >
-          <div class="rounded-lg border border-default p-4 space-y-1">
+          <div class="dark relative overflow-hidden rounded-[1.25rem] bg-linear-to-br from-brand-500 to-brand-700 p-4 text-white space-y-1 shadow-[0_14px_30px_-14px_var(--color-brand-600)]">
+            <UIcon
+              name="i-lucide-mouse-pointer-click"
+              class="pointer-events-none absolute -right-3 -top-3 size-20 text-white/15 -rotate-12"
+              aria-hidden="true"
+            />
             <NuxtLink
               :to="localePath('/app/analytics')"
-              class="block hover:opacity-80"
+              class="relative block hover:opacity-80"
             >
-              <p class="text-2xl font-semibold text-highlighted">
+              <p class="app-display text-4xl text-white">
                 <TickNumber
                   :value="shown.clicks"
                   :format="n => formatCompact(n, locale)"
                   show-up
                 />
               </p>
-              <p class="text-sm text-muted">
+              <p class="text-sm font-medium text-white/85">
                 {{ t('home.clicksWeek') }}
               </p>
             </NuxtLink>
             <div
               v-if="!summary.clicks7d"
-              class="pt-1 space-y-2"
+              class="relative pt-1 space-y-2"
             >
-              <p class="text-xs text-muted">
+              <p class="text-xs text-white/80">
                 {{ t('home.noClicks') }}
               </p>
               <CopyButton
@@ -347,12 +352,17 @@ async function dismiss() {
               />
             </div>
           </div>
-          <div class="rounded-lg border border-default p-4 space-y-1">
+          <div class="app-rail dark relative overflow-hidden rounded-[1.25rem] p-4 text-default space-y-1 shadow-(--app-shadow-card)">
+            <UIcon
+              name="i-lucide-message-circle-reply"
+              class="pointer-events-none absolute -right-3 -top-3 size-20 text-white/10 rotate-12"
+              aria-hidden="true"
+            />
             <NuxtLink
               :to="localePath('/app/auto-reply/activity')"
-              class="block hover:opacity-80"
+              class="relative block hover:opacity-80"
             >
-              <p class="text-2xl font-semibold text-highlighted">
+              <p class="app-display text-4xl text-highlighted">
                 <TickNumber
                   :value="shown.replies"
                   :format="n => formatCompact(n, locale)"
@@ -365,7 +375,7 @@ async function dismiss() {
             </NuxtLink>
             <div
               v-if="!summary.autoReplies7d"
-              class="pt-1 space-y-2"
+              class="relative pt-1 space-y-2"
             >
               <p class="text-xs text-muted">
                 {{ t('home.noReplies') }}
@@ -416,7 +426,7 @@ async function dismiss() {
 
         <div
           v-if="tip"
-          class="flex gap-3 rounded-lg bg-primary/5 border border-primary/20 p-4"
+          class="flex gap-3 rounded-2xl bg-primary/10 p-4"
         >
           <UIcon
             name="i-lucide-lightbulb"

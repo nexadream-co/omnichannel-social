@@ -50,7 +50,7 @@ async function publishNow(event: MouseEvent) {
 </script>
 
 <template>
-  <div class="rounded-lg border border-warning/40 bg-warning/5 p-3 sm:p-4">
+  <div class="rounded-2xl bg-warning/10 p-3 sm:p-4">
     <div class="flex gap-3">
       <NuxtLink
         :to="localePath(`/app/posts/${post.id}`)"

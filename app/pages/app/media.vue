@@ -211,7 +211,7 @@ async function makeIdeas() {
 
     <div
       v-if="inflight.length"
-      class="mb-4 rounded-md border border-default p-3"
+      class="mb-4 rounded-2xl bg-default shadow-(--app-shadow-card) p-3"
     >
       <p class="text-xs font-medium text-muted mb-2">
         {{ t('mediaLibrary.uploads') }}

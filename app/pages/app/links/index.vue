@@ -216,7 +216,7 @@ const searching = computed(() => Boolean(list.search.value.trim()) || showArchiv
       <div
         v-if="pendingUrl"
         key="pending"
-        class="flex gap-3 rounded-lg border border-default bg-default p-2 sm:flex-col sm:p-0 sm:overflow-hidden"
+        class="flex gap-3 rounded-2xl bg-default shadow-(--app-shadow-card) p-2 sm:flex-col sm:p-0 sm:overflow-hidden"
       >
         <div class="shimmer size-[72px] shrink-0 rounded-lg bg-elevated sm:aspect-[4/3] sm:size-auto sm:w-full sm:rounded-none" />
         <div class="min-w-0 flex-1 space-y-2 py-1 sm:p-3">
@@ -233,7 +233,7 @@ const searching = computed(() => Boolean(list.search.value.trim()) || showArchiv
         v-for="link in list.items.value"
         :id="`link-${link.id}`"
         :key="link.id"
-        class="flex gap-3 rounded-lg border border-default bg-default p-2 sm:flex-col sm:p-0 sm:overflow-hidden"
+        class="flex gap-3 rounded-2xl bg-default shadow-(--app-shadow-card) p-2 sm:flex-col sm:p-0 sm:overflow-hidden"
       >
         <ProductPhotoButton
           v-if="!link.imageUrl && !fillingIds.has(link.id)"

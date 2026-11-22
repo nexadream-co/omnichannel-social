@@ -22,11 +22,11 @@ const weekday = (day: string) => new Intl.DateTimeFormat(locale.value === 'en' ?
 </script>
 
 <template>
-  <div class="grid grid-cols-7 border-t border-l border-default rounded-md overflow-hidden">
+  <div class="grid grid-cols-7 overflow-hidden rounded-2xl bg-default shadow-(--app-shadow-card)">
     <div
       v-for="day in days"
       :key="day"
-      class="min-h-72 motion-safe:transition-colors border-r border-b border-default p-1.5 flex flex-col gap-1 bg-default"
+      class="min-h-72 motion-safe:transition-colors border-r border-b-0 border-default last:border-r-0 p-1.5 flex flex-col gap-1 bg-default"
       :class="[day < today ? 'bg-muted/40' : '', dropCellClass(dnd.state(day), dnd.settled.value === day), marks.has(day) ? 'border-t-2 border-t-primary/40' : '', fillable(day) && !dnd.dragging.value ? 'group/day cursor-pointer day-hover:bg-primary/10 day-hover:ring-1 day-hover:ring-inset day-hover:ring-primary/40' : '']"
       :data-drop-day="day"
       @planner-drop="dnd.drop(day)"

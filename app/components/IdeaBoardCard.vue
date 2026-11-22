@@ -119,11 +119,11 @@ useDragSource(el, {
     :role="floating ? undefined : 'button'"
     :tabindex="floating ? -1 : 0"
     :aria-label="floating ? undefined : idea.title"
-    class="group/card relative overflow-hidden rounded-lg border bg-default text-left select-none [-webkit-touch-callout:none] outline-none focus-visible:ring-2 focus-visible:ring-primary"
+    class="group/card relative overflow-hidden rounded-xl bg-default text-left select-none [-webkit-touch-callout:none] outline-none focus-visible:ring-2 focus-visible:ring-primary"
     :class="[
-      ghost ? 'opacity-40 border-dashed border-accented' : manual ? 'border-dashed border-warning/70' : 'border-default',
-      !hasPicture ? ['border-l-[3px]', idea.pillar && !manual && !ghost ? PILLAR_EDGE[idea.pillar] : ''] : '',
-      floating ? '' : canWrite ? 'cursor-grab active:cursor-grabbing touch-pan-y hover:border-accented motion-safe:transition-colors' : 'cursor-pointer'
+      ghost ? 'opacity-40 border-2 border-dashed border-accented' : floating ? 'shadow-(--app-shadow-lift)' : 'shadow-(--app-shadow-card)',
+      !hasPicture && !ghost && idea.pillar ? ['border-l-4', PILLAR_EDGE[idea.pillar]] : '',
+      floating ? '' : canWrite ? 'cursor-grab active:cursor-grabbing touch-pan-y hover:shadow-(--app-shadow-lift) motion-safe:transition-shadow' : 'cursor-pointer'
     ]"
     @click="open"
     @keydown.enter.self.prevent="open"
@@ -261,7 +261,7 @@ useDragSource(el, {
         :text="manualTip"
       >
         <span
-          class="inline-flex w-fit items-center gap-1 rounded-md border border-dashed border-warning/70 px-1.5 py-0.5 text-xs text-warning"
+          class="inline-flex w-fit items-center gap-1 rounded-full bg-warning/10 px-2 py-0.5 text-xs font-medium text-warning"
           :title="manualTip"
         >
           <UIcon
@@ -283,7 +283,7 @@ useDragSource(el, {
         color="neutral"
         variant="ghost"
         size="sm"
-        class="absolute top-1.5 right-1.5 size-9 justify-center bg-default/90 hover:bg-elevated"
+        class="absolute top-1 right-1 size-9 justify-center rounded-full bg-default/90 text-muted hover:bg-elevated hover:text-highlighted"
         data-no-drag
         :aria-label="t('planner.idea.actions')"
         @click.stop

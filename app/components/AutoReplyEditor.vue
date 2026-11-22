@@ -342,7 +342,7 @@ watch(testOpen, (open) => {
             <UFormField :label="t('autoReply.product')">
               <div
                 v-if="link"
-                class="flex items-center gap-3 rounded-lg border border-default p-2"
+                class="flex items-center gap-3 rounded-xl bg-elevated/70 p-2"
               >
                 <SmartImage
                   :src="link.imageUrl"

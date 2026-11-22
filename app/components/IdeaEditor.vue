@@ -193,7 +193,7 @@ async function restore() {
                 <li
                   v-for="link in form.links"
                   :key="link.id"
-                  class="flex items-center gap-2 rounded-md border border-default px-2 py-1.5"
+                  class="flex items-center gap-2 rounded-xl bg-elevated/70 px-2 py-1.5"
                 >
                   <UAvatar
                     :src="link.imageUrl ?? undefined"

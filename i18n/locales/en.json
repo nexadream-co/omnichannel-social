@@ -1358,7 +1358,7 @@
     },
     "bank": {
       "title": "Idea bank",
-      "capturePlaceholder": "Write a content idea, then press Enter",
+      "capturePlaceholder": "Write a content idea…",
       "capture": "Save idea",
       "views": {
         "unplanned": "No date yet",

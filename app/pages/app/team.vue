@@ -102,7 +102,7 @@ const seatsLabel = computed(() => {
         <li
           v-for="row in PREVIEW_ROWS"
           :key="row.role"
-          class="flex items-start gap-2 rounded-lg border border-default px-3 py-2 text-sm"
+          class="flex items-start gap-2 rounded-xl bg-elevated/70 px-3 py-2 text-sm"
         >
           <UIcon
             :name="row.icon"

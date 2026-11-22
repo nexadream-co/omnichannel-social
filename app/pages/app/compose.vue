@@ -512,8 +512,8 @@ function warn(key: string) {
                   <button
                     v-if="account.status === 'active'"
                     type="button"
-                    class="flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition-colors"
-                    :class="selected.includes(account.id) ? 'border-primary bg-primary/10 text-highlighted' : 'border-default text-muted'"
+                    class="flex items-center gap-2 rounded-full px-3 py-1.5 text-sm transition-colors"
+                    :class="selected.includes(account.id) ? 'bg-inverted text-inverted' : 'bg-elevated text-muted hover:text-highlighted'"
                     :aria-pressed="selected.includes(account.id)"
                     @click="toggle(account.id)"
                   >

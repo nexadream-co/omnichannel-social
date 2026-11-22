@@ -29,7 +29,7 @@ const accounts = computed(() => (props.post.accounts ?? []).map(a => `@${a}`).jo
 
 <template>
   <div
-    class="flex items-center gap-1 rounded-md border border-default border-l-[3px] bg-default motion-safe:transition-[opacity,transform]"
+    class="flex items-center gap-1 rounded-xl border-l-4 bg-default shadow-(--app-shadow-card) motion-safe:transition-[opacity,transform]"
     :class="[postEdge(post), lifted ? 'opacity-30 scale-95' : '']"
   >
     <NuxtLink

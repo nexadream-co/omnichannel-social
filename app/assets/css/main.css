@@ -401,3 +401,99 @@
 [class*="socialz-loader"].animate-spin {
   animation: none;
 }
+
+/*
+ * Creator console (/app) "ink rail + paper desk" look. CreatorShell puts `.creator-app` on <html> (so teleported
+ * menus and sheets follow too):
+ *  - a warm oat canvas, warm stone neutrals and softer hairlines;
+ *  - an ink rail: the sidebar wears `.dark`, so its tokens and dark: utilities flip whatever the theme;
+ *  - surfaces are lifted by a soft shadow instead of drawn with an outline (.app-card);
+ *  - outline buttons, chips and fields are filled with a translucent ink tint instead (.app-fill, .app-field,
+ *    .app-chip), which reads on white paper and on the canvas alike.
+ * The hook classes come from app.config.ts and do nothing outside `.creator-app`, so /admin keeps its own look.
+ */
+.creator-app {
+  --app-canvas: #f6f2ee;
+  --app-ink-rail: #19141a;
+  --app-shadow-card: 0 1px 2px rgb(60 40 30 / 0.05), 0 10px 30px -12px rgb(60 40 30 / 0.16);
+  --app-shadow-lift: 0 2px 4px rgb(60 40 30 / 0.06), 0 18px 40px -14px rgb(60 40 30 / 0.24);
+  --app-tint: color-mix(in srgb, var(--ui-text) 6%, transparent);
+  --app-tint-strong: color-mix(in srgb, var(--ui-text) 11%, transparent);
+  --ui-radius: 0.5rem;
+  --ui-bg-muted: #faf7f4;
+  --ui-bg-elevated: #f3eee9;
+  --ui-bg-accented: #e9e2db;
+  --ui-border: #ece5de;
+  --ui-border-muted: #f2ede8;
+  --ui-border-accented: #dcd3ca;
+  --ui-color-neutral-50: var(--color-stone-50);
+  --ui-color-neutral-100: var(--color-stone-100);
+  --ui-color-neutral-200: var(--color-stone-200);
+  --ui-color-neutral-300: var(--color-stone-300);
+  --ui-color-neutral-400: var(--color-stone-400);
+  --ui-color-neutral-500: var(--color-stone-500);
+  --ui-color-neutral-600: var(--color-stone-600);
+  --ui-color-neutral-700: var(--color-stone-700);
+  --ui-color-neutral-800: var(--color-stone-800);
+  --ui-color-neutral-900: var(--color-stone-900);
+  --ui-color-neutral-950: var(--color-stone-950);
+}
+.creator-app.dark,
+.creator-app .dark {
+  --app-canvas: #141113;
+  --app-ink-rail: #0d0a0c;
+  --app-shadow-card: 0 1px 2px rgb(0 0 0 / 0.3), 0 10px 30px -12px rgb(0 0 0 / 0.5);
+  --app-shadow-lift: 0 2px 4px rgb(0 0 0 / 0.35), 0 18px 40px -14px rgb(0 0 0 / 0.6);
+  --ui-bg: #1f1a1d;
+  --ui-bg-muted: #241e22;
+  --ui-bg-elevated: #2a2327;
+  --ui-bg-accented: #352d32;
+  --ui-border: #2e272b;
+  --ui-border-muted: #272125;
+  --ui-border-accented: #3d3439;
+}
+/* The rail is ink in both themes: one step darker than the dark paper. */
+.creator-app .app-rail {
+  --ui-bg: var(--app-ink-rail);
+  --ui-bg-elevated: #2b2329;
+  --ui-bg-accented: #382e35;
+  --ui-border: #2e262c;
+  background-color: var(--ui-bg);
+}
+.creator-app body {
+  background-color: var(--app-canvas);
+}
+
+@layer utilities {
+  .creator-app .app-card {
+    box-shadow: var(--app-shadow-card);
+  }
+  .creator-app .app-fill {
+    box-shadow: none;
+    background-color: var(--app-tint);
+  }
+  .creator-app .app-fill:not(:disabled, [aria-disabled="true"]):hover,
+  .creator-app .app-fill[data-state="open"] {
+    background-color: var(--app-tint-strong);
+  }
+  .creator-app .app-chip {
+    box-shadow: none;
+  }
+  .creator-app .app-field {
+    box-shadow: none;
+    background-color: var(--app-tint);
+  }
+  .creator-app .app-field:focus-visible,
+  .creator-app .app-field:focus-within {
+    background-color: var(--ui-bg);
+    box-shadow: 0 0 0 2px var(--ui-primary);
+  }
+}
+
+/* Page headings in the console: the landing's heavy italic, a size smaller. */
+.app-display {
+  font-style: italic;
+  font-weight: 850;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}

@@ -237,7 +237,7 @@ async function remove(rule: RuleRow) {
             v-for="template in RULE_TEMPLATES"
             :key="template.key"
             :to="localePath(`/app/auto-reply/new?template=${template.key}`)"
-            class="relative rounded-lg border border-default p-3 text-sm text-default hover:border-primary hover:bg-elevated/50 transition-colors flex items-start gap-3"
+            class="relative rounded-xl bg-elevated/70 p-3 text-sm text-default hover:bg-primary/10 transition-colors flex items-start gap-3"
           >
             <span class="grid size-9 shrink-0 place-items-center rounded-full bg-primary/10 text-primary">
               <UIcon

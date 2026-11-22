@@ -18,8 +18,8 @@ const nextKey = computed(() => steps.value.find(step => !step.done)?.key)
     >
       <NuxtLink
         :to="localePath(step.to)"
-        class="flex w-full items-center gap-3 rounded-lg border border-default px-3 text-left motion-safe:transition-colors hover:bg-elevated/60 focus-visible:outline-2 focus-visible:outline-primary"
-        :class="[compact ? 'py-2' : 'py-3', step.key === nextKey ? 'ring-2 ring-primary' : '']"
+        class="flex w-full items-center gap-3 rounded-xl px-3 text-left motion-safe:transition-colors focus-visible:outline-2 focus-visible:outline-primary"
+        :class="[compact ? 'py-2' : 'py-3', step.key === nextKey ? 'bg-primary/10 hover:bg-primary/15' : 'bg-elevated/70 hover:bg-elevated']"
       >
         <span
           class="grid size-7 shrink-0 place-items-center rounded-full text-sm font-semibold"

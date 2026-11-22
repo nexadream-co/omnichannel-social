@@ -38,8 +38,8 @@ function pick(stage: IdeaStage) {
         >
           <button
             type="button"
-            class="w-full min-h-12 flex items-center gap-3 rounded-lg border px-3 py-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-60"
-            :class="row.blocked ? 'border-default bg-elevated/40' : row.reason ? 'border-warning/50 bg-warning/5' : 'border-default hover:bg-elevated'"
+            class="w-full min-h-12 flex items-center gap-3 rounded-xl px-3 py-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-60"
+            :class="row.blocked ? 'bg-elevated/40' : row.reason ? 'bg-warning/10' : 'bg-elevated/70 hover:bg-elevated'"
             :disabled="row.here || row.blocked"
             @click="pick(row.stage)"
           >

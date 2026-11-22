@@ -145,10 +145,10 @@ defineExpose({ items, total: list.total, removeById, insertAt, snapshot, restore
   <section
     :data-drop-stage="stage"
     :aria-label="t(`ideas.stage.${stage}`)"
-    class="flex flex-col min-w-0 rounded-xl border border-default bg-elevated/40 ring-2 ring-transparent motion-safe:transition-[background-color,box-shadow] duration-200 lg:h-[calc(100dvh-14.5rem)] lg:min-h-[26rem]"
+    class="flex flex-col min-w-0 rounded-[1.25rem] bg-(--app-tint) ring-2 ring-transparent motion-safe:transition-[background-color,box-shadow] duration-200 lg:h-[calc(100dvh-15rem)] lg:min-h-[26rem]"
     :class="[mine ? (mine.honest ? style.hover : CONFIRM_STYLE.hover) : '', flash ? 'animate-ring-pulse' : '']"
   >
-    <header class="flex items-center gap-2 px-3 py-2.5">
+    <header class="flex items-center gap-2 px-3.5 pt-3 pb-2.5">
       <span
         class="size-2.5 rounded-full shrink-0"
         :class="style.dot"
@@ -157,15 +157,11 @@ defineExpose({ items, total: list.total, removeById, insertAt, snapshot, restore
       <h2 class="font-semibold text-highlighted text-sm truncate">
         {{ t(`ideas.stage.${stage}`) }}
       </h2>
-      <UBadge
+      <span
         :key="bounce"
-        color="neutral"
-        variant="subtle"
-        size="sm"
-        class="ml-auto tabular-nums"
+        class="ml-auto grid h-6 min-w-6 place-items-center rounded-full bg-default px-1.5 text-xs font-semibold tabular-nums text-highlighted shadow-(--app-shadow-card)"
         :class="bounce ? 'motion-safe:animate-count-bounce' : ''"
-        :label="String(list.total.value)"
-      />
+      >{{ list.total.value }}</span>
     </header>
 
     <div
@@ -174,24 +170,30 @@ defineExpose({ items, total: list.total, removeById, insertAt, snapshot, restore
     >
       <form
         v-if="stage === 'raw' && canWrite"
-        class="flex gap-2"
         @submit.prevent="capture()"
       >
         <UInput
           v-model="draft"
           :placeholder="t('planner.bank.capturePlaceholder')"
           :maxlength="IDEA_TITLE_MAX"
-          icon="i-lucide-lightbulb"
-          class="flex-1 min-w-0"
-        />
-        <UButton
-          type="submit"
-          :icon="pop.done.value ? 'i-lucide-check' : 'i-lucide-plus'"
-          :color="pop.done.value ? 'success' : 'primary'"
-          :loading="capturing"
-          :disabled="!draft.trim()"
-          :aria-label="t('planner.bank.capture')"
-        />
+          size="lg"
+          class="w-full"
+          :ui="{ base: 'bg-default! shadow-(--app-shadow-card) rounded-xl ps-3', trailing: 'pe-1' }"
+        >
+          <template #trailing>
+            <UButton
+              type="submit"
+              size="sm"
+              square
+              class="rounded-lg"
+              :icon="pop.done.value ? 'i-lucide-check' : 'i-lucide-plus'"
+              :color="pop.done.value ? 'success' : 'primary'"
+              :loading="capturing"
+              :disabled="!draft.trim()"
+              :aria-label="t('planner.bank.capture')"
+            />
+          </template>
+        </UInput>
       </form>
 
       <div
@@ -221,24 +223,31 @@ defineExpose({ items, total: list.total, removeById, insertAt, snapshot, restore
         compact
         class="motion-safe:transition-opacity"
         :class="mine ? 'opacity-30' : ''"
+      />
+
+      <ul
+        v-if="stage === 'raw' && canWrite && !loadingFirst && !items.length && list.status.value !== 'error'"
+        class="-mt-2 flex w-full flex-col gap-1.5 motion-safe:transition-opacity"
+        :class="mine ? 'opacity-30' : ''"
       >
-        <div
-          v-if="stage === 'raw' && canWrite"
-          class="flex flex-wrap justify-center gap-2"
+        <li
+          v-for="starter in starters"
+          :key="starter"
         >
-          <UButton
-            v-for="starter in starters"
-            :key="starter"
-            size="sm"
-            color="neutral"
-            variant="outline"
-            icon="i-lucide-plus"
-            :label="starter"
+          <button
+            type="button"
+            class="flex w-full items-start gap-2 rounded-xl bg-default/70 px-3 py-2 text-left text-sm text-default outline-none hover:bg-default hover:shadow-(--app-shadow-card) focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-60 motion-safe:transition-[background-color,box-shadow]"
             :disabled="capturing"
             @click="capture(starter)"
-          />
-        </div>
-      </EmptyState>
+          >
+            <UIcon
+              name="i-lucide-plus"
+              class="mt-0.5 size-4 shrink-0 text-primary"
+            />
+            <span class="min-w-0 break-words">{{ starter }}</span>
+          </button>
+        </li>
+      </ul>
 
       <ul
         ref="listEl"

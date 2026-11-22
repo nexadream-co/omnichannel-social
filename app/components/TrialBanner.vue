@@ -31,7 +31,7 @@ function close() {
   <Transition name="banner">
     <div
       v-if="visible"
-      class="border-b border-default bg-elevated/50 px-4 py-2 text-sm flex flex-wrap items-center justify-between gap-2"
+      class="mx-4 mt-1 sm:mx-6 lg:mx-8 rounded-full bg-primary/10 ps-4 pe-2 py-1.5 text-sm flex flex-wrap items-center justify-between gap-2"
     >
       <span class="flex items-center gap-2 text-default">
         <UIcon

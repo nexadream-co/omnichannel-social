@@ -65,7 +65,7 @@ async function setTarget(value: number) {
 
 <template>
   <div
-    class="flex flex-col sm:flex-row sm:items-center gap-3 rounded-md border border-default bg-default p-3 mb-4"
+    class="flex flex-col sm:flex-row sm:items-center gap-3 rounded-2xl bg-default shadow-(--app-shadow-card) p-3 mb-4"
     :class="glowing ? 'animate-glow' : ''"
   >
     <div class="flex-1 min-w-0">

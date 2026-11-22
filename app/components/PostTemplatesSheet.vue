@@ -150,7 +150,7 @@ async function remove(template: PostTemplate) {
           <li
             v-for="template in templates"
             :key="template.id"
-            class="flex items-start gap-2 rounded-lg border border-default p-3 motion-safe:transition-colors hover:bg-elevated/50"
+            class="flex items-start gap-2 rounded-xl bg-elevated/70 p-3 motion-safe:transition-colors hover:bg-elevated"
           >
             <button
               type="button"

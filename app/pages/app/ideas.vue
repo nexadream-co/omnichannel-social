@@ -195,12 +195,14 @@ function onDrop(event: Event) {
         icon="i-lucide-archive"
         color="neutral"
         variant="outline"
+        class="rounded-full"
         :label="t('ideas.archive')"
         @click="archiveOpen = true"
       />
       <UButton
         v-if="canWrite"
         icon="i-lucide-lightbulb"
+        class="rounded-full"
         :label="t('planner.idea.new')"
         @click="newIdea"
       />
@@ -218,8 +220,8 @@ function onDrop(event: Event) {
         role="tab"
         :aria-selected="active === stage"
         :data-drop-stage="stage"
-        class="shrink-0 min-h-11 flex items-center gap-2 rounded-full border px-3.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary motion-safe:transition-[background-color,box-shadow]"
-        :class="[active === stage ? 'border-accented bg-elevated text-highlighted font-medium' : 'border-default text-muted', hovering(stage) ? 'ring-2 ring-primary bg-primary/10' : '']"
+        class="shrink-0 min-h-11 flex items-center gap-2 rounded-full px-3.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary motion-safe:transition-[background-color,box-shadow,color]"
+        :class="[active === stage ? 'bg-inverted text-inverted font-semibold' : 'bg-(--app-tint) text-muted', hovering(stage) ? 'ring-2 ring-primary bg-primary/10' : '']"
         @click="active = stage"
       >
         <span
@@ -228,15 +230,18 @@ function onDrop(event: Event) {
           aria-hidden="true"
         />
         {{ t(`ideas.stage.${stage}`) }}
-        <span class="tabular-nums text-xs text-muted">{{ counts[stage] }}</span>
+        <span
+          class="tabular-nums text-xs"
+          :class="active === stage ? 'text-inverted/70' : 'text-dimmed'"
+        >{{ counts[stage] }}</span>
       </button>
     </div>
 
-    <div class="board-snap flex gap-3 md:overflow-x-auto md:snap-x md:snap-mandatory md:pb-3 lg:overflow-visible lg:pb-0">
+    <div class="board-snap flex gap-3 md:-mx-2 md:overflow-x-auto md:snap-x md:snap-mandatory md:px-2 md:pt-1 md:pb-3 md:scroll-px-2">
       <div
         v-for="stage in IDEA_STAGES"
         :key="stage"
-        class="min-w-0 w-full md:w-72 md:shrink-0 md:snap-start lg:w-auto lg:flex-1 lg:shrink"
+        class="min-w-0 w-full md:w-72 md:shrink-0 md:snap-start lg:w-auto lg:min-w-52 lg:flex-1 lg:shrink"
         :class="active === stage ? 'block' : 'hidden md:block'"
       >
         <IdeaBoardColumn

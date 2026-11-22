@@ -95,7 +95,7 @@ async function prepare(event: MouseEvent) {
       </div>
       <div
         v-if="week.nextMoment"
-        class="flex items-center gap-3 rounded-md border border-default p-3"
+        class="flex items-center gap-3 rounded-xl bg-elevated/70 p-3"
       >
         <UIcon
           :name="MOMENT_KIND_META[week.nextMoment.kind].icon"

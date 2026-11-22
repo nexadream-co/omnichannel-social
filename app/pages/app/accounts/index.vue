@@ -226,7 +226,7 @@ async function disconnect(account: Account) {
         <div
           v-for="entry in data.platforms"
           :key="entry.platform"
-          class="rounded-lg border border-default p-4 flex flex-col gap-3"
+          class="rounded-2xl bg-elevated/70 p-4 flex flex-col gap-3"
         >
           <div class="flex items-center gap-2">
             <PlatformIcon

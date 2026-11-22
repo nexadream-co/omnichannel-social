@@ -67,7 +67,7 @@ function choose(choice: SuccessChoice) {
             <strong class="text-highlighted">{{ day }}, {{ time }}</strong>
           </template>
         </i18n-t>
-        <div class="flex gap-3 rounded-md border border-default p-3">
+        <div class="flex gap-3 rounded-xl bg-elevated/70 p-3">
           <SmartImage
             :src="imageUrl"
             kind="post"

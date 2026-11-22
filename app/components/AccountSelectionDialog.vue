@@ -62,8 +62,8 @@ async function save() {
         >
           <button
             type="button"
-            class="w-full flex items-center gap-3 rounded-lg border p-3 text-left motion-safe:transition-colors"
-            :class="selected.includes(account.id) ? 'border-primary bg-primary/5' : 'border-default'"
+            class="w-full flex items-center gap-3 rounded-xl p-3 text-left motion-safe:transition-colors"
+            :class="selected.includes(account.id) ? 'bg-primary/10' : 'bg-elevated/70 hover:bg-elevated'"
             :aria-pressed="selected.includes(account.id)"
             :disabled="!selected.includes(account.id) && selected.length >= max"
             @click="toggle(account.id)"
