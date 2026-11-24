@@ -301,6 +301,10 @@ async function dismiss() {
             </li>
           </ul>
         </UCard>
+
+        <!-- "Lagi rame": content ideas from today's news, also only after the checklist (ARCHITECTURE §8.9). Main column,
+             so the headlines get room and sit above the fold instead of under the side stack. -->
+        <NewsCard v-if="canRead && !showChecklist" />
       </div>
 
       <div class="space-y-6 min-w-0">
@@ -420,9 +424,6 @@ async function dismiss() {
 
         <!-- Rencana konten: only once the onboarding checklist is done or hidden, so the newcomer path stays as it is. -->
         <WeekCard v-if="canRead && !showChecklist" />
-
-        <!-- "Lagi rame": content ideas from today's news, also only after the checklist (ARCHITECTURE §8.9). -->
-        <NewsCard v-if="canRead && !showChecklist" />
 
         <div
           v-if="tip"
