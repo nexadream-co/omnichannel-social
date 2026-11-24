@@ -21,6 +21,7 @@ const { SEED_HASHTAGS } = await import('../shared/hashtags/library-seed')
 const { SEED_MOMENTS } = await import('../shared/utils/planner')
 const { baseContext } = await import('../server/core/context')
 const { provisionWorkspace } = await import('../server/core/registration')
+const { addStarterTemplates } = await import('../server/core/templates/service')
 const { encrypt } = await import('../server/core/crypto')
 
 const db = getDb()
@@ -140,6 +141,16 @@ if (!isProduction) {
     await provisionWorkspace(baseContext(), demo!.id, { name: 'Kreator Demo', email: demoEmail })
     console.log(`  created ${demoEmail} / demo12345`)
   }
+}
+
+step('starter post templates (missing ones, by name)')
+{
+  const all = await db.select({ id: schema.workspaces.id }).from(schema.workspaces)
+  let filled = 0
+  for (const workspace of all) {
+    if (await addStarterTemplates(db, workspace.id)) filled++
+  }
+  if (filled) console.log(`  added to ${filled} workspace(s)`)
 }
 
 await closeDb()

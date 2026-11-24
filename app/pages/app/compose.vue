@@ -34,6 +34,8 @@ const duplicateId = typeof route.query.duplicate === 'string' ? route.query.dupl
 // Bank Ide → "Jadikan postingan": saving the post takes the idea out of the bank.
 const ideaId = !editId && !duplicateId && typeof route.query.idea === 'string' ? route.query.idea : null
 const mediaParam = typeof route.query.media === 'string' ? route.query.media : null
+// Postingan → Template → "Pakai di postingan": the caption starts as the template.
+const templateParam = !editId && !duplicateId && !ideaId && typeof route.query.template === 'string' ? route.query.template : null
 const fromIdea = ref<Pick<IdeaDetail, 'id' | 'title' | 'note'> | null>(null)
 useHead({ title: () => editId ? t('composer.editTitle') : t('composer.title') })
 
@@ -171,6 +173,13 @@ onMounted(async () => {
   } else if (mediaParam) {
     // Galeri Media → "Pakai di postingan": one id or a comma list, ready items only.
     media.value = await readyMedia(mediaParam.split(',').filter(Boolean).slice(0, 10))
+  } else if (templateParam) {
+    const list = await apiFetch<{ items: { id: string, name: string, caption: string }[] }>('/api/app/post-templates').catch(() => ({ items: [] }))
+    const template = list.items.find(item => item.id === templateParam)
+    if (template) {
+      caption.value = template.caption
+      toast.add({ title: t('postTemplates.fromTemplate', { name: template.name }), icon: 'i-lucide-bookmark-check', color: 'info' })
+    }
   } else {
     pendingDraft.value = draftStore.read()
   }

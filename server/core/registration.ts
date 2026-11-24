@@ -12,6 +12,7 @@ import { env } from './env'
 import { appError } from './errors'
 import { createNotification, notifyStaff } from './notifications'
 import { getSetting, getSettingBool } from './settings'
+import { addStarterTemplates } from './templates/service'
 
 export const registrationSchema = z.object({
   name: z.string().trim().min(2, 'Nama minimal 2 karakter.').max(100, 'Nama terlalu panjang.'),
@@ -105,6 +106,8 @@ export async function afterWorkspaceProvisioned(ctx: CoreContext, userId: string
   if (!result.created) return
   try {
     await invalidateEntitlements(result.workspaceId, ctx.db)
+    // "Template" in Postingan starts with a few ready captions instead of an empty list.
+    await addStarterTemplates(ctx.db, result.workspaceId)
     await createNotification(ctx, { audience: 'creator', userId, workspaceId: result.workspaceId, templateKey: 'welcome', channels: { email: false } })
     if (result.trialGranted && result.trialEndsAt) {
       await createNotification(ctx, {

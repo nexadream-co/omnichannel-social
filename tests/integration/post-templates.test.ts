@@ -3,8 +3,9 @@ import type { WorkspaceContext } from '../../server/core/context'
 import { closeDb, getDb } from '../../server/core/db/client'
 import { plans, postTemplates, users } from '../../server/core/db/schema'
 import { provisionWorkspace } from '../../server/core/registration'
-import { createPostTemplate, deletePostTemplate, listPostTemplates, MAX_POST_TEMPLATES, postTemplateSchema, updatePostTemplate } from '../../server/core/templates/service'
+import { addStarterTemplates, createPostTemplate, deletePostTemplate, listPostTemplates, MAX_POST_TEMPLATES, postTemplateSchema, updatePostTemplate } from '../../server/core/templates/service'
 import { SEED_PLANS } from '../../shared/utils/plans'
+import { STARTER_POST_TEMPLATES } from '../../shared/utils/post-templates'
 import { testContext, truncate } from './helpers'
 
 let ws: WorkspaceContext
@@ -61,5 +62,18 @@ describe('post templates', () => {
     await getDb().insert(postTemplates).values(Array.from({ length: MAX_POST_TEMPLATES }, (_, i) => ({ workspaceId: ws.workspaceId, name: `T${i}`, caption: 'x' })))
     await expect(createPostTemplate(ws, { name: 'Satu lagi', caption: 'x' })).rejects.toMatchObject({ statusCode: 400 })
     await expect(createPostTemplate(other, { name: 'Boleh', caption: 'x' })).resolves.toMatchObject({ name: 'Boleh' })
+  })
+
+  it('fills the starter captions in order, adds only the missing ones again, and keeps the creator\'s own', async () => {
+    expect(await addStarterTemplates(getDb(), ws.workspaceId)).toBe(STARTER_POST_TEMPLATES.length)
+    expect((await listPostTemplates(ws)).items.map(i => i.name)).toEqual(STARTER_POST_TEMPLATES.map(s => s.name))
+    expect(await addStarterTemplates(getDb(), ws.workspaceId)).toBe(0)
+    const own = await createPostTemplate(other, { name: 'Punyaku', caption: 'x' })
+    expect(await addStarterTemplates(getDb(), other.workspaceId)).toBe(STARTER_POST_TEMPLATES.length)
+    const first = (await listPostTemplates(other)).items.find(i => i.name === STARTER_POST_TEMPLATES[0]!.name)!
+    await deletePostTemplate(other, first.id)
+    expect(await addStarterTemplates(getDb(), other.workspaceId)).toBe(1)
+    expect((await listPostTemplates(other)).items.some(i => i.id === own.id)).toBe(true)
+    for (const starter of STARTER_POST_TEMPLATES) expect(postTemplateSchema.safeParse(starter).success).toBe(true)
   })
 })

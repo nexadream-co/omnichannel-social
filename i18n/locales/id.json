@@ -66,7 +66,10 @@
     "addAccount": "Hubungkan akun lain",
     "connectAccount": "Hubungkan akun",
     "moreAccounts": "+{n} akun lainnya",
-    "needsReauth": "perlu dihubungkan ulang"
+    "needsReauth": "perlu dihubungkan ulang",
+    "templates": "Template",
+    "hubListShort": "Semua",
+    "hubMediaShort": "Media"
   },
   "auth": {
     "email": "Email",
@@ -2199,6 +2202,18 @@
     "append": "Tambahkan di bawah",
     "deleteTitle": "Hapus template \"{name}\"?",
     "deleteBody": "Postingan yang sudah memakai template ini tidak berubah.",
-    "delete": "Hapus"
+    "delete": "Hapus",
+    "pageTitle": "Template",
+    "pageSubtitle": "Caption siap pakai, lengkap dengan tagar dan link produknya. Pilih satu, isi bagian yang dikurung, lalu jadwalkan.",
+    "new": "Template baru",
+    "newTitle": "Template baru",
+    "editTitle": "Ubah template",
+    "edit": "Ubah",
+    "name": "Nama template",
+    "useInPost": "Pakai di postingan",
+    "more": "Pilihan untuk \"{name}\"",
+    "emptyTitle": "Belum ada template",
+    "blankHint": "Tulis bagian yang mau kamu ganti tiap posting di dalam kurung siku, misalnya [nama produk].",
+    "fromTemplate": "Caption dari template \"{name}\". Ganti bagian yang dikurung sebelum dijadwalkan."
   }
 }

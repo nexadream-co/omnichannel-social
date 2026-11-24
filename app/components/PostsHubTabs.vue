@@ -2,7 +2,7 @@
 import { CREATOR_NAV } from '#shared/utils/menus'
 
 /**
- * The tabs of Postingan, one entry in the menu: Kalender, Semua postingan, Galeri Media. Each tab is its own page
+ * The tabs of Postingan, one entry in the menu: Kalender, Semua postingan, Galeri Media, Template. Each tab is its own page
  * (and address), so links such as /app/posts?tab=failed keep working.
  */
 const { t } = useI18n()
@@ -10,11 +10,13 @@ const localePath = useLocalePath()
 const route = useRoute()
 const auth = useCreatorAuth()
 
-const LABEL: Record<string, string> = { calendar: 'nav.hubCalendar', posts: 'nav.hubList', media: 'nav.media' }
-const ICON: Record<string, string> = { calendar: 'i-lucide-calendar-days', posts: 'i-lucide-list', media: 'i-lucide-images' }
+const LABEL: Record<string, string> = { calendar: 'nav.hubCalendar', posts: 'nav.hubList', media: 'nav.media', templates: 'nav.templates' }
+// Phone: four equal tabs need short labels.
+const SHORT: Record<string, string> = { posts: 'nav.hubListShort', media: 'nav.hubMediaShort' }
+const ICON: Record<string, string> = { calendar: 'i-lucide-calendar-days', posts: 'i-lucide-list', media: 'i-lucide-images', templates: 'i-lucide-bookmark' }
 const tabs = computed(() => CREATOR_NAV
   .filter(item => (item.key === 'calendar' || item.hub === 'calendar') && (!item.ability || auth.hasAbility(item.ability)))
-  .map(item => ({ key: item.key, to: localePath(item.to), label: t(LABEL[item.key] ?? item.labelKey), icon: ICON[item.key] ?? item.icon })))
+  .map(item => ({ key: item.key, to: localePath(item.to), label: t(LABEL[item.key] ?? item.labelKey), short: t(SHORT[item.key] ?? LABEL[item.key] ?? item.labelKey), icon: ICON[item.key] ?? item.icon })))
 </script>
 
 <template>
@@ -22,7 +24,7 @@ const tabs = computed(() => CREATOR_NAV
     :aria-label="t('nav.postsHub')"
     class="mb-4"
   >
-    <!-- Phone: three equal tabs across the screen, labels only; wider screens add the icons. -->
+    <!-- Phone: four equal tabs across the screen, short labels only; wider screens add the icons and full labels. -->
     <ul class="flex w-full gap-1 rounded-lg bg-elevated p-1 sm:inline-flex sm:w-auto">
       <li
         v-for="tab in tabs"
@@ -39,7 +41,8 @@ const tabs = computed(() => CREATOR_NAV
             :name="tab.icon"
             class="hidden size-4 sm:block"
           />
-          {{ tab.label }}
+          <span class="sm:hidden">{{ tab.short }}</span>
+          <span class="hidden sm:inline">{{ tab.label }}</span>
         </NuxtLink>
       </li>
     </ul>

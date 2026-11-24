@@ -1,7 +1,9 @@
 import { and, count, desc, eq } from 'drizzle-orm'
 import { z } from 'zod'
 import { recordAudit } from '../audit'
+import { STARTER_POST_TEMPLATES } from '../../../shared/utils/post-templates'
 import { assertAbility, type WorkspaceContext } from '../context'
+import type { Executor } from '../db/client'
 import { postTemplates } from '../db/schema'
 import { appError } from '../errors'
 
@@ -51,4 +53,21 @@ export async function deletePostTemplate(ctx: WorkspaceContext, id: string) {
   const rows = await ctx.db.delete(postTemplates).where(and(eq(postTemplates.id, id), eq(postTemplates.workspaceId, ctx.workspaceId))).returning({ id: postTemplates.id })
   if (!rows.length) throw notFound()
   await recordAudit(ctx, { audience: 'creator', action: 'post_template.delete', workspaceId: ctx.workspaceId, actorId: ctx.userId, impersonatorId: ctx.impersonatorId, targetType: 'post_template', targetId: id })
+}
+
+/**
+ * Copies the starter captions the workspace doesn't have yet (matched by name) into it: all of them at sign-up, the
+ * missing ones when the seed runs on a dev database. The deploy seed only runs on a fresh database, so a live creator's
+ * deleted starters never come back. Staggered timestamps keep the order of STARTER_POST_TEMPLATES (newest first).
+ * Returns how many were added.
+ */
+export async function addStarterTemplates(db: Executor, workspaceId: string, now = new Date()): Promise<number> {
+  const have = new Set((await db.select({ name: postTemplates.name }).from(postTemplates).where(eq(postTemplates.workspaceId, workspaceId))).map(row => row.name))
+  const missing = STARTER_POST_TEMPLATES.filter(template => !have.has(template.name))
+  if (!missing.length) return 0
+  await db.insert(postTemplates).values(missing.map((template, index) => {
+    const at = new Date(now.getTime() - index * 1000)
+    return { workspaceId, name: template.name, caption: template.caption, createdAt: at, updatedAt: at }
+  }))
+  return missing.length
 }

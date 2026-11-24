@@ -302,9 +302,9 @@ async function dismiss() {
           </ul>
         </UCard>
 
-        <!-- "Lagi rame": content ideas from today's news, also only after the checklist (ARCHITECTURE §8.9). Main column,
-             so the headlines get room and sit above the fold instead of under the side stack. -->
-        <NewsCard v-if="canRead && !showChecklist" />
+        <!-- "Lagi rame": content ideas from today's news (ARCHITECTURE §8.9), on every plan and from day one: it sits
+             under the checklist, so the newcomer steps still come first. Main column, so the headlines get room. -->
+        <NewsCard v-if="canRead" />
       </div>
 
       <div class="space-y-6 min-w-0">

@@ -66,7 +66,10 @@
     "addAccount": "Connect another account",
     "connectAccount": "Connect an account",
     "moreAccounts": "+{n} more accounts",
-    "needsReauth": "needs reconnecting"
+    "needsReauth": "needs reconnecting",
+    "templates": "Templates",
+    "hubListShort": "All",
+    "hubMediaShort": "Media"
   },
   "auth": {
     "email": "Email",
@@ -2199,6 +2202,18 @@
     "append": "Add below",
     "deleteTitle": "Delete template \"{name}\"?",
     "deleteBody": "Posts that already used this template stay as they are.",
-    "delete": "Delete"
+    "delete": "Delete",
+    "pageTitle": "Templates",
+    "pageSubtitle": "Ready-to-use captions with their hashtags and product links. Pick one, fill in the bracketed parts, then schedule it.",
+    "new": "New template",
+    "newTitle": "New template",
+    "editTitle": "Edit template",
+    "edit": "Edit",
+    "name": "Template name",
+    "useInPost": "Use in a post",
+    "more": "Options for \"{name}\"",
+    "emptyTitle": "No templates yet",
+    "blankHint": "Put the parts you change every post in square brackets, for example [product name].",
+    "fromTemplate": "Caption from the \"{name}\" template. Replace the bracketed parts before you schedule it."
   }
 }
