@@ -70,5 +70,5 @@ export const DM_EVENT_STATUS_KEYS: Record<DmEventStatus, string> = {
 }
 
 /** dm_events.error codes the worker writes; each has a plain-Bahasa reason in i18n (autoReply.reason.*). */
-export const DM_REASONS = ['kill_switch', 'account_inactive', 'plan_limit', 'daily_cap', 'hourly_cap', 'auth', 'rejected', 'no_rule'] as const
+export const DM_REASONS = ['kill_switch', 'account_inactive', 'plan_limit', 'daily_cap', 'hourly_cap', 'auth', 'rejected', 'send_unknown', 'no_rule'] as const
 export type DmReason = (typeof DM_REASONS)[number]

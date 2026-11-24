@@ -209,7 +209,8 @@ export async function retryTarget(ctx: WorkspaceContext, targetId: string, optio
     if (!target) throw appError(404, 'Postingan tidak ditemukan.', 'NOT_FOUND')
     // "Terbitkan sekarang": a target left `scheduled` long past its time (a reconnect re-arms it without a job).
     const stale = target.status === 'scheduled' && isOverdue('scheduled', target.scheduledAt)
-    if (!stale && !['failed', 'needs_reauth', 'quota_deferred'].includes(target.status)) throw appError(409, 'Postingan ini tidak perlu dicoba lagi.', 'CONFLICT')
+    // publish_unknown with no live job is stuck (its reconcile gave up or was dropped): retrying reconciles it.
+    if (!stale && !['failed', 'needs_reauth', 'quota_deferred', 'publish_unknown'].includes(target.status)) throw appError(409, 'Postingan ini tidak perlu dicoba lagi.', 'CONFLICT')
     // Never two live jobs for one target: a running one means it is being handled, a queued retry means another retry just won.
     const live = await tx.select({ id: jobs.id, status: jobs.status, singletonKey: jobs.singletonKey }).from(jobs)
       .where(and(inArray(jobs.queue, ['publish.target', 'publish.reconcile']), inArray(jobs.status, ['queued', 'running']), sql`${jobs.payload}->>'targetId' = ${targetId}`))
@@ -219,7 +220,7 @@ export async function retryTarget(ctx: WorkspaceContext, targetId: string, optio
     if (queued.length) await tx.update(jobs).set({ status: 'cancelled', finishedAt: new Date() }).where(and(inArray(jobs.id, queued), eq(jobs.status, 'queued')))
     const [post] = await tx.select({ version: posts.version }).from(posts).where(eq(posts.id, target.postId))
     // A step-less retry restarts from prepare; a target that reached publishing is reconciled first.
-    const resumeUnknown = target.step === 'publishing'
+    const resumeUnknown = target.step === 'publishing' || target.status === 'publish_unknown'
     await tx.update(postTargets).set({ status: resumeUnknown ? 'publish_unknown' : 'scheduled', step: resumeUnknown ? 'publishing' : null, containerIds: resumeUnknown ? target.containerIds : [], lastErrorCode: null, lastErrorMsg: null, scheduledAt: target.scheduledAt ?? new Date(), updatedAt: new Date() })
       .where(and(eq(postTargets.id, targetId), eq(postTargets.status, target.status)))
     const id = await enqueue(tx, resumeUnknown ? 'publish.reconcile' : 'publish.target', { targetId, workspaceId: ctx.workspaceId, version: post!.version }, { singletonKey: `${targetId}:retry:${Date.now()}` })

@@ -101,10 +101,16 @@ export const dmSendJob: JobHandler = async (job, ctx) => {
       await settle(db, event.id, 'failed', 'auth')
       return
     }
-    if (error.kind === 'rate_limit' || error.kind === 'transient') {
+    if (error.kind === 'rate_limit') {
       // The platform refused before sending: release the claim and try again later.
       await settle(db, event.id, 'matched', null)
       return { deferUntil: error.retryAfter ?? new Date(Date.now() + 15 * 60_000) }
+    }
+    if (error.kind === 'transient') {
+      // A timeout or 5xx: the DM may already have gone out. Never send blindly again (CLAUDE.md rule 10):
+      // a missed DM costs less than a duplicate one, which Instagram can treat as spam.
+      await settle(db, event.id, 'failed', 'send_unknown')
+      return
     }
     await settle(db, event.id, 'failed', error.code ? `rejected:${error.code}`.slice(0, 100) : 'rejected')
     return

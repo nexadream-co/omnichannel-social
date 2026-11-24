@@ -1743,6 +1743,7 @@
       "hourly_cap": "Too many DMs in one hour. Instagram may treat it as spam.",
       "auth": "Instagram refused because the account needs reconnecting.",
       "rejected": "Instagram refused to send this DM.",
+      "send_unknown": "The connection to Instagram dropped while sending. The DM may have gone out, so we did not send it again.",
       "no_rule": "The rule was turned off or deleted."
     },
     "deletedRule": "Deleted rule",

@@ -3,7 +3,7 @@ import { sql } from 'drizzle-orm'
 import type { CoreContext } from '../context'
 import type { Database } from '../db/client'
 import { env } from '../env'
-import { handlers } from './handlers'
+import { deadHandlers, handlers } from './handlers'
 import { backoffMs, queueDef } from './queues'
 import { PermanentJobError, type ClaimedJob } from './types'
 
@@ -69,13 +69,26 @@ function leaseCases(): string {
     .join(' ')
 }
 
-async function finish(db: Database, id: string, status: 'done' | 'dead', error?: string) {
-  await db.execute(sql`update jobs set status = ${status}, finished_at = now(), lease_until = null, last_error = ${error ?? null} where id = ${id} and status = 'running'`)
+/**
+ * Every claim bumps `attempts`, so (id, attempts) names one claim. An invocation that outlived its lease
+ * finds the job reclaimed (attempts moved on) and its finish/requeue does nothing: only the owner settles it.
+ */
+async function finish(db: Database, job: ClaimedJob, status: 'done' | 'dead', error?: string): Promise<boolean> {
+  const result = await db.execute(sql`update jobs set status = ${status}, finished_at = now(), lease_until = null, last_error = ${error ?? null}
+    where id = ${job.id} and status = 'running' and attempts = ${job.attempts}`)
+  return (result.rowCount ?? 0) > 0
 }
 
-async function requeue(db: Database, id: string, runAt: Date, countAttempt: boolean, error?: string) {
+async function requeue(db: Database, job: ClaimedJob, runAt: Date, countAttempt: boolean, error?: string) {
   await db.execute(sql`update jobs set status = 'queued', run_at = ${runAt.toISOString()}, lease_until = null,
-    attempts = attempts - ${countAttempt ? 0 : 1}, last_error = ${error ?? null} where id = ${id} and status = 'running'`)
+    attempts = attempts - ${countAttempt ? 0 : 1}, last_error = ${error ?? null} where id = ${job.id} and status = 'running' and attempts = ${job.attempts}`)
+}
+
+/** A job that gives up may leave domain state waiting on it; its queue's dead handler settles that state. */
+async function died(ctx: CoreContext & { db: Database }, job: ClaimedJob, error: string, log: CoreContext['log']) {
+  if (!await finish(ctx.db, job, 'dead', error)) return
+  const onDead = deadHandlers[job.queue]
+  if (onDead) await onDead(job, { ...ctx, log }).catch(cause => log.error('job.dead_handler_failed', { error: cause }))
 }
 
 function describe(error: unknown): string {
@@ -107,20 +120,20 @@ export async function runDue(ctx: CoreContext & { db: Database }, options: RunOp
       const def = queueDef(job.queue)
       const log = ctx.log.child({ jobId: job.id, queue: job.queue, attempt: job.attempts })
       if (deadline - now() < def.expectedMs) {
-        await requeue(ctx.db, job.id, new Date(), false)
+        await requeue(ctx.db, job, new Date(), false)
         released.add(job.id)
         summary.released++
         return
       }
       const handler = handlers[job.queue]
       if (!handler) {
-        await finish(ctx.db, job.id, 'dead', `No handler for queue ${job.queue}`)
+        await finish(ctx.db, job, 'dead', `No handler for queue ${job.queue}`)
         summary.dead++
         log.error('job.no_handler')
         return
       }
       if (job.attempts > job.maxAttempts) {
-        await finish(ctx.db, job.id, 'dead', 'Lease expired too many times (the invocation kept dying)')
+        await died(ctx, job, 'Lease expired too many times (the invocation kept dying)', log)
         summary.dead++
         log.error('job.lease_exhausted')
         return
@@ -128,21 +141,21 @@ export async function runDue(ctx: CoreContext & { db: Database }, options: RunOp
       try {
         const result = await handler(job, { ...ctx, log })
         if (result && 'deferUntil' in result) {
-          await requeue(ctx.db, job.id, result.deferUntil, false)
+          await requeue(ctx.db, job, result.deferUntil, false)
           summary.deferred++
           log.info('job.deferred', { until: result.deferUntil.toISOString() })
         } else {
-          await finish(ctx.db, job.id, 'done')
+          await finish(ctx.db, job, 'done')
           summary.done++
         }
       } catch (error) {
         const message = describe(error)
         if (error instanceof PermanentJobError || job.attempts >= job.maxAttempts) {
-          await finish(ctx.db, job.id, 'dead', message)
+          await died(ctx, job, message, log)
           summary.dead++
           log.error('job.dead', { error })
         } else {
-          await requeue(ctx.db, job.id, new Date(Date.now() + backoffMs(job.attempts)), true, message)
+          await requeue(ctx.db, job, new Date(Date.now() + backoffMs(job.attempts)), true, message)
           summary.retried++
           log.warn('job.retry', { error })
         }

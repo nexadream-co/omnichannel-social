@@ -7,7 +7,7 @@ import { acceptStaffInvitation, createMenu, createRole, deleteMenu, deleteRole, 
 import { getWorkspaceDetail, impersonateCreator, listWorkspaces, overridePlan, reinstateWorkspace, suspendWorkspace } from '../../server/core/admin/workspaces'
 import type { StaffContext, WorkspaceContext } from '../../server/core/context'
 import { closeDb, getDb } from '../../server/core/db/client'
-import { contactMessages, faqs, menus, pages, permissions, plans, postTargets, posts, roles, sessions, shortLinks, socialAccounts, staffAccounts, staffInvitations, staffUsers, subscriptionEvents, subscriptions, users, workspaces } from '../../server/core/db/schema'
+import { contactMessages, faqs, jobs, menus, pages, permissions, plans, postTargets, posts, roles, sessions, shortLinks, socialAccounts, staffAccounts, staffInvitations, staffUsers, subscriptionEvents, subscriptions, users, workspaces } from '../../server/core/db/schema'
 import { resetEnvCache } from '../../server/core/env'
 import { createLink } from '../../server/core/links/service'
 import { provisionWorkspace } from '../../server/core/registration'
@@ -61,12 +61,23 @@ describe('workspaces', () => {
     expect((await getDb().select().from(subscriptions))[0]!.status).toBe('suspended')
     await expect(suspendWorkspace(staff, ws.workspaceId, 'lagi')).rejects.toMatchObject({ statusCode: 409 })
 
-    expect(await reinstateWorkspace(staff, ws.workspaceId)).toEqual({ missed: 1, rescheduled: 1 })
+    expect(await reinstateWorkspace(staff, ws.workspaceId)).toEqual({ missed: 1, rescheduled: 1, resumed: 0 })
     const targets = await getDb().select().from(postTargets).orderBy(postTargets.scheduledAt)
     expect(targets.map(t => t.status)).toEqual(['failed', 'scheduled'])
     expect(targets[0]!.lastErrorMsg).toBe('Terlewat saat akun ditangguhkan')
     expect(targets[1]!.jobId).toBeTruthy()
     expect((await getDb().select().from(subscriptions))[0]!.status).toBe('downgraded') // no paid period left
+  })
+
+  it('reinstate hands posts caught mid-publish to a fresh job (reconcile when they may be live)', async () => {
+    const [accountId] = (await connectAccounts(ws, 'threads', [{ externalId: 'th-2', username: 'rina', avatarUrl: null, accessToken: 't', refreshToken: null, tokenExpiresAt: null, scopes: [], meta: {} }])).connected
+    const [post] = await getDb().insert(posts).values({ workspaceId: ws.workspaceId, baseCaption: 'x', status: 'publishing' }).returning()
+    const base = { workspaceId: ws.workspaceId, postId: post!.id, socialAccountId: accountId!, platform: 'threads' as const, format: 'text' as const, scheduledAt: new Date(Date.now() - 3_600_000) }
+    await getDb().insert(postTargets).values([{ ...base, status: 'retrying' }, { ...base, status: 'publish_unknown', step: 'publishing' }])
+    await suspendWorkspace(staff, ws.workspaceId, 'Cek')
+    await getDb().delete(jobs) // their jobs ended while the workspace was suspended
+    expect(await reinstateWorkspace(staff, ws.workspaceId)).toMatchObject({ resumed: 2 })
+    expect((await getDb().select({ queue: jobs.queue }).from(jobs).where(eq(jobs.status, 'queued'))).map(j => j.queue).sort()).toEqual(['publish.reconcile', 'publish.target'])
   })
 
   it('plan override is audited as admin_override and enforces limits', async () => {

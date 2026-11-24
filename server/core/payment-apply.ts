@@ -1,5 +1,6 @@
-import { eq } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import type { CoreContext } from './context'
+import type { Executor } from './db/client'
 import { payments, plans, subscriptions, workspaces } from './db/schema'
 import { formatIDR } from './money'
 import { notifyWorkspaceOwners } from './notifications'
@@ -40,11 +41,18 @@ export async function applyPayment(ctx: Ctx, normalized: NormalizedPayment): Pro
     paidAt: normalized.status === 'paid' ? normalized.paidAt ?? new Date() : payment.paidAt, raw: normalized.raw ?? payment.raw, updatedAt: new Date()
   }
 
+  // Compare-and-set on the status we read: when a callback, a replay and the daily reconcile apply the same
+  // payment at once, the row lock makes the others re-check, find the status moved on and change nothing.
+  // Without it, two `pay` transitions would each stack a period onto the subscription.
+  const claim = (tx: Executor) => tx.update(payments).set(data)
+    .where(and(eq(payments.id, payment.id), eq(payments.status, payment.status))).returning({ id: payments.id })
+
   if (normalized.status === 'paid') {
     const sub = await ctx.db.transaction(async (tx) => {
-      await tx.update(payments).set(data).where(eq(payments.id, payment.id))
+      if (!(await claim(tx)).length) return null
       return transitionSubscription({ workspaceId: payment.workspaceId, transition: 'pay', planSlug: payment.planSlug ?? undefined, period: payment.period, force: true, tx })
     })
+    if (!sub) return { applied: false, noop: true }
     const [[plan], [ws]] = await Promise.all([
       ctx.db.select({ name: plans.name }).from(plans).where(eq(plans.id, sub.planId)),
       ctx.db.select({ name: workspaces.name }).from(workspaces).where(eq(workspaces.id, payment.workspaceId))
@@ -63,7 +71,7 @@ export async function applyPayment(ctx: Ctx, normalized: NormalizedPayment): Pro
   if (normalized.status === 'failed' || normalized.status === 'expired') {
     // An abandoned early renewal looks like a default: grace only when the paid time has run out (07 §1.2).
     const graceEndsAt = await ctx.db.transaction(async (tx) => {
-      await tx.update(payments).set(data).where(eq(payments.id, payment.id))
+      if (!(await claim(tx)).length) return null
       const [sub] = await tx.select().from(subscriptions).where(eq(subscriptions.workspaceId, payment.workspaceId)).for('update').limit(1)
       if (!sub || !['active', 'trialing', 'past_due'].includes(sub.status) || !isSubscriptionDue(sub) || sub.status === 'past_due') return null
       const row = await transitionSubscription({ workspaceId: payment.workspaceId, transition: 'payment_failed', force: true, tx })
@@ -83,6 +91,6 @@ export async function applyPayment(ctx: Ctx, normalized: NormalizedPayment): Pro
     return { applied: true }
   }
 
-  await ctx.db.update(payments).set(data).where(eq(payments.id, payment.id))
+  if (!(await claim(ctx.db)).length) return { applied: false, noop: true }
   return { applied: true }
 }

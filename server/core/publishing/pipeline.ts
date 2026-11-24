@@ -1,10 +1,10 @@
-import { and, asc, count, eq, gte, min, sql } from 'drizzle-orm'
+import { and, asc, count, eq, gte, inArray, min, ne, sql } from 'drizzle-orm'
 import { CHANNELS, PLATFORM_META } from '../../../shared/channels/registry'
 import type { AdapterError, ResolvedTarget } from '../channels/adapter'
 import { getAdapter } from '../channels/registry'
 import type { CoreContext } from '../context'
-import type { Database } from '../db/client'
-import { mediaAssets, platformPublishLedger, postMedia, posts, postTargets, publishAttempts, socialAccounts, workspaces } from '../db/schema'
+import type { Database, Executor } from '../db/client'
+import { jobs, mediaAssets, platformPublishLedger, postMedia, posts, postTargets, publishAttempts, socialAccounts, workspaces } from '../db/schema'
 import { enqueue } from '../jobs/enqueue'
 import type { ClaimedJob, JobHandler, JobResult } from '../jobs/types'
 import { notifyWorkspaceOwners } from '../notifications'
@@ -56,6 +56,16 @@ async function setTarget(db: Database, id: string, values: Partial<typeof postTa
   await db.update(postTargets).set({ ...values, updatedAt: new Date() }).where(eq(postTargets.id, id))
 }
 
+/**
+ * Hands a target to a fresh publish.target job. Poll and reconcile jobs use this instead of a defer or a
+ * runner retry: their own re-run only accepts processing/publishing and would drop a target that moved on.
+ */
+export async function rearmTarget(db: Executor, target: Pick<Target, 'id' | 'workspaceId' | 'attemptCount'>, version: unknown, runAt: Date, reason: string) {
+  const jobId = await enqueue(db, 'publish.target', { targetId: target.id, workspaceId: target.workspaceId, version }, { runAt, singletonKey: `${target.id}:rearm:${target.attemptCount}:${reason}` })
+  if (jobId) await db.update(postTargets).set({ jobId }).where(eq(postTargets.id, target.id))
+  return jobId
+}
+
 async function notifyFailure(ctx: CoreContext, target: Target, account: Account, code: string) {
   const [ws] = await ctx.db.select({ timezone: workspaces.timezone }).from(workspaces).where(eq(workspaces.id, target.workspaceId))
   await notifyWorkspaceOwners(ctx, target.workspaceId, {
@@ -97,12 +107,18 @@ async function routeError(ctx: CoreContext, job: ClaimedJob, target: Target, acc
       const until = error.retryAfter ?? new Date(Date.now() + 3_600_000)
       await setTarget(db, target.id, { status: 'quota_deferred', lastErrorCode: error.kind, step: null, containerIds: [] })
       await refreshPostStatus(db, target.postId)
-      return { deferUntil: until }
+      if (job.queue === 'publish.target') return { deferUntil: until }
+      await rearmTarget(db, target, job.payload.version, until, `quota:${until.getTime()}`)
+      return
     }
     case 'transient':
       if (job.attempts >= job.maxAttempts) return fail(ctx, target, account, 'transient', error.message)
       await setTarget(db, target.id, { status: 'retrying', lastErrorCode: 'transient', lastErrorMsg: error.message.slice(0, 500), ...(step === 'prepare' ? { step: null, containerIds: [] } : {}) })
-      throw new Error(`transient: ${error.message}`) // the runner retries with backoff
+      if (job.queue === 'publish.target') throw new Error(`transient: ${error.message}`) // the runner retries with backoff
+      // A poll job's retry would find `retrying` and drop the target: a fresh publish.target starts over.
+      await rearmTarget(db, target, job.payload.version, new Date(Date.now() + 60_000 * job.attempts), `transient:${job.id}:${job.attempts}`)
+      await refreshPostStatus(db, target.postId)
+      return
     default:
       return fail(ctx, target, account, error.kind, error.message)
   }
@@ -151,7 +167,15 @@ async function publishStep(ctx: CoreContext, job: ClaimedJob, target: Target, ac
   const db = ctx.db as Database
   const adapter = getAdapter(account.platform)!
   // Persist BEFORE calling media_publish: if we die mid-call, the next run reconciles instead of re-posting.
-  await setTarget(db, target.id, { status: 'publishing', step: 'publishing', containerIds })
+  // Compare-and-set: an invocation that outlived its lease finds the target taken over (a newer attempt, or
+  // another run already publishing) and stops here, so media_publish is called at most once per attempt.
+  const won = await db.update(postTargets).set({ status: 'publishing', step: 'publishing', containerIds, updatedAt: new Date() })
+    .where(and(eq(postTargets.id, target.id), inArray(postTargets.status, ['preparing', 'processing']), eq(postTargets.attemptCount, target.attemptCount)))
+    .returning({ id: postTargets.id })
+  if (!won.length) {
+    ctx.log.warn('publish.superseded', { targetId: target.id, attempt: target.attemptCount })
+    return
+  }
   const started = Date.now()
   try {
     const result = await adapter.publish(adapterCtx(ctx, account), resolved, containerIds)
@@ -301,7 +325,11 @@ export const publishReconcileJob: JobHandler = async (job, ctx) => {
   const { target, account } = live
   const adapter = getAdapter(account.platform)!
   const resolved = await resolveTarget(db, target)
-  const since = new Date((target.scheduledAt ?? target.updatedAt).getTime() - 10 * 60_000)
+  // The window starts when this attempt began (its first recorded step), not at scheduledAt: after a
+  // deferral or a late retry scheduledAt can be days back, where an older post with the same caption waits.
+  const [first] = await db.select({ at: min(publishAttempts.createdAt) }).from(publishAttempts)
+    .where(and(eq(publishAttempts.postTargetId, target.id), eq(publishAttempts.attemptNo, target.attemptCount)))
+  const since = new Date((first?.at ?? target.scheduledAt ?? target.updatedAt).getTime() - 10 * 60_000)
   const started = Date.now()
   let recent: Awaited<ReturnType<typeof adapter.findRecent>>
   try {
@@ -311,10 +339,17 @@ export const publishReconcileJob: JobHandler = async (job, ctx) => {
     if (error.kind === 'auth') return routeError(ctx, job, target, account, error, 'poll')
     throw raw // transient: the runner retries the reconcile itself
   }
+  // A platform post already recorded on another target (a reused caption) is never this one.
+  const ids = recent.map(r => r.externalId)
+  const taken = new Set(ids.length
+    ? (await db.select({ externalId: postTargets.externalId }).from(postTargets)
+        .where(and(eq(postTargets.socialAccountId, account.id), inArray(postTargets.externalId, ids), ne(postTargets.id, target.id)))).map(r => r.externalId)
+    : [])
+  const candidates = recent.filter(r => r.ts.getTime() >= since.getTime() && !taken.has(r.externalId))
   const wanted = normalize(resolved?.caption ?? '')
   const match = wanted
-    ? recent.find(r => normalize(r.caption) === wanted)
-    : recent.find(r => r.ts.getTime() >= target.updatedAt.getTime() - 5 * 60_000)
+    ? candidates.find(r => normalize(r.caption) === wanted)
+    : candidates[0]
   if (match) {
     await db.transaction(async (tx) => {
       await tx.update(postTargets).set({ status: 'published', step: 'done', externalId: match.externalId, permalink: match.permalink ?? null, platformCaption: match.caption, publishedAt: match.ts, lastErrorCode: null, updatedAt: new Date() }).where(eq(postTargets.id, target.id))
@@ -330,5 +365,31 @@ export const publishReconcileJob: JobHandler = async (job, ctx) => {
     await enqueue(db, 'publish.reconcile', { ...job.payload, round: round + 1 }, { runAt: new Date(Date.now() + 2 * 60_000), singletonKey: `${target.id}:reconcile:${round + 1}` })
     return
   }
+  // Confirmed absent: clear the step so "Coba lagi" publishes again instead of reconciling forever.
+  await setTarget(db, target.id, { step: null, containerIds: [] })
   await fail(ctx, target, account, 'not_found_after_publish')
+}
+
+const WAITING = ['preparing', 'processing', 'publishing', 'publish_unknown', 'retrying', 'quota_deferred']
+
+/**
+ * Dead handler for publish.* jobs: a job that gave up must not leave its target in flight with nothing
+ * driving it. The target becomes `failed` (with a notification) so "Coba lagi" works; one that may already
+ * be live keeps step `publishing`, so the retry reconciles first and never re-posts blindly.
+ */
+export async function publishJobDied(job: ClaimedJob, ctx: CoreContext) {
+  const db = ctx.db as Database
+  const targetId = String(job.payload.targetId ?? '')
+  const [row] = await db.select({ target: postTargets, account: socialAccounts }).from(postTargets)
+    .innerJoin(socialAccounts, eq(socialAccounts.id, postTargets.socialAccountId)).where(eq(postTargets.id, targetId)).limit(1)
+  if (!row || !WAITING.includes(row.target.status)) return
+  const [other] = await db.select({ id: jobs.id }).from(jobs)
+    .where(and(inArray(jobs.queue, ['publish.target', 'publish.poll', 'publish.reconcile']), inArray(jobs.status, ['queued', 'running']), sql`${jobs.payload}->>'targetId' = ${targetId}`, ne(jobs.id, job.id)))
+    .limit(1)
+  if (other) return // a retry or re-arm already drives it
+  const mayBeLive = row.target.status === 'publishing' || row.target.status === 'publish_unknown'
+  const code = mayBeLive ? 'not_found_after_publish' : 'transient'
+  await setTarget(db, targetId, { status: 'failed', step: mayBeLive ? 'publishing' : null, containerIds: mayBeLive ? row.target.containerIds : [], lastErrorCode: code })
+  await refreshPostStatus(db, row.target.postId)
+  await notifyFailure(ctx, row.target, row.account, code)
 }

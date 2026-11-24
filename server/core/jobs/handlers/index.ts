@@ -1,4 +1,5 @@
-import type { JobHandler } from '../types'
+import type { ClaimedJob, JobHandler } from '../types'
+import type { CoreContext } from '../../context'
 import { mediaWatchdogJob, processMediaJob, purgeMediaJob } from '../../media/service'
 import { dmSendJob } from '../../autoreply/send'
 import { billingDailyJob, renewalRemindersJob } from '../../billing-jobs'
@@ -9,7 +10,7 @@ import { hashtagSignalsJob } from '../../hashtags/research'
 import { dataDeletionJob } from '../../meta-callbacks'
 import { newsRefreshJob } from '../../news/service'
 import { plannerRemindersJob, plannerWeeklyJob } from '../../planner/jobs'
-import { publishPollJob, publishReconcileJob, publishTargetJob } from '../../publishing/pipeline'
+import { publishJobDied, publishPollJob, publishReconcileJob, publishTargetJob } from '../../publishing/pipeline'
 import { purge } from './maintenance'
 import { noop } from './system'
 import { tokenRefresh, tokenRefreshOne } from './token'
@@ -39,4 +40,11 @@ export const handlers: Record<string, JobHandler> = {
   'planner.weekly': plannerWeeklyJob,
   'planner.reminders': plannerRemindersJob,
   'news.refresh': newsRefreshJob
+}
+
+/** Queue name → what to do when a job of that queue gives up for good (attempts or leases exhausted). */
+export const deadHandlers: Record<string, (job: ClaimedJob, ctx: CoreContext) => Promise<void>> = {
+  'publish.target': publishJobDied,
+  'publish.poll': publishJobDied,
+  'publish.reconcile': publishJobDied
 }

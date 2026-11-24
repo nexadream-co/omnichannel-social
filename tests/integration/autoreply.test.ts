@@ -176,6 +176,14 @@ describe('DM guards', () => {
     expect((await events())[0]).toMatchObject({ status: 'failed', error: 'auth' })
     expect((await getDb().select().from(socialAccounts).where(eq(socialAccounts.id, igId)))[0]!.status).toBe('needs_reauth')
   })
+
+  it('a timeout while sending is never retried: the DM may already have gone out', async () => {
+    await createRule(ctx, rule())
+    await ingestMetaWebhook(getDb(), comment('mau', { commentId: 'c-fail-transient' }))
+    await run(4)
+    expect((await events())[0]).toMatchObject({ status: 'failed', error: 'send_unknown' })
+    expect(await getDb().select().from(jobs).where(eq(jobs.status, 'queued'))).toHaveLength(0)
+  })
 })
 
 describe('rules', () => {

@@ -1,10 +1,10 @@
-import { and, eq } from 'drizzle-orm'
+import { and, eq, sql } from 'drizzle-orm'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { connectAccounts } from '../../server/core/social-accounts'
-import { fakeAdapter, resetFakeChannels } from '../../server/core/channels/fake'
+import { fakeAdapter, fakeStatusErrors, resetFakeChannels } from '../../server/core/channels/fake'
 import type { WorkspaceContext } from '../../server/core/context'
 import { closeDb, getDb } from '../../server/core/db/client'
-import { jobs, mediaAssets, platformPublishLedger, plans, posts, postTargets, socialAccounts, subscriptions, users } from '../../server/core/db/schema'
+import { jobs, mediaAssets, platformPublishLedger, plans, posts, postTargets, publishAttempts, socialAccounts, subscriptions, users } from '../../server/core/db/schema'
 import { resetEnvCache } from '../../server/core/env'
 import { runDue } from '../../server/core/jobs'
 import { setInlinePollDelays } from '../../server/core/publishing/pipeline'
@@ -153,6 +153,103 @@ describe('publishing pipeline', () => {
     await retryTarget(ctx, failed!.id)
     await run(1)
     expect((await targetRows())[0]!.status).toBe('published')
+  })
+
+  it('a platform error while polling hands the target to a fresh job instead of stranding it', async () => {
+    setInlinePollDelays([]) // straight to the poll job
+    try {
+      await post('Video lama diproses', { targets: [{ socialAccountId: igId }] })
+      await run(1)
+      expect((await targetRows())[0]!.status).toBe('processing')
+      fakeStatusErrors.push('transient')
+      await run(1)
+      const [retrying] = await targetRows()
+      expect(retrying!.status).toBe('retrying')
+      const [job] = await getDb().select().from(jobs).where(and(eq(jobs.queue, 'publish.target'), eq(jobs.status, 'queued')))
+      expect(retrying!.jobId).toBe(job!.id)
+      await run(3)
+      expect((await targetRows())[0]!.status).toBe('published')
+      expect(await publishedOnFake('ig-1')).toHaveLength(1)
+    } finally {
+      setInlinePollDelays([0, 0])
+    }
+  })
+
+  it('a rate limit while polling defers through a fresh job, not the poll that would drop it', async () => {
+    setInlinePollDelays([])
+    try {
+      await post('Kena batas', { targets: [{ socialAccountId: igId }] })
+      await run(1)
+      fakeStatusErrors.push('rate_limit')
+      await run(1)
+      expect((await targetRows())[0]!.status).toBe('quota_deferred')
+      const [job] = await getDb().select().from(jobs).where(and(eq(jobs.queue, 'publish.target'), eq(jobs.status, 'queued')))
+      expect(job!.runAt.getTime()).toBeGreaterThan(Date.now() + 30 * 60_000)
+      await run(2)
+      expect((await targetRows())[0]!.status).toBe('published')
+    } finally {
+      setInlinePollDelays([0, 0])
+    }
+  })
+
+  it('a run that outlived its lease never calls media_publish after another run took over', async () => {
+    setInlinePollDelays([400])
+    try {
+      await post('Lambat', { targets: [{ socialAccountId: igId }] })
+      await getDb().update(jobs).set({ runAt: new Date(0) })
+      const slow = runDue({ ...testContext(), db: getDb() }, { budgetMs: 60_000 })
+      // While the slow run waits on its container, its lease expires and a newer attempt takes the target.
+      await new Promise(resolve => setTimeout(resolve, 150))
+      await getDb().update(postTargets).set({ attemptCount: sql`${postTargets.attemptCount} + 1` })
+      await slow
+      expect(await publishedOnFake('ig-1')).toHaveLength(0)
+    } finally {
+      setInlinePollDelays([0, 0])
+    }
+  })
+
+  it('a publish job that gives up leaves a failed, retryable target, never one stuck in flight', async () => {
+    await post('Mati di tengah', { targets: [{ socialAccountId: igId }] })
+    // Simulate: every invocation died mid-prepare until the lease budget ran out.
+    await getDb().update(postTargets).set({ status: 'preparing', step: 'prepare' })
+    await getDb().update(jobs).set({ status: 'running', attempts: 4, leaseUntil: new Date(Date.now() - 1000) })
+    await run(1)
+    const [failed] = await targetRows()
+    expect(failed).toMatchObject({ status: 'failed', step: null, lastErrorCode: 'transient' })
+    await retryTarget(ctx, failed!.id)
+    await run(1)
+    expect((await targetRows())[0]!.status).toBe('published')
+  })
+
+  it('a stuck publish_unknown can be retried, and the retry reconciles instead of re-posting', async () => {
+    await post('Tidak pasti [fail:unknown]', { targets: [{ socialAccountId: igId }] })
+    await run(1)
+    expect((await targetRows())[0]!.status).toBe('publish_unknown')
+    // Its reconcile job was lost (died, or dropped while the workspace was suspended).
+    await getDb().update(jobs).set({ status: 'dead' }).where(eq(jobs.queue, 'publish.reconcile'))
+    const [target] = await targetRows()
+    await retryTarget(ctx, target!.id)
+    await run(1)
+    expect((await targetRows())[0]!.status).toBe('published')
+    expect(await publishedOnFake('ig-1')).toHaveLength(1)
+  })
+
+  it('reconcile never claims an older post that reused the same caption', async () => {
+    await post('Promo sama persis', { targets: [{ socialAccountId: igId }] })
+    await run(1)
+    expect(await publishedOnFake('ig-1')).toHaveLength(1)
+    // A second post with the same caption, deferred for days, died after saving step=publishing.
+    await post('Promo sama persis', { targets: [{ socialAccountId: igId }] })
+    const second = (await targetRows()).find(t => t.status === 'scheduled')!
+    await getDb().update(postTargets).set({ status: 'publishing', step: 'publishing', scheduledAt: new Date(Date.now() - 3 * 86_400_000) }).where(eq(postTargets.id, second.id))
+    await getDb().update(jobs).set({ status: 'running', attempts: 1, leaseUntil: new Date(Date.now() - 1000) }).where(eq(jobs.status, 'queued'))
+    await run(5)
+    const after = (await getDb().select().from(postTargets).where(eq(postTargets.id, second.id)))[0]!
+    expect(after.status).toBe('failed')
+    expect(after.externalId).toBeNull()
+    // Confirmed absent, so "Coba lagi" publishes again rather than reconciling forever.
+    expect(after.step).toBeNull()
+    expect(await getDb().select().from(publishAttempts).where(and(eq(publishAttempts.postTargetId, second.id), eq(publishAttempts.outcome, 'not_found')))).not.toHaveLength(0)
   })
 
   it('cancel stops a scheduled post', async () => {

@@ -39,10 +39,28 @@ async function each<T extends { workspaceId: string }>(ctx: Ctx, rows: T[], fn: 
   return done
 }
 
-async function downgrade(ctx: Ctx, workspaceId: string, transition: SubscriptionTransition) {
-  await transitionSubscription({ workspaceId, transition, force: true })
+type Sub = typeof subscriptions.$inferSelect
+
+/**
+ * The candidate lists are read once per run, and a payment can land while the loop works through them.
+ * So each transition re-checks its condition on the subscription row under its lock and skips a row that
+ * moved on (e.g. a trial that was just paid), instead of forcing the transition on stale data.
+ * Exported for tests.
+ */
+export async function transitionIfStill(ctx: Ctx, workspaceId: string, still: (sub: Sub) => boolean, transition: SubscriptionTransition) {
+  return ctx.db.transaction(async (tx) => {
+    const [sub] = await tx.select().from(subscriptions).where(eq(subscriptions.workspaceId, workspaceId)).for('update').limit(1)
+    if (!sub || !still(sub)) return null
+    return transitionSubscription({ workspaceId, transition, force: true, tx })
+  })
+}
+
+async function downgrade(ctx: Ctx, workspaceId: string, transition: SubscriptionTransition, still: (sub: Sub) => boolean) {
+  if (!await transitionIfStill(ctx, workspaceId, still, transition)) return
   await enforceWorkspaceLimits(ctx, workspaceId)
 }
+
+const reached = (at: Date | null, now: Date) => !at || at <= now
 
 /**
  * billing.daily, 00:05 WIB (docs/blueprint/07 §7, 15 §3). The Payment Hub never charges automatically, so
@@ -56,11 +74,11 @@ export const billingDailyJob: JobHandler = async (_job, base) => {
     .from(subscriptions).innerJoin(plans, eq(plans.id, subscriptions.planId)).innerJoin(workspaces, eq(workspaces.id, subscriptions.workspaceId))
     .where(and(where, eq(workspaces.status, 'active'), isNull(workspaces.deletedAt)))
 
-  await step(ctx, 'trialExpired', summary, async () => each(ctx, await due(and(eq(subscriptions.status, 'trialing'), isNotNull(subscriptions.trialEndsAt), lte(subscriptions.trialEndsAt, now))), row => downgrade(ctx, row.workspaceId, 'trial_expired')))
+  await step(ctx, 'trialExpired', summary, async () => each(ctx, await due(and(eq(subscriptions.status, 'trialing'), isNotNull(subscriptions.trialEndsAt), lte(subscriptions.trialEndsAt, now))), row => downgrade(ctx, row.workspaceId, 'trial_expired', sub => sub.status === 'trialing' && !!sub.trialEndsAt && sub.trialEndsAt <= now)))
 
   await step(ctx, 'periodLapsed', summary, async () => each(ctx, await due(and(eq(subscriptions.status, 'active'), isNotNull(subscriptions.currentPeriodEnd), lte(subscriptions.currentPeriodEnd, now))), async (row) => {
-    const sub = await transitionSubscription({ workspaceId: row.workspaceId, transition: 'payment_failed', force: true })
-    if (!sub.graceEndsAt) return
+    const sub = await transitionIfStill(ctx, row.workspaceId, s => s.status === 'active' && !!s.currentPeriodEnd && s.currentPeriodEnd <= now, 'payment_failed')
+    if (!sub?.graceEndsAt) return
     const amount = toRupiah(row.sub.period === 'yearly' ? row.priceYearly : row.priceMonthly)
     await notifyWorkspaceOwners(ctx, row.workspaceId, {
       templateKey: 'payment_failed',
@@ -69,9 +87,9 @@ export const billingDailyJob: JobHandler = async (_job, base) => {
     })
   }))
 
-  await step(ctx, 'graceExpired', summary, async () => each(ctx, await due(and(eq(subscriptions.status, 'past_due'), or(isNull(subscriptions.graceEndsAt), lte(subscriptions.graceEndsAt, now)))), row => downgrade(ctx, row.workspaceId, 'grace_expired')))
+  await step(ctx, 'graceExpired', summary, async () => each(ctx, await due(and(eq(subscriptions.status, 'past_due'), or(isNull(subscriptions.graceEndsAt), lte(subscriptions.graceEndsAt, now)))), row => downgrade(ctx, row.workspaceId, 'grace_expired', sub => sub.status === 'past_due' && reached(sub.graceEndsAt, now))))
 
-  await step(ctx, 'cancelledEnded', summary, async () => each(ctx, await due(and(eq(subscriptions.status, 'cancelled'), or(isNull(subscriptions.currentPeriodEnd), lte(subscriptions.currentPeriodEnd, now)))), row => downgrade(ctx, row.workspaceId, 'grace_expired')))
+  await step(ctx, 'cancelledEnded', summary, async () => each(ctx, await due(and(eq(subscriptions.status, 'cancelled'), or(isNull(subscriptions.currentPeriodEnd), lte(subscriptions.currentPeriodEnd, now)))), row => downgrade(ctx, row.workspaceId, 'grace_expired', sub => sub.status === 'cancelled' && reached(sub.currentPeriodEnd, now))))
 
   await step(ctx, 'trialEndingSoon', summary, async () => {
     const days = Math.max(0, Math.trunc(await getSettingNumber('billing.trialReminderDays', 3, ctx.db)))

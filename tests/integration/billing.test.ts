@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
-import { billingDailyJob, renewalRemindersJob } from '../../server/core/billing-jobs'
+import { billingDailyJob, renewalRemindersJob, transitionIfStill } from '../../server/core/billing-jobs'
 import { cancelWorkspacePayment, startCheckout } from '../../server/core/checkout'
 import type { WorkspaceContext } from '../../server/core/context'
 import { encrypt } from '../../server/core/crypto'
@@ -174,9 +174,30 @@ describe('checkout → callback → active', () => {
     expect(await reconcilePendingPayments(testContext())).toEqual({ checked: 1, updated: 1 })
     expect((await sub())).toMatchObject({ status: 'active', period: 'yearly' })
   })
+
+  it('one payment applied by racing callbacks and the reconcile extends the plan once', async () => {
+    const { orderId } = await startCheckout(ctx, { planSlug: 'kreator', period: 'monthly' })
+    hub.get(orderId)!.status = 'paid'
+    // Different callback ids, so the webhook dedupe can't help: only the payment row's compare-and-set can.
+    await Promise.all([callback(orderId, 'settlement-a'), callback(orderId, 'settlement-b'), callback(orderId, 'settlement-c'), reconcilePendingPayments(testContext())])
+    const s = await sub()
+    expect(s.status).toBe('active')
+    expect(s.currentPeriodEnd!.getTime()).toBeLessThan(Date.now() + 32 * DAY)
+    const pays = (await getDb().select().from(subscriptionEvents).where(eq(subscriptionEvents.workspaceId, ctx.workspaceId))).filter(e => e.transition === 'pay')
+    expect(pays).toHaveLength(1)
+  })
 })
 
 describe('billing.daily and downgrade enforcement', () => {
+  it('a candidate that was paid after the list was read is left alone', async () => {
+    // billing.daily read this trial as expired; the creator paid before the loop reached it.
+    await getDb().update(subscriptions).set({ trialEndsAt: new Date(Date.now() - 1000) }).where(eq(subscriptions.workspaceId, ctx.workspaceId))
+    await transitionSubscription({ workspaceId: ctx.workspaceId, transition: 'pay', planSlug: 'kreator', period: 'monthly' })
+    const ctxDb = { ...testContext(), db: getDb() }
+    expect(await transitionIfStill(ctxDb, ctx.workspaceId, s => s.status === 'trialing', 'trial_expired')).toBeNull()
+    expect((await sub()).status).toBe('active')
+  })
+
   it('a lapsed trial drops to Gratis, excess accounts are disabled (never deleted) and the owner picks', async () => {
     for (let i = 1; i <= 4; i++) await connectAccounts(ctx, 'instagram', [account(i)])
     await getDb().update(subscriptions).set({ trialEndsAt: new Date(Date.now() - 1000) }).where(eq(subscriptions.workspaceId, ctx.workspaceId))

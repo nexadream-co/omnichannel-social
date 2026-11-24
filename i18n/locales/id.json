@@ -1743,6 +1743,7 @@
       "hourly_cap": "Terlalu banyak DM dalam satu jam. Instagram bisa menganggapnya spam.",
       "auth": "Instagram menolak karena akun perlu dihubungkan ulang.",
       "rejected": "Instagram menolak mengirim DM ini.",
+      "send_unknown": "Koneksi ke Instagram terputus saat mengirim. DM mungkin sudah terkirim, jadi tidak kami kirim ulang.",
       "no_rule": "Aturannya sudah dimatikan atau dihapus."
     },
     "deletedRule": "Aturan terhapus",

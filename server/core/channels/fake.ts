@@ -16,6 +16,8 @@ export const fakeOutbox: { kind: 'dm' | 'reply', accountId: string, commentId: s
 /** Post ids the fake platform reports as deleted, and captions edited there (a creator changed them in the app), for tests. */
 export const fakeRemovedPosts = new Set<string>()
 export const fakeEditedCaptions = new Map<string, string>()
+/** Errors the next container status checks throw, in order (tests: a poll that hits a platform error). */
+export const fakeStatusErrors: AdapterError['kind'][] = []
 
 const FAKE_ACCOUNTS: Record<Platform, () => ConnectedAccount[]> = {
   instagram: () => [account('17841400000000001', 'kreator.demo')],
@@ -66,6 +68,8 @@ export function fakeAdapter(platform: Platform): ChannelAdapter {
       return { containerIds: ids }
     },
     async checkStatus(_c, ids) {
+      const forced = fakeStatusErrors.shift()
+      if (forced) throw new ChannelError({ kind: forced, code: 'FAKE', message: `Forced ${forced} error`, retryAfter: forced === 'rate_limit' || forced === 'quota' ? new Date(Date.now() + 3_600_000) : undefined })
       for (const id of ids) {
         const remaining = containers.get(id) ?? 0
         if (remaining > 0) {
@@ -124,6 +128,7 @@ export function resetFakeChannels() {
   fakeOutbox.length = 0
   fakeRemovedPosts.clear()
   fakeEditedCaptions.clear()
+  fakeStatusErrors.length = 0
 }
 
 export const isFakeMode = () => env().ADAPTER_MODE === 'fake'

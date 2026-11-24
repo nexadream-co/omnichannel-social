@@ -128,7 +128,21 @@ export async function reinstateWorkspace(ctx: StaffContext, id: string) {
       const jobId = await enqueue(tx, 'publish.target', { targetId: target.id, workspaceId: id, version: target.version }, { runAt: target.scheduledAt ?? now, singletonKey: `${target.id}:v${target.version}:reinstate:${now.getTime()}` })
       await tx.update(postTargets).set({ jobId }).where(eq(postTargets.id, target.id))
     }
-    return { missed: missed.length, rescheduled: future.length }
+    // Posts caught mid-publish: their jobs ended while the workspace was suspended. Hand each one to a fresh
+    // job (a target that may already be live is reconciled, never re-posted).
+    const inFlight = await tx.select({ id: postTargets.id, status: postTargets.status, attemptCount: postTargets.attemptCount, version: posts.version }).from(postTargets).innerJoin(posts, eq(posts.id, postTargets.postId))
+      .where(and(eq(postTargets.workspaceId, id), inArray(postTargets.status, ['preparing', 'processing', 'publishing', 'publish_unknown', 'retrying', 'quota_deferred'])))
+    let resumed = 0
+    for (const target of inFlight) {
+      const [live] = await tx.select({ id: jobs.id }).from(jobs)
+        .where(and(inArray(jobs.queue, ['publish.target', 'publish.poll', 'publish.reconcile']), inArray(jobs.status, ['queued', 'running']), sql`${jobs.payload}->>'targetId' = ${target.id}`)).limit(1)
+      if (live) continue
+      const reconcile = target.status === 'publish_unknown'
+      const jobId = await enqueue(tx, reconcile ? 'publish.reconcile' : 'publish.target', { targetId: target.id, workspaceId: id, version: target.version, round: 1 }, { singletonKey: `${target.id}:reinstate:${target.attemptCount}:${now.getTime()}` })
+      if (!reconcile) await tx.update(postTargets).set({ jobId }).where(eq(postTargets.id, target.id))
+      resumed++
+    }
+    return { missed: missed.length, rescheduled: future.length, resumed }
   })
   await recordAudit(ctx, { audience: 'staff', action: 'workspace.reinstate', actorId: ctx.staffUserId, actorName: ctx.staffName, impersonatorId: ctx.impersonatorId, workspaceId: id, targetType: 'workspace', targetId: id, metadata: result })
   return result
