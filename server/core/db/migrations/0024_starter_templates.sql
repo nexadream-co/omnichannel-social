@@ -1,0 +1,1 @@
+ALTER TABLE "workspaces" ADD COLUMN "starter_templates_at" timestamp with time zone;

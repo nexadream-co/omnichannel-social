@@ -3,6 +3,7 @@ import { afterAll, beforeEach, describe, expect, it } from 'vitest'
 import type { WorkspaceContext } from '../../server/core/context'
 import { closeDb, getDb } from '../../server/core/db/client'
 import { newsItems } from '../../server/core/db/schema'
+import { syncContent } from '../../server/core/content-sync'
 import { listNews, newsRefreshJob, storeHeadlines } from '../../server/core/news/service'
 import { setNewsSource } from '../../server/core/services/news'
 import { fakeNewsSource } from '../../server/core/services/news/fake'
@@ -77,5 +78,14 @@ describe('Lagi rame', () => {
     expect(reads).toBe(0)
     expect(await listNews(ws(), { region: 'id', range: 'today' })).toEqual({ enabled: false, items: [] })
     expect(await getDb().select().from(newsItems).where(eq(newsItems.region, 'id'))).toHaveLength(0)
+  })
+
+  it('the content sync reads the news now and reports each region (templates skipped here)', async () => {
+    setNewsSource(fakeNewsSource())
+    const result = await syncContent(testContext(), { templates: false })
+    expect(result.templates).toBeNull()
+    expect(result.news!.id).toBeGreaterThan(0)
+    expect(result.news!.world).toBeGreaterThan(0)
+    expect((await listNews(ws(), { region: 'id', range: 'today' })).items.length).toBeGreaterThan(0)
   })
 })

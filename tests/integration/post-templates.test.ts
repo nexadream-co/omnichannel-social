@@ -3,7 +3,7 @@ import type { WorkspaceContext } from '../../server/core/context'
 import { closeDb, getDb } from '../../server/core/db/client'
 import { plans, postTemplates, users } from '../../server/core/db/schema'
 import { provisionWorkspace } from '../../server/core/registration'
-import { addStarterTemplates, createPostTemplate, deletePostTemplate, listPostTemplates, MAX_POST_TEMPLATES, postTemplateSchema, updatePostTemplate } from '../../server/core/templates/service'
+import { addStarterTemplates, backfillStarterTemplates, createPostTemplate, deletePostTemplate, listPostTemplates, MAX_POST_TEMPLATES, postTemplateSchema, updatePostTemplate } from '../../server/core/templates/service'
 import { SEED_PLANS } from '../../shared/utils/plans'
 import { STARTER_POST_TEMPLATES } from '../../shared/utils/post-templates'
 import { testContext, truncate } from './helpers'
@@ -64,16 +64,23 @@ describe('post templates', () => {
     await expect(createPostTemplate(other, { name: 'Boleh', caption: 'x' })).resolves.toMatchObject({ name: 'Boleh' })
   })
 
-  it('fills the starter captions in order, adds only the missing ones again, and keeps the creator\'s own', async () => {
+  it('copies the starter captions once per workspace, in order, never over the creator\'s own', async () => {
     expect(await addStarterTemplates(getDb(), ws.workspaceId)).toBe(STARTER_POST_TEMPLATES.length)
     expect((await listPostTemplates(ws)).items.map(i => i.name)).toEqual(STARTER_POST_TEMPLATES.map(s => s.name))
+    // Deleted starters stay deleted: the workspace is marked done.
+    const first = (await listPostTemplates(ws)).items[0]!
+    await deletePostTemplate(ws, first.id)
     expect(await addStarterTemplates(getDb(), ws.workspaceId)).toBe(0)
-    const own = await createPostTemplate(other, { name: 'Punyaku', caption: 'x' })
-    expect(await addStarterTemplates(getDb(), other.workspaceId)).toBe(STARTER_POST_TEMPLATES.length)
-    const first = (await listPostTemplates(other)).items.find(i => i.name === STARTER_POST_TEMPLATES[0]!.name)!
-    await deletePostTemplate(other, first.id)
-    expect(await addStarterTemplates(getDb(), other.workspaceId)).toBe(1)
-    expect((await listPostTemplates(other)).items.some(i => i.id === own.id)).toBe(true)
+    expect(await backfillStarterTemplates(getDb())).toBe(1) // only `other` was still pending
+    expect(await backfillStarterTemplates(getDb())).toBe(0)
+    expect((await listPostTemplates(ws)).items).toHaveLength(STARTER_POST_TEMPLATES.length - 1)
     for (const starter of STARTER_POST_TEMPLATES) expect(postTemplateSchema.safeParse(starter).success).toBe(true)
+  })
+
+  it('skips a starter whose name the workspace already uses', async () => {
+    const own = await createPostTemplate(other, { name: STARTER_POST_TEMPLATES[0]!.name, caption: 'punyaku' })
+    expect(await addStarterTemplates(getDb(), other.workspaceId)).toBe(STARTER_POST_TEMPLATES.length - 1)
+    const items = (await listPostTemplates(other)).items
+    expect(items.filter(i => i.name === own.name)).toEqual([expect.objectContaining({ id: own.id, caption: 'punyaku' })])
   })
 })

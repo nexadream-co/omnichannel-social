@@ -23,20 +23,34 @@ export const newsQuerySchema = z.object({
 
 export interface NewsItemView { id: string, title: string, source: string | null, url: string, publishedAt: string | null, firstSeenAt: string, hot: boolean }
 
-/** news.refresh, hourly: each region's top list is merged in; one region failing doesn't stop the other. */
-export const newsRefreshJob: JobHandler = async (_job, ctx) => {
-  if (!await getSettingBool('app.news.enabled', ctx.db)) return void ctx.log.info('news.refresh.off')
+/**
+ * Reads each region's top list and merges it in; one region failing doesn't stop the other. Returns the headlines
+ * stored per region (null = that region failed, or the card is off). Used by news.refresh and `npm run content:sync`.
+ */
+export async function refreshNews(ctx: CoreContext): Promise<Record<NewsRegion, number | null>> {
+  const result: Record<NewsRegion, number | null> = { id: null, world: null }
+  if (!await getSettingBool('app.news.enabled', ctx.db)) {
+    ctx.log.info('news.refresh.off')
+    return result
+  }
   const source = newsSource()
   for (const region of NEWS_REGIONS) {
     try {
       const headlines = await source.topHeadlines(region)
       await storeHeadlines(ctx, region, headlines)
+      result[region] = headlines.length
       ctx.log.info('news.refresh', { region, count: headlines.length, source: source.name })
     } catch (error) {
       ctx.log.warn('news.refresh.failed', { region, error: (error as Error).message })
     }
   }
   await ctx.db.delete(newsItems).where(lt(newsItems.lastSeenAt, new Date(Date.now() - KEEP_DAYS * 86_400_000)))
+  return result
+}
+
+/** news.refresh, hourly (job schedule). */
+export const newsRefreshJob: JobHandler = async (_job, ctx) => {
+  await refreshNews(ctx)
 }
 
 export async function storeHeadlines(ctx: Pick<CoreContext, 'db'>, region: NewsRegion, headlines: Awaited<ReturnType<ReturnType<typeof newsSource>['topHeadlines']>>, now = new Date()) {

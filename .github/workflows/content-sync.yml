@@ -1,0 +1,54 @@
+# Content sync (scripts/content-sync.ts): starter templates for workspaces that never got them, and a fresh
+# "Lagi rame" news read. Run it by hand from the Actions tab (Run workflow), or let the hourly schedule keep the news
+# fresh when the host's per-minute tick isn't set up yet. Safe to run any time.
+#
+# Setup: Settings → Secrets and variables → Actions → New repository secret
+#   DATABASE_URL   the environment's pooled Postgres URL (the same one the app uses)
+# Without the secret the run is skipped (a notice, not a failure).
+name: Content sync
+
+on:
+  workflow_dispatch:
+    inputs:
+      only:
+        description: What to sync
+        type: choice
+        options: [all, templates, news]
+        default: all
+  schedule:
+    - cron: '17 * * * *'
+
+concurrency:
+  group: content-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+    steps:
+      - name: Check the database secret
+        id: secret
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::notice::DATABASE_URL secret is not set; content sync skipped."
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.secret.outputs.ok == 'true'
+        uses: actions/checkout@v4
+      - if: steps.secret.outputs.ok == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - if: steps.secret.outputs.ok == 'true'
+        run: npm ci --ignore-scripts
+      - if: steps.secret.outputs.ok == 'true'
+        name: Sync
+        run: |
+          ONLY="${{ inputs.only || 'all' }}"
+          if [ "$ONLY" = "all" ]; then npm run content:sync; else npm run content:sync -- --only="$ONLY"; fi

@@ -41,7 +41,7 @@ Every target, whatever the host, provides the same six things:
 
 | # | Requirement | Notes |
 |---|---|---|
-| 1 | Build with `NITRO_PRESET=<preset> npm run build` | Preset per §4. The build then runs `db:deploy`: migrations, plus the seed on a fresh database |
+| 1 | Build with `NITRO_PRESET=<preset> npm run build` | Preset per §4. The build then runs `db:deploy`: migrations, the seed on a fresh database, then the content sync (best effort, see below) |
 | 2 | Env vars from `01` §5 | Secrets in the host's secret store |
 | 3 | Custom domains: `socialz.id` and `SHORT_DOMAIN` attached to the app | Cloudflare proxies both (§7) |
 | 4 | **One cron entry**: every minute → `GET https://socialz.id/api/internal/tick` with `Authorization: Bearer $CRON_SECRET` | From the host's cron or an external pinger (§4) |
@@ -55,6 +55,8 @@ Every target, whatever the host, provides the same six things:
 3. Reference data travels **inside migrations** (`02` §5), so a release never needs the seed. The build runs the seed only on a fresh environment (no staff user yet), because re-running it would overwrite admin edits.
 4. Deploy the functions with the host's CLI or Git integration.
 5. Smoke check `/healthz`.
+
+**Content sync** (`npm run content:sync`, `server/core/content-sync.ts`): fills content a live database would otherwise wait for: the starter post templates for workspaces made before they existed (once per workspace, `workspaces.starter_templates_at`) and a "Lagi rame" news read right now. It runs at the end of every `db:deploy` (a failure only logs a warning), and from the **Content sync** GitHub workflow: by hand (Actions → Content sync → Run workflow, optionally only `templates` or `news`) and hourly at :17 as a backup while the tick isn't wired. It needs the repository secret `DATABASE_URL` (the pooled URL); without it the workflow skips with a notice. It never replaces the tick: publishing, DMs and billing still need requirement 4.
 
 **Migrations are expand / contract.** During a serverless rollout, old and new function versions run at the same time for a while, and a rollback brings old code back on the new schema. So every migration must work with **both** the previous and the next release: add columns nullable or with defaults, backfill in a job, and drop or rename only in a later release. Never edit a migration that has already been applied.
 

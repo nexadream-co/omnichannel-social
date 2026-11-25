@@ -9,7 +9,8 @@ loadDotEnv()
  * Runs inside `npm run build`: applies migrations, then seeds a FRESH database once.
  * "Fresh" = no staff user yet (the seed's last step creates the superadmin), so a live
  * environment is never re-seeded and admin edits survive. SKIP_DB_DEPLOY=1 builds without
- * a database (CI preset builds).
+ * a database (CI preset builds). Then, on every build, the content sync (starter templates for workspaces that never
+ * got them, a fresh "Lagi rame" read); best effort, so a blocked news feed never fails a deploy.
  */
 if (process.env.SKIP_DB_DEPLOY === '1') {
   console.log('SKIP_DB_DEPLOY=1: migrations and seed skipped.')
@@ -39,4 +40,15 @@ try {
   await lock.query('select pg_advisory_unlock($1)', [LOCK_KEY]).catch(() => {})
   lock.release()
   await pool.end()
+}
+
+try {
+  const { closeDb } = await import('../server/core/db/client')
+  const { baseContext } = await import('../server/core/context')
+  const { syncContent } = await import('../server/core/content-sync')
+  const result = await syncContent(baseContext())
+  console.log(`Content sync: starter templates added to ${result.templates} workspace(s); Lagi rame ${JSON.stringify(result.news)}.`)
+  await closeDb()
+} catch (error) {
+  console.warn(`Content sync skipped: ${(error as Error).message}. Run \`npm run content:sync\` later.`)
 }
